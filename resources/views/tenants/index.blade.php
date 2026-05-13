@@ -118,12 +118,12 @@
             <input type="hidden" name="collection_id" id="pay-collection-id">
             
             <div id="payments-container">
-                <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr auto; gap: 0.8rem; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 0.8rem; margin-bottom: 1rem;">
                     <div>
-                        <label style="display:block; font-size:0.7rem; font-weight:700; color:var(--text-light); text-transform:uppercase; margin-bottom:0.4rem;">Método</label>
-                        <select name="payments[0][payment_method_id]" required style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--secondary-color);">
-                            @foreach($paymentMethods as $pm)
-                                <option value="{{ $pm->id }}">{{ $pm->name }}</option>
+                        <label style="display:block; font-size:0.7rem; font-weight:700; color:var(--text-light); text-transform:uppercase; margin-bottom:0.4rem;">Cuenta de Ingreso</label>
+                        <select name="payments[0][account_id]" required style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--secondary-color);">
+                            @foreach($accounts as $acc)
+                                <option value="{{ $acc->id }}">{{ $acc->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -132,11 +132,8 @@
                         <input type="number" step="0.01" name="payments[0][amount]" id="pay-amount" required style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--secondary-color);">
                     </div>
                     <div>
-                        <label style="display:block; font-size:0.7rem; font-weight:700; color:var(--text-light); text-transform:uppercase; margin-bottom:0.4rem;">Destino</label>
-                        <select name="payments[0][destination]" required style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--secondary-color);">
-                            <option value="agency">Inmobiliaria</option>
-                            <option value="owner">Propietario</option>
-                        </select>
+                        <label style="display:block; font-size:0.7rem; font-weight:700; color:var(--text-light); text-transform:uppercase; margin-bottom:0.4rem;">Fecha de Pago</label>
+                        <input type="date" name="payments[0][payment_date]" value="{{ date('Y-m-d') }}" required style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--secondary-color);">
                     </div>
                 </div>
             </div>

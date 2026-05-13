@@ -1,0 +1,318 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Settlement;
+use App\Models\SettlementPayment;
+use App\Models\Property;
+use App\Models\Collection;
+use App\Models\Expense;
+use App\Models\Account;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
+
+class SettlementController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = Settlement::with('owner')->orderBy('year', 'desc')->orderBy('month', 'desc');
+
+        if ($request->filled('owner_id')) {
+            $query->where('owner_id', $request->owner_id);
+        }
+
+        $settlements = $query->paginate(20);
+        $owners = \App\Models\Owner::all();
+
+        return view('settlements.index', compact('settlements', 'owners'));
+    }
+
+    public function create(Request $request)
+    {
+        $owners = \App\Models\Owner::all();
+        $ownerId = $request->get('owner_id');
+        $month = $request->get('month', date('n'));
+        $year = $request->get('year', date('Y'));
+
+        // Si no hay owner_id, redirigimos a una vista de "Previa Masiva"
+        if (!$ownerId) {
+            return $this->bulkPreview($month, $year);
+        }
+
+        $rentTotal = 0;
+        $income = 0;
+        $expense = 0;
+        $collections = collect();
+        $expenses = collect();
+        $commissionPercentage = 10; // Default a 10%
+
+        if ($ownerId) {
+            $propertyIds = Property::where('owner_id', $ownerId)->pluck('id');
+
+            $collections = Collection::whereHas('lease', function($q) use ($propertyIds) {
+                $q->whereIn('property_id', $propertyIds);
+            })->where('month', $month)->where('year', $year)->where('status', 'paid')->get();
+
+            $income = $collections->sum('total_amount');
+            $rentTotal = $collections->sum('rent_amount');
+            
+            $expenses = Expense::whereIn('property_id', $propertyIds)
+                ->whereMonth('date', $month)
+                ->whereYear('date', $year)
+                ->get();
+            
+            $expense = $expenses->sum('amount');
+        }
+
+        return view('settlements.create', compact('owners', 'ownerId', 'month', 'year', 'income', 'expense', 'collections', 'expenses', 'rentTotal', 'commissionPercentage'));
+    }
+
+    public function bulkPreview($month, $year)
+    {
+        $owners = \App\Models\Owner::whereHas('properties', function($q) use ($month, $year) {
+            $q->whereHas('expenses', function($sq) use ($month, $year) {
+                $sq->whereMonth('date', $month)->whereYear('date', $year);
+            })->orWhereHas('leases.collections', function($sq) use ($month, $year) {
+                $sq->where('month', $month)->where('year', $year)->where('status', 'paid');
+            });
+        })->with('properties')->get();
+
+        $previews = [];
+
+        foreach ($owners as $owner) {
+            $propertyIds = $owner->properties->pluck('id');
+
+            $collections = Collection::whereHas('lease', function($q) use ($propertyIds) {
+                $q->whereIn('property_id', $propertyIds);
+            })->where('month', $month)->where('year', $year)->where('status', 'paid')->get();
+
+            $income = $collections->sum('total_amount');
+            $rentBaseForCommission = $collections->sum('rent_amount');
+            
+            $expensesSum = Expense::whereIn('property_id', $propertyIds)
+                ->whereMonth('date', $month)
+                ->whereYear('date', $year)
+                ->sum('amount');
+
+            // La comisión se cobra SOLO sobre los alquileres (sin incluir extras)
+            $agencyCommission = $rentBaseForCommission * (($owner->commission_percentage ?? 10) / 100);
+            $net = $income - $expensesSum - $agencyCommission;
+
+            // Solo agregamos si hay movimientos o si el neto no es cero
+            if ($income > 0 || $expensesSum > 0) {
+                $previews[] = [
+                    'owner' => $owner,
+                    'income' => $income,
+                    'expenses' => $expensesSum,
+                    'agency_commission' => $agencyCommission,
+                    'net' => $net,
+                    'rent_total' => $rentBaseForCommission // Base para recalcular en JS
+                ];
+            }
+        }
+
+        return view('settlements.bulk_preview', compact('previews', 'month', 'year'));
+    }
+
+    public function bulkStore(Request $request)
+    {
+        $request->validate([
+            'month' => 'required|integer',
+            'year' => 'required|integer',
+            'owners' => 'required|array',
+            'owners.*.owner_id' => 'required|exists:owners,id',
+        ]);
+
+        $count = 0;
+        foreach ($request->owners as $data) {
+            if (!isset($data['selected'])) continue;
+
+            Settlement::updateOrCreate(
+                ['owner_id' => $data['owner_id'], 'month' => $request->month, 'year' => $request->year],
+                [
+                    'rent_total' => $data['rent_total'],
+                    'total_income' => $data['total_income'],
+                    'total_expense' => $data['total_expense'],
+                    'agency_commission' => $data['agency_commission'],
+                    'net_amount' => $data['net_amount'],
+                    'status' => 'ready'
+                ]
+            );
+            $count++;
+        }
+
+        return redirect()->route('settlements.index')->with('success', "$count rendiciones generadas masivamente.");
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'owner_id' => 'required|exists:owners,id',
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer',
+            'rent_total' => 'required|numeric',
+            'total_income' => 'required|numeric',
+            'total_expense' => 'required|numeric',
+            'agency_commission' => 'required|numeric',
+            'net_amount' => 'required|numeric',
+        ]);
+
+        $settlement = Settlement::updateOrCreate(
+            ['owner_id' => $request->owner_id, 'month' => $request->month, 'year' => $request->year],
+            [
+                'rent_total' => $request->rent_total,
+                'total_income' => $request->total_income,
+                'total_expense' => $request->total_expense,
+                'agency_commission' => $request->agency_commission,
+                'net_amount' => $request->net_amount,
+                'status' => 'ready'
+            ]
+        );
+
+        return redirect()->route('settlements.show', $settlement)->with('success', 'Rendición generada correctamente.');
+    }
+
+    public function show(Settlement $settlement)
+    {
+        $settlement->load(['owner.bankAccounts', 'payments.account', 'payments.ownerBankAccount']);
+        $accounts = Account::where('is_active', true)->get();
+
+        // Obtener detalles de lo que compone la rendición para el desglose
+        $propertyIds = Property::where('owner_id', $settlement->owner_id)->pluck('id');
+
+        $collections = Collection::with(['lease.property', 'lease.tenant', 'details'])
+            ->whereHas('lease', function($q) use ($propertyIds) {
+                $q->whereIn('property_id', $propertyIds);
+            })
+            ->where('month', $settlement->month)
+            ->where('year', $settlement->year)
+            ->where('status', 'paid')
+            ->get();
+
+        $expenses = Expense::with('property')
+            ->whereIn('property_id', $propertyIds)
+            ->whereMonth('date', $settlement->month)
+            ->whereYear('date', $settlement->year)
+            ->get();
+
+        return view('settlements.show', compact('settlement', 'accounts', 'collections', 'expenses'));
+    }
+
+    public function sendToOwner(Request $request, Settlement $settlement)
+    {
+        $type = $request->get('type', 'settlement'); // 'settlement' o 'payment_confirmation'
+        $settlement->load(['owner.bankAccounts', 'payments.account', 'payments.ownerBankAccount']);
+        
+        $propertyIds = Property::where('owner_id', $settlement->owner_id)->pluck('id');
+        $collections = Collection::with(['lease.property', 'lease.tenant', 'details'])
+            ->whereHas('lease', function($q) use ($propertyIds) {
+                $q->whereIn('property_id', $propertyIds);
+            })
+            ->where('month', $settlement->month)
+            ->where('year', $settlement->year)
+            ->where('status', 'paid')
+            ->get();
+
+        $expenses = Expense::with('property')
+            ->whereIn('property_id', $propertyIds)
+            ->whereMonth('date', $settlement->month)
+            ->whereYear('date', $settlement->year)
+            ->get();
+
+        $payload = [
+            'type' => $type,
+            'settlement_id' => $settlement->id,
+            'period' => $settlement->month . '/' . $settlement->year,
+            'owner' => [
+                'name' => $settlement->owner->name,
+                'email' => $settlement->owner->email,
+            ],
+            'totals' => [
+                'total_income' => $settlement->total_income,
+                'total_expenses' => $settlement->total_expense,
+                'agency_commission' => $settlement->agency_commission,
+                'net_amount' => $settlement->net_amount
+            ],
+            'details' => [
+                'collections' => $collections->map(function($c) {
+                    return [
+                        'property' => $c->lease->property->location,
+                        'tenant' => $c->lease->tenant->name,
+                        'items' => $c->details()->where('destination', 'owner')->get()->map(function($d) {
+                            return [
+                                'concept' => $d->name,
+                                'amount' => $d->amount
+                            ];
+                        })
+                    ];
+                }),
+                'expenses' => $expenses->map(function($e) {
+                    return [
+                        'property' => $e->property->location,
+                        'description' => $e->description,
+                        'amount' => $e->amount
+                    ];
+                })
+            ]
+        ];
+
+        if ($type === 'payment_confirmation') {
+            $payload['payments'] = $settlement->payments->map(function($p) {
+                return [
+                    'amount' => $p->amount,
+                    'bank' => $p->ownerBankAccount->cbu_alias,
+                    'date' => $p->date
+                ];
+            });
+        }
+
+        try {
+            // Webhooks diferenciados por tipo
+            $webhookUrl = ($type === 'settlement') 
+                ? 'https://n8n.dev.jfsdevs.com.ar/webhook/826bdd12-5d40-4574-bf7a-72d90c4d3ee7' 
+                : 'https://n8n.dev.jfsdevs.com.ar/webhook/72e5f4f5-f7b8-4b00-beb1-6ea4281bad8d';
+
+            $response = \Illuminate\Support\Facades\Http::timeout(15)->post($webhookUrl, $payload);
+            
+            if (!$response->successful()) {
+                throw new \Exception("El servidor respondió con código " . $response->status() . ": " . $response->body());
+            }
+            
+            return back()->with('success', 'Información enviada correctamente para generar el documento y enviar mail.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error Webhook Settlement: " . $e->getMessage());
+            return back()->with('error', 'Error al enviar al webhook: ' . $e->getMessage());
+        }
+    }
+
+    public function pay(Request $request, Settlement $settlement)
+    {
+        $request->validate([
+            'payments' => 'required|array|min:1',
+            'payments.*.amount' => 'required|numeric|min:0.01',
+            'payments.*.account_id' => 'required|exists:accounts,id',
+            'payments.*.owner_bank_account_id' => 'required|exists:owner_bank_accounts,id',
+            'payments.*.date' => 'required|date',
+        ]);
+
+        foreach ($request->payments as $pData) {
+            $payment = $settlement->payments()->create($pData);
+
+            // Generar movimiento de caja (Egreso)
+            $payment->movement()->create([
+                'account_id' => $pData['account_id'],
+                'type' => 'expense',
+                'amount' => $pData['amount'],
+                'description' => 'Pago Rendición a: ' . $settlement->owner->name . ' (' . $settlement->month . '/' . $settlement->year . ')',
+                'movement_date' => $pData['date'],
+            ]);
+        }
+
+        $totalPaid = $settlement->payments()->sum('amount');
+        if ($totalPaid >= $settlement->net_amount) {
+            $settlement->update(['status' => 'paid']);
+        }
+
+        return back()->with('success', 'Pago(s) registrado(s) correctamente.');
+    }
+}

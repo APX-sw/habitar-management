@@ -38,6 +38,7 @@ class OwnerController extends Controller
             'email' => 'nullable|email',
             'phone' => 'nullable|string',
             'contact' => 'nullable|string',
+            'commission_percentage' => 'nullable|numeric|min:0|max:100',
             'bank_accounts' => 'nullable|array',
             'bank_accounts.*.cbu_alias' => 'required|string',
             'bank_accounts.*.holder_name' => 'required|string',
@@ -81,9 +82,22 @@ class OwnerController extends Controller
             'email' => 'nullable|email',
             'phone' => 'nullable|string',
             'contact' => 'nullable|string',
+            'commission_percentage' => 'nullable|numeric|min:0|max:100',
+            'bank_accounts' => 'nullable|array',
+            'bank_accounts.*.cbu_alias' => 'required|string',
+            'bank_accounts.*.holder_name' => 'required|string',
+            'bank_accounts.*.holder_cuit' => 'required|string',
         ]);
 
         $owner->update($validated);
+
+        // Sincronizar cuentas bancarias
+        $owner->bankAccounts()->delete();
+        if ($request->has('bank_accounts')) {
+            foreach ($request->bank_accounts as $account) {
+                $owner->bankAccounts()->create($account);
+            }
+        }
 
         return redirect()->route('owners.index')->with('success', 'Propietario actualizado.');
     }

@@ -47,6 +47,11 @@ class Property extends Model
         return $this->hasOne(Lease::class)->where('is_active', true);
     }
 
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()->logFillable();

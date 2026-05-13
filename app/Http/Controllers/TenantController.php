@@ -38,9 +38,9 @@ class TenantController extends Controller
         }
 
         $tenants = $query->latest()->paginate(15)->withQueryString();
-        $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->get();
+        $accounts = \App\Models\Account::where('is_active', true)->get();
         
-        return view('tenants.index', compact('tenants', 'paymentMethods'));
+        return view('tenants.index', compact('tenants', 'accounts'));
     }
 
     public function pendingCollections(Tenant $tenant)

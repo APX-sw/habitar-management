@@ -96,7 +96,7 @@ class CollectionController extends Controller
                     // 1. Asegurar Alquiler
                     $collection->details()->updateOrCreate(
                         ['type' => 'rent'],
-                        ['name' => 'Alquiler Mensual', 'amount' => $rentAmount]
+                        ['name' => 'Alquiler Mensual', 'amount' => $rentAmount, 'destination' => 'owner']
                     );
                     $collection->update(['rent_amount' => $rentAmount]);
 
@@ -107,17 +107,27 @@ class CollectionController extends Controller
                         ->get();
 
                     foreach ($extras as $extra) {
+                        $dest = 'owner';
+                        $lowerName = strtolower($extra->description);
+                        if (str_contains($lowerName, 'honorario') || str_contains($lowerName, 'comision') || str_contains($lowerName, 'comisión') || str_contains($lowerName, 'deposito') || str_contains($lowerName, 'depósito')) {
+                            $dest = 'agency';
+                        }
                         $collection->details()->updateOrCreate(
                             ['type' => 'extra_charge', 'related_id' => $extra->id],
-                            ['name' => $extra->description, 'amount' => $extra->amount]
+                            ['name' => $extra->description, 'amount' => $extra->amount, 'destination' => $dest]
                         );
                     }
 
                     // 3. Conceptos Mensuales Recurrentes
                     foreach ($lease->fixedCharges as $fc) {
+                        $dest = 'owner';
+                        $lowerName = strtolower($fc->name);
+                        if (str_contains($lowerName, 'honorario') || str_contains($lowerName, 'comision') || str_contains($lowerName, 'comisión') || str_contains($lowerName, 'deposito') || str_contains($lowerName, 'depósito')) {
+                            $dest = 'agency';
+                        }
                         $collection->details()->firstOrCreate(
                             ['type' => 'fixed_charge', 'related_id' => $fc->id],
-                            ['name' => $fc->name, 'amount' => 0]
+                            ['name' => $fc->name, 'amount' => 0, 'destination' => $dest]
                         );
                     }
                     
@@ -163,9 +173,9 @@ class CollectionController extends Controller
 
     public function show(Collection $collection)
     {
-        $collection->load(['lease.property', 'lease.tenant', 'details', 'lease.fixedCharges', 'lease.extraCharges', 'payments.method']);
-        $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->get();
-        return view('collections.show', compact('collection', 'paymentMethods'));
+        $collection->load(['lease.property', 'lease.tenant', 'details', 'lease.fixedCharges', 'lease.extraCharges', 'payments.account']);
+        $accounts = \App\Models\Account::where('is_active', true)->get();
+        return view('collections.show', compact('collection', 'accounts'));
     }
 
     public function update(Request $request, Collection $collection)
@@ -198,16 +208,21 @@ class CollectionController extends Controller
         $payload = $this->prepareWebhookPayload($collection);
 
         try {
-            \Illuminate\Support\Facades\Http::post('https://n8n.dev.jfsdevs.com.ar/webhook-test/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
+            $response = \Illuminate\Support\Facades\Http::timeout(15)->post('https://n8n.dev.jfsdevs.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
             
+            if (!$response->successful()) {
+                throw new \Exception("Error " . $response->status());
+            }
+
             // Actualizar estado a "sent" si estaba en "ready"
             if ($collection->status === 'ready') {
                 $collection->update(['status' => 'sent']);
             }
 
-            return back()->with('success', 'Detalles enviados correctamente al sistema de notificaciones.');
+            return back()->with('success', 'Información enviada correctamente al inquilino.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al conectar con el servidor de correos: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error("Error Webhook Collection: " . $e->getMessage());
+            return back()->with('error', 'Error al enviar al webhook: ' . $e->getMessage());
         }
     }
 
@@ -223,7 +238,7 @@ class CollectionController extends Controller
             if ($collection && $collection->status === 'ready') {
                 $payload = $this->prepareWebhookPayload($collection);
                 try {
-                    \Illuminate\Support\Facades\Http::post('https://n8n.dev.jfsdevs.com.ar/webhook-test/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
+                        \Illuminate\Support\Facades\Http::post('https://n8n.dev.jfsdevs.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
                     $collection->update(['status' => 'sent']);
                     $count++;
                 } catch (\Exception $e) {
@@ -240,14 +255,22 @@ class CollectionController extends Controller
         $request->validate([
             'payments' => 'required|array|min:1',
             'payments.*.amount' => 'required|numeric|min:0.01',
-            'payments.*.payment_method_id' => 'required|exists:payment_methods,id',
-            'payments.*.destination' => 'required|string',
+            'payments.*.account_id' => 'required|exists:accounts,id',
             'payments.*.payment_date' => 'required|date',
             'payments.*.notes' => 'nullable|string'
         ]);
 
         foreach ($request->payments as $pData) {
-            $collection->payments()->create($pData);
+            $payment = $collection->payments()->create($pData);
+
+            // Generar movimiento de caja (Ingreso)
+            $payment->movement()->create([
+                'account_id' => $pData['account_id'],
+                'type' => 'income',
+                'amount' => $pData['amount'],
+                'description' => 'Cobro Alquiler: ' . $collection->lease->property->location . ' (' . $collection->month . '/' . $collection->year . ')',
+                'movement_date' => $pData['payment_date'],
+            ]);
         }
 
         // Recalcular estado basado en el total pagado

@@ -86,14 +86,14 @@ class LeaseController extends Controller
             'update_value' => 'nullable|numeric',
             'index_type_id' => 'nullable|exists:index_types,id',
             'fixed_charges' => 'nullable|array',
-            'fixed_charges.*.name' => 'required|string',
+            'fixed_charges.*.name' => 'nullable|string',
             'fixed_charges.*.amount' => 'nullable|numeric|min:0',
             'initial_fee_installments' => 'nullable|integer|min:1',
         ]);
 
         $lease = Lease::create($validated);
 
-        // Generar Cargos Fijos (Conceptos)
+        // Generar Cargos Fijos (Conceptos) - Solo si tienen nombre
         if ($request->has('fixed_charges')) {
             foreach ($request->fixed_charges as $charge) {
                 if (!empty($charge['name'])) {

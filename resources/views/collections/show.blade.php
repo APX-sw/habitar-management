@@ -119,7 +119,7 @@
                     @foreach($collection->payments as $payment)
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #f8fafc; border-radius: 12px; border: 1px solid #edf2f7;">
                             <div>
-                                <div style="font-weight: 700; color: var(--primary-color);">{{ $payment->method->name ?? 'N/A' }} - {{ $payment->destination === 'agency' ? 'Inmobiliaria' : 'Propietario' }}</div>
+                                <div style="font-weight: 700; color: var(--primary-color);">{{ $payment->account->name ?? 'N/A' }}</div>
                                 <div style="font-size: 0.8rem; color: var(--text-light);">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d/m/Y') }}</div>
                                 @if($payment->notes)
                                     <div style="font-size: 0.8rem; color: #718096; font-style: italic; margin-top: 0.2rem;">"{{ $payment->notes }}"</div>
@@ -253,24 +253,17 @@
 
             <div id="paymentRows">
                 <!-- Fila de pago inicial -->
-                <div class="payment-row" style="display: grid; grid-template-columns: 1.5fr 1.2fr 1.2fr 1.2fr 40px; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1rem; border-bottom: 1px dashed #edf2f7;">
+                <div class="payment-row" style="display: grid; grid-template-columns: 1.5fr 1.5fr 1.5fr 40px; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1rem; border-bottom: 1px dashed #edf2f7;">
                     <div>
                         <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 0.5rem;">Monto</label>
                         <input type="number" step="0.01" name="payments[0][amount]" class="payment-amount" value="{{ $collection->balance }}" oninput="updateRemainingBalance()" required style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #d2d6dc; font-weight: 700;">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 0.5rem;">Método</label>
-                        <select name="payments[0][payment_method_id]" required style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #d2d6dc; font-weight: 600;">
-                            @foreach($paymentMethods as $pm)
-                                <option value="{{ $pm->id }}">{{ $pm->name }}</option>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 0.5rem;">Cuenta de Ingreso</label>
+                        <select name="payments[0][account_id]" required style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #d2d6dc; font-weight: 600;">
+                            @foreach($accounts as $acc)
+                                <option value="{{ $acc->id }}">{{ $acc->name }}</option>
                             @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 0.5rem;">Destino</label>
-                        <select name="payments[0][destination]" required style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #d2d6dc; font-weight: 600;">
-                            <option value="agency">🏢 Inmobiliaria</option>
-                            <option value="owner">👤 Propietario</option>
                         </select>
                     </div>
                     <div>
@@ -280,7 +273,7 @@
                     <div>
                         <!-- No delete for first row -->
                     </div>
-                    <div style="grid-column: span 5; margin-top: 0.5rem;">
+                    <div style="grid-column: span 4; margin-top: 0.5rem;">
                         <input type="text" name="payments[0][notes]" placeholder="Notas adicionales..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #edf2f7; font-size: 0.8rem;">
                     </div>
                 </div>
@@ -298,27 +291,21 @@
 
 <script>
     let paymentRowCount = 1;
-    const paymentMethodsOptions = `@foreach($paymentMethods as $pm)<option value="{{ $pm->id }}">{{ $pm->name }}</option>@endforeach`;
+    const paymentMethodsOptions = `@foreach($accounts as $acc)<option value="{{ $acc->id }}">{{ $acc->name }}</option>@endforeach`;
 
     function addPaymentRow() {
         const container = document.getElementById('paymentRows');
         const newRow = document.createElement('div');
         newRow.className = 'payment-row';
-        newRow.style = 'display: grid; grid-template-columns: 1.5fr 1.2fr 1.2fr 1.2fr 40px; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1rem; border-bottom: 1px dashed #edf2f7;';
+        newRow.style = 'display: grid; grid-template-columns: 1.5fr 1.5fr 1.5fr 40px; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1rem; border-bottom: 1px dashed #edf2f7;';
         
         newRow.innerHTML = `
             <div>
                 <input type="number" step="0.01" name="payments[${paymentRowCount}][amount]" class="payment-amount" value="0" oninput="updateRemainingBalance()" required style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #d2d6dc; font-weight: 700;">
             </div>
             <div>
-                <select name="payments[${paymentRowCount}][payment_method_id]" required style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #d2d6dc; font-weight: 600;">
+                <select name="payments[${paymentRowCount}][account_id]" required style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #d2d6dc; font-weight: 600;">
                     ${paymentMethodsOptions}
-                </select>
-            </div>
-            <div>
-                <select name="payments[${paymentRowCount}][destination]" required style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #d2d6dc; font-weight: 600;">
-                    <option value="agency">🏢 Inmobiliaria</option>
-                    <option value="owner">👤 Propietario</option>
                 </select>
             </div>
             <div>
@@ -329,7 +316,7 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 </button>
             </div>
-            <div style="grid-column: span 5; margin-top: 0.5rem;">
+            <div style="grid-column: span 4; margin-top: 0.5rem;">
                 <input type="text" name="payments[${paymentRowCount}][notes]" placeholder="Notas adicionales..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #edf2f7; font-size: 0.8rem;">
             </div>
         `;

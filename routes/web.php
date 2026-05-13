@@ -22,8 +22,10 @@ use App\Http\Controllers\FixedChargeController;
 use App\Http\Controllers\LeaseDocumentController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\PaymentMethodController;
 
+use App\Http\Controllers\CashRegisterController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\SettlementController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -41,7 +43,7 @@ Route::post('leases/{lease}/terminate', [LeaseController::class, 'terminate'])->
 Route::resource('extra-charges', ExtraChargeController::class);
 Route::resource('fixed-charges', FixedChargeController::class);
 Route::resource('lease-documents', LeaseDocumentController::class);
-Route::resource('payment-methods', PaymentMethodController::class);
+
 Route::get('leases/{lease}/documents', [LeaseDocumentController::class, 'index'])->name('leases.documents');
 
 // Cobros de Alquiler
@@ -57,6 +59,16 @@ Route::post('collections/bulk-send', [CollectionController::class, 'bulkSend'])-
 
 
 Route::get('leases/{lease}/summary', [LeaseController::class, 'monthlySummary'])->name('leases.summary');
+
+// Finanzas
+Route::get('cash-register', [CashRegisterController::class, 'index'])->name('cash_register.index');
+
+Route::resource('expenses', ExpenseController::class)->except(['show', 'edit', 'update', 'destroy']);
+
+Route::resource('settlements', SettlementController::class)->except(['edit', 'update', 'destroy']);
+Route::post('settlements/bulk', [SettlementController::class, 'bulkStore'])->name('settlements.bulk_store');
+Route::post('settlements/{settlement}/send', [SettlementController::class, 'sendToOwner'])->name('settlements.send_to_owner');
+Route::post('settlements/{settlement}/pay', [SettlementController::class, 'pay'])->name('settlements.pay');
 
 // Settings
 Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');

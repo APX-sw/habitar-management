@@ -5,20 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class CollectionPayment extends Model
+class Expense extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['collection_id', 'amount', 'account_id', 'destination', 'notes', 'payment_date'];
+    protected $fillable = ['property_id', 'account_id', 'date', 'amount', 'description', 'is_paid'];
 
-    public function collection()
+    public function property()
     {
-        return $this->belongsTo(Collection::class);
+        return $this->belongsTo(Property::class);
     }
 
     public function account()
     {
-        return $this->belongsTo(Account::class, 'account_id');
+        return $this->belongsTo(Account::class);
     }
 
     public function movement()

@@ -44,7 +44,7 @@
     </a>
 
     <!-- TESORERÍA -->
-    <a href="{{ route('payment-methods.index') }}" class="config-card" style="text-decoration: none; color: inherit;">
+    <a href="{{ route('cash_register.index') }}" class="config-card" style="text-decoration: none; color: inherit;">
         <div class="card" style="height: 100%; transition: all 0.3s ease; border-top: 4px solid var(--primary-color); display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem;">
             <div style="background: #F7FAFC; color: var(--primary-color); width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
