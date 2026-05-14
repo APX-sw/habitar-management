@@ -12,11 +12,16 @@ class FixedCharge extends Model
 {
     use HasFactory, LogsActivity;
 
-    protected $fillable = ['lease_id', 'name', 'amount'];
+    protected $fillable = ['lease_id', 'name', 'amount', 'transaction_category_id'];
 
     public function lease()
     {
         return $this->belongsTo(Lease::class);
+    }
+
+    public function transactionCategory()
+    {
+        return $this->belongsTo(TransactionCategory::class);
     }
 
     public function getActivitylogOptions(): LogOptions

@@ -168,10 +168,15 @@
 
                 <!-- Formulario Oculto para añadir concepto -->
                 <div id="add-fixed-charge-form" style="display: none; background: #f8fafc; padding: 1rem; border-radius: 10px; border: 1px solid #edf2f7; margin-bottom: 1rem;">
-                    <form action="{{ route('fixed-charges.store') }}" method="POST" style="display: flex; gap: 0.5rem;">
+                    <form action="{{ route('fixed-charges.store') }}" method="POST" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         @csrf
                         <input type="hidden" name="lease_id" value="{{ $lease->id }}">
-                        <input type="text" name="name" placeholder="Nombre (ej: Tasa Municipal)" required style="flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid #d2d6dc;">
+                        <input type="text" name="name" placeholder="Nombre (ej: Tasa Municipal)" required style="flex: 1; min-width: 150px; padding: 0.5rem; border-radius: 6px; border: 1px solid #d2d6dc;">
+                        <select name="transaction_category_id" required style="padding: 0.5rem; border: 1px solid #d2d6dc; border-radius: 6px;">
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat->id }}" {{ $cat->id == 4 ? 'selected' : '' }}>{{ $cat->name }}</option>
+                            @endforeach
+                        </select>
                         <button type="submit" class="btn" style="background: var(--accent-color); color: white; padding: 0.5rem 1rem; font-size: 0.8rem;">Guardar</button>
                     </form>
                 </div>
@@ -217,6 +222,11 @@
                         <input type="number" step="0.01" name="amount" placeholder="Monto Total $" required style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #d2d6dc;">
                         <input type="date" name="billing_date" value="{{ date('Y-m-d') }}" required style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #d2d6dc;">
                     </div>
+                    <select name="transaction_category_id" required style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #d2d6dc;">
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->id }}" {{ $cat->id == 4 ? 'selected' : '' }}>{{ $cat->name }}</option>
+                        @endforeach
+                    </select>
                     <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #4a5568;">
                         <span>En</span>
                         <input type="number" name="total_installments" value="1" min="1" style="width: 50px; padding: 0.4rem; border-radius: 6px; border: 1px solid #d2d6dc; text-align: center;">

@@ -9,7 +9,16 @@ class Expense extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['property_id', 'account_id', 'date', 'amount', 'description', 'is_paid'];
+    protected $fillable = [
+        'property_id', 
+        'account_id', 
+        'date', 
+        'amount', 
+        'description', 
+        'attachment_path',
+        'is_paid', 
+        'transaction_category_id'
+    ];
 
     public function property()
     {
@@ -24,5 +33,10 @@ class Expense extends Model
     public function movement()
     {
         return $this->morphOne(CashRegisterMovement::class, 'related');
+    }
+
+    public function transactionCategory()
+    {
+        return $this->belongsTo(TransactionCategory::class);
     }
 }

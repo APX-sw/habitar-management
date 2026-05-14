@@ -16,7 +16,19 @@ class ExtraChargeController extends Controller
             'amount' => 'required|numeric|min:0',
             'billing_date' => 'required|date',
             'total_installments' => 'required|integer|min:1',
+            'transaction_category_id' => 'nullable|exists:transaction_categories,id',
         ]);
+
+        $catId = $validated['transaction_category_id'] ?? null;
+        
+        // Heurística si no viene categoría (para compatibilidad)
+        if (!$catId) {
+            $lowerDesc = strtolower($validated['description']);
+            if (str_contains($lowerDesc, 'honorario') || str_contains($lowerDesc, 'comision')) $catId = 2;
+            elseif (str_contains($lowerDesc, 'deposito')) $catId = 3;
+            elseif (str_contains($lowerDesc, 'multa')) $catId = 7;
+            else $catId = 4;
+        }
 
         $totalInstallments = $validated['total_installments'];
         $amountPerInstallment = $validated['amount'] / $totalInstallments;
@@ -32,6 +44,7 @@ class ExtraChargeController extends Controller
                 'billing_date' => $billingDate,
                 'installment_number' => $i,
                 'total_installments' => $totalInstallments,
+                'transaction_category_id' => $catId,
             ]);
 
             // Si ya existe un cobro generado para ese mes y ese contrato, se lo adosamos
@@ -45,7 +58,8 @@ class ExtraChargeController extends Controller
                     'type' => 'extra_charge',
                     'related_id' => $extra->id,
                     'name' => $extra->description,
-                    'amount' => $extra->amount
+                    'amount' => $extra->amount,
+                    'transaction_category_id' => $catId
                 ]);
                 $collection->update(['total_amount' => $collection->details()->sum('amount')]);
             }

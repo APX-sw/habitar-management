@@ -96,7 +96,7 @@ class CollectionController extends Controller
                     // 1. Asegurar Alquiler
                     $collection->details()->updateOrCreate(
                         ['type' => 'rent'],
-                        ['name' => 'Alquiler Mensual', 'amount' => $rentAmount, 'destination' => 'owner']
+                        ['name' => 'Alquiler Mensual', 'amount' => $rentAmount, 'destination' => 'owner', 'transaction_category_id' => 1] // 1: Alquileres
                     );
                     $collection->update(['rent_amount' => $rentAmount]);
 
@@ -108,26 +108,41 @@ class CollectionController extends Controller
 
                     foreach ($extras as $extra) {
                         $dest = 'owner';
+                        $catId = $extra->transaction_category_id ?? 4; // Default to Expensas/Impuestos if none
                         $lowerName = strtolower($extra->description);
-                        if (str_contains($lowerName, 'honorario') || str_contains($lowerName, 'comision') || str_contains($lowerName, 'comisión') || str_contains($lowerName, 'deposito') || str_contains($lowerName, 'depósito')) {
+                        if (str_contains($lowerName, 'honorario') || str_contains($lowerName, 'comision') || str_contains($lowerName, 'comisión')) {
                             $dest = 'agency';
+                            $catId = 2; // Honorarios Inmobiliarios
+                        } elseif (str_contains($lowerName, 'deposito') || str_contains($lowerName, 'depósito')) {
+                            $dest = 'agency';
+                            $catId = 3; // Depósitos en Garantía
+                        } elseif (str_contains($lowerName, 'multa') || str_contains($lowerName, 'interes') || str_contains($lowerName, 'interés')) {
+                            $dest = 'agency';
+                            $catId = 7; // Multas por Atraso
                         }
+                        
                         $collection->details()->updateOrCreate(
                             ['type' => 'extra_charge', 'related_id' => $extra->id],
-                            ['name' => $extra->description, 'amount' => $extra->amount, 'destination' => $dest]
+                            ['name' => $extra->description, 'amount' => $extra->amount, 'destination' => $dest, 'transaction_category_id' => $catId]
                         );
                     }
 
                     // 3. Conceptos Mensuales Recurrentes
                     foreach ($lease->fixedCharges as $fc) {
                         $dest = 'owner';
+                        $catId = $fc->transaction_category_id ?? 4; // Default to Expensas/Impuestos if none
                         $lowerName = strtolower($fc->name);
-                        if (str_contains($lowerName, 'honorario') || str_contains($lowerName, 'comision') || str_contains($lowerName, 'comisión') || str_contains($lowerName, 'deposito') || str_contains($lowerName, 'depósito')) {
+                        if (str_contains($lowerName, 'honorario') || str_contains($lowerName, 'comision') || str_contains($lowerName, 'comisión')) {
                             $dest = 'agency';
+                            $catId = 2; // Honorarios Inmobiliarios
+                        } elseif (str_contains($lowerName, 'deposito') || str_contains($lowerName, 'depósito')) {
+                            $dest = 'agency';
+                            $catId = 3; // Depósitos en Garantía
                         }
+                        
                         $collection->details()->firstOrCreate(
                             ['type' => 'fixed_charge', 'related_id' => $fc->id],
-                            ['name' => $fc->name, 'amount' => 0, 'destination' => $dest]
+                            ['name' => $fc->name, 'amount' => 0, 'destination' => $dest, 'transaction_category_id' => $catId]
                         );
                     }
                     
@@ -175,7 +190,8 @@ class CollectionController extends Controller
     {
         $collection->load(['lease.property', 'lease.tenant', 'details', 'lease.fixedCharges', 'lease.extraCharges', 'payments.account']);
         $accounts = \App\Models\Account::where('is_active', true)->get();
-        return view('collections.show', compact('collection', 'accounts'));
+        $categories = \App\Models\TransactionCategory::all();
+        return view('collections.show', compact('collection', 'accounts', 'categories'));
     }
 
     public function update(Request $request, Collection $collection)
@@ -262,15 +278,62 @@ class CollectionController extends Controller
 
         foreach ($request->payments as $pData) {
             $payment = $collection->payments()->create($pData);
+            
+            $paymentAmount = $pData['amount'];
+            $totalDebt = $collection->total_amount;
+            
+            // Si el total es 0 (raro pero posible), evitamos división por cero
+            if ($totalDebt <= 0) {
+                $payment->movement()->create([
+                    'account_id' => $pData['account_id'],
+                    'type' => 'income',
+                    'amount' => $paymentAmount,
+                    'description' => 'Cobro Inquilino (Sin detalle): ' . $collection->lease->property->location,
+                    'movement_date' => Carbon::parse($pData['payment_date'])->setTimeFrom(now()),
+                    'transaction_category_id' => 1 // Default Alquiler
+                ]);
+                continue;
+            }
 
-            // Generar movimiento de caja (Ingreso)
-            $payment->movement()->create([
-                'account_id' => $pData['account_id'],
-                'type' => 'income',
-                'amount' => $pData['amount'],
-                'description' => 'Cobro Alquiler: ' . $collection->lease->property->location . ' (' . $collection->month . '/' . $collection->year . ')',
-                'movement_date' => $pData['payment_date'],
-            ]);
+            // Distribuir el pago proporcionalmente según los detalles del cobro
+            $proportion = $paymentAmount / $totalDebt;
+            $details = $collection->details;
+            
+            // Agrupar por categoría para no generar demasiados movimientos chicos del mismo tipo
+            $amountsByCategory = [];
+            foreach ($details as $detail) {
+                if ($detail->amount <= 0) continue;
+                $catId = $detail->transaction_category_id ?? 1;
+                $amountsByCategory[$catId] = ($amountsByCategory[$catId] ?? 0) + ($detail->amount * $proportion);
+            }
+            
+            $accumulated = 0;
+            $categoriesCount = count($amountsByCategory);
+            $i = 0;
+            
+            foreach ($amountsByCategory as $catId => $amount) {
+                $i++;
+                // Para evitar errores de redondeo en el último iterador, asignamos el remanente
+                if ($i === $categoriesCount) {
+                    $amount = $paymentAmount - $accumulated;
+                } else {
+                    $amount = round($amount, 2);
+                }
+                $accumulated += $amount;
+                
+                if ($amount > 0) {
+                    $categoryName = \App\Models\TransactionCategory::find($catId)?->name ?? 'Ingreso';
+                    
+                    $payment->movement()->create([
+                        'account_id' => $pData['account_id'],
+                        'type' => 'income',
+                        'amount' => $amount,
+                        'description' => "Cobro ($categoryName): " . $collection->lease->property->location . ' (' . $collection->month . '/' . $collection->year . ')',
+                        'movement_date' => Carbon::parse($pData['payment_date'])->setTimeFrom(now()),
+                        'transaction_category_id' => $catId
+                    ]);
+                }
+            }
         }
 
         // Recalcular estado basado en el total pagado

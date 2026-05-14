@@ -12,12 +12,14 @@ class FixedChargeController extends Controller
         $request->validate([
             'lease_id' => 'required|exists:leases,id',
             'name' => 'required|string|max:255',
+            'transaction_category_id' => 'nullable|exists:transaction_categories,id',
         ]);
 
         FixedCharge::create([
             'lease_id' => $request->lease_id,
             'name' => $request->name,
             'amount' => 0, // Siempre 0 por defecto como pidió el usuario
+            'transaction_category_id' => $request->transaction_category_id,
         ]);
 
         return back()->with('success', 'Concepto mensual añadido.');

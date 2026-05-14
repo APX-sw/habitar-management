@@ -213,6 +213,15 @@
                 </div>
             </div>
 
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 0.5rem;">Categoría</label>
+                <select name="transaction_category_id" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;">
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat->id }}" {{ $cat->id == 4 ? 'selected' : '' }}>{{ $cat->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <div style="margin-bottom: 2rem;">
                 <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 0.5rem;">Mes de Inicio</label>
                 <input type="date" name="billing_date" value="{{ $collection->year }}-{{ str_pad($collection->month, 2, '0', STR_PAD_LEFT) }}-01" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;">

@@ -21,8 +21,24 @@ class SettlementController extends Controller
             $query->where('owner_id', $request->owner_id);
         }
 
-        $settlements = $query->paginate(20);
-        $owners = \App\Models\Owner::all();
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('month')) {
+            $query->where('month', $request->month);
+        }
+
+        if ($request->filled('year')) {
+            $query->where('year', $request->year);
+        }
+
+        $settlements = $query->paginate(20)->withQueryString();
+        $owners = \App\Models\Owner::orderBy('name')->get();
+
+        if ($request->ajax()) {
+            return view('settlements.partials.table', compact('settlements'))->render();
+        }
 
         return view('settlements.index', compact('settlements', 'owners'));
     }
@@ -304,7 +320,8 @@ class SettlementController extends Controller
                 'type' => 'expense',
                 'amount' => $pData['amount'],
                 'description' => 'Pago Rendición a: ' . $settlement->owner->name . ' (' . $settlement->month . '/' . $settlement->year . ')',
-                'movement_date' => $pData['date'],
+                'movement_date' => Carbon::parse($pData['date'])->setTimeFrom(now()),
+                'transaction_category_id' => 5 // Pago Rendición a Propietario
             ]);
         }
 

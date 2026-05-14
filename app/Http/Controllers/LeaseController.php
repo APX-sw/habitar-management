@@ -91,7 +91,10 @@ class LeaseController extends Controller
             'initial_fee_installments' => 'nullable|integer|min:1',
         ]);
 
-        $lease = Lease::create($validated);
+        $lease = Lease::create(array_merge($validated, [
+            'security_deposit_amount' => $validated['security_deposit_amount'] ?? 0,
+            'agency_fee_amount' => $validated['agency_fee_amount'] ?? 0,
+        ]));
 
         // Generar Cargos Fijos (Conceptos) - Solo si tienen nombre
         if ($request->has('fixed_charges')) {
@@ -181,6 +184,7 @@ class LeaseController extends Controller
             'guarantor_address' => $lease->guarantor_address,
             'guarantor_phone' => $lease->guarantor_phone,
             'security_deposit_amount' => $newTotalDeposit,
+            'agency_fee_amount' => $validated['agency_fee_amount'] ?? 0,
             'parent_lease_id' => $lease->id,
             'renewal_status' => 'renewed',
             'is_active' => true
@@ -270,6 +274,7 @@ class LeaseController extends Controller
             'guarantor_address' => $lease->guarantor_address,
             'guarantor_phone' => $lease->guarantor_phone,
             'security_deposit_amount' => $newTotalDeposit,
+            'agency_fee_amount' => $validated['agency_fee_amount'] ?? 0,
             'parent_lease_id' => $lease->id,
             'renewal_status' => 'renegotiated',
             'is_active' => true
@@ -357,7 +362,8 @@ class LeaseController extends Controller
     public function show(Lease $lease)
     {
         $lease->load(['property', 'tenant', 'fixedCharges', 'extraCharges']);
-        return view('leases.show', compact('lease'));
+        $categories = \App\Models\TransactionCategory::all();
+        return view('leases.show', compact('lease', 'categories'));
     }
 
     public function monthlySummary(Lease $lease, Request $request)

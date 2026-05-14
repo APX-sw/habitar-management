@@ -26,6 +26,8 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\SettlementController;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\TransactionCategoryController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -62,6 +64,8 @@ Route::get('leases/{lease}/summary', [LeaseController::class, 'monthlySummary'])
 
 // Finanzas
 Route::get('cash-register', [CashRegisterController::class, 'index'])->name('cash_register.index');
+Route::post('cash-register/transfer', [CashRegisterController::class, 'transfer'])->name('cash_register.transfer');
+Route::post('cash-register/adjust', [CashRegisterController::class, 'adjust'])->name('cash_register.adjust');
 
 Route::resource('expenses', ExpenseController::class)->except(['show', 'edit', 'update', 'destroy']);
 
@@ -70,11 +74,20 @@ Route::post('settlements/bulk', [SettlementController::class, 'bulkStore'])->nam
 Route::post('settlements/{settlement}/send', [SettlementController::class, 'sendToOwner'])->name('settlements.send_to_owner');
 Route::post('settlements/{settlement}/pay', [SettlementController::class, 'pay'])->name('settlements.pay');
 
+
+
 // Settings
 Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
 Route::get('settings/locations', [SettingsController::class, 'locations'])->name('settings.locations');
 Route::get('settings/property-types', [SettingsController::class, 'propertyTypes'])->name('settings.property_types');
 Route::get('settings/indices', [SettingsController::class, 'indices'])->name('settings.indices');
+Route::get('settings/accounts', [AccountController::class, 'index'])->name('settings.accounts');
+Route::post('settings/accounts', [AccountController::class, 'store'])->name('settings.accounts.store');
+Route::post('settings/accounts/{account}/toggle', [AccountController::class, 'toggleActive'])->name('settings.accounts.toggle');
+Route::get('settings/categories', [TransactionCategoryController::class, 'index'])->name('settings.categories');
+
+Route::post('settings/categories', [TransactionCategoryController::class, 'store'])->name('settings.categories.store');
+Route::delete('settings/categories/{category}', [TransactionCategoryController::class, 'destroy'])->name('settings.categories.destroy');
 
 Route::post('settings/provinces', [SettingsController::class, 'storeProvince'])->name('settings.provinces.store');
 Route::delete('settings/provinces/{province}', [SettingsController::class, 'destroyProvince'])->name('settings.provinces.destroy');

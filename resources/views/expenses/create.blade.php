@@ -13,7 +13,7 @@
 </div>
 
 <div class="card" style="max-width: 600px; padding: 2rem;">
-    <form action="{{ route('expenses.store') }}" method="POST">
+    <form action="{{ route('expenses.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         
         <div style="margin-bottom: 1.5rem;">
@@ -47,9 +47,30 @@
             </div>
         </div>
 
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light); text-transform: uppercase;">Categoría de Gasto</label>
+            <select name="transaction_category_id" required style="width: 100%; padding: 0.8rem; border: 1px solid #d2d6dc; border-radius: 8px;">
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light); text-transform: uppercase;">Descripción (Opcional)</label>
+            <input type="text" name="description" placeholder="Ej: Arreglo termotanque, Resma papel..." style="width: 100%; padding: 0.8rem; border: 1px solid #d2d6dc; border-radius: 8px;">
+        </div>
+
         <div style="margin-bottom: 2.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light); text-transform: uppercase;">Descripción</label>
-            <input type="text" name="description" placeholder="Ej: Arreglo termotanque, Resma papel..." required style="width: 100%; padding: 0.8rem; border: 1px solid #d2d6dc; border-radius: 8px;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light); text-transform: uppercase;">Adjuntar Comprobante (Imagen o PDF)</label>
+            <div style="position: relative; border: 2px dashed #d2d6dc; border-radius: 12px; padding: 1.5rem; text-align: center; transition: all 0.3s ease; background: #f9fafb;">
+                <input type="file" name="attachment" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                <div style="pointer-events: none;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" style="margin-bottom: 0.5rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <p style="margin: 0; font-size: 0.9rem; color: #4a5568;">Haz clic o arrastra un archivo aquí</p>
+                    <p style="margin: 0.2rem 0 0; font-size: 0.75rem; color: #a0aec0;">PDF, JPG, PNG (Máx 5MB)</p>
+                </div>
+            </div>
         </div>
 
         <div style="text-align: right;">

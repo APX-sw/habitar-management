@@ -9,7 +9,7 @@ class CashRegisterMovement extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['account_id', 'type', 'amount', 'description', 'movement_date', 'related_type', 'related_id'];
+    protected $fillable = ['account_id', 'type', 'amount', 'description', 'movement_date', 'related_type', 'related_id', 'transaction_category_id'];
 
     public function account()
     {
@@ -19,5 +19,10 @@ class CashRegisterMovement extends Model
     public function related()
     {
         return $this->morphTo();
+    }
+
+    public function transactionCategory()
+    {
+        return $this->belongsTo(TransactionCategory::class);
     }
 }

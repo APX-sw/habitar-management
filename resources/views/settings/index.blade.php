@@ -44,13 +44,24 @@
     </a>
 
     <!-- TESORERÍA -->
-    <a href="{{ route('cash_register.index') }}" class="config-card" style="text-decoration: none; color: inherit;">
+    <a href="{{ route('settings.accounts') }}" class="config-card" style="text-decoration: none; color: inherit;">
         <div class="card" style="height: 100%; transition: all 0.3s ease; border-top: 4px solid var(--primary-color); display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem;">
             <div style="background: #F7FAFC; color: var(--primary-color); width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
             </div>
             <h3 style="margin: 0 0 0.5rem; color: var(--primary-color);">Tesorería</h3>
             <p style="font-size: 0.9rem; color: var(--text-light); margin: 0;">Gestión de métodos de pago y cuentas.</p>
+        </div>
+    </a>
+
+    <!-- CATEGORÍAS -->
+    <a href="{{ route('settings.categories') }}" class="config-card" style="text-decoration: none; color: inherit;">
+        <div class="card" style="height: 100%; transition: all 0.3s ease; border-top: 4px solid #9F7AEA; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem;">
+            <div style="background: #FAF5FF; color: #805AD5; width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+            </div>
+            <h3 style="margin: 0 0 0.5rem; color: var(--primary-color);">Plan de Cuentas</h3>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin: 0;">Categorías de ingresos y gastos para reportes.</p>
         </div>
     </a>
 
