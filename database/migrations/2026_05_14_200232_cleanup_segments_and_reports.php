@@ -8,9 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('transaction_categories', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('transaction_segment_id');
-        });
+        if (Schema::hasColumn('transaction_categories', 'transaction_segment_id')) {
+            Schema::table('transaction_categories', function (Blueprint $table) {
+                $table->dropConstrainedForeignId('transaction_segment_id');
+            });
+        }
         Schema::dropIfExists('transaction_segments');
     }
 
