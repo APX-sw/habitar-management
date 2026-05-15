@@ -6,7 +6,6 @@ use Illuminate\Database\Seeder;
 use App\Models\TransactionCategory;
 use App\Models\Account;
 use App\Models\IndexType;
-use App\Models\PropertyType;
 
 class SystemDataSeeder extends Seeder
 {
@@ -46,12 +45,5 @@ class SystemDataSeeder extends Seeder
         // 4. Tipos de Índice
         IndexType::updateOrCreate(['name' => 'IPC'], ['description' => 'Índice de Precios al Consumidor']);
         IndexType::updateOrCreate(['name' => 'ICL'], ['description' => 'Índice para Contratos de Locación']);
-
-        // 5. Tipos de Propiedad Básicos
-        PropertyType::firstOrCreate(['name' => 'Casa']);
-        PropertyType::firstOrCreate(['name' => 'Departamento']);
-        PropertyType::firstOrCreate(['name' => 'Local Comercial']);
-        PropertyType::firstOrCreate(['name' => 'Cochera']);
-        PropertyType::firstOrCreate(['name' => 'Terreno']);
     }
 }

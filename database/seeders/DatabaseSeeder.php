@@ -15,5 +15,6 @@ class DatabaseSeeder extends Seeder
         // sin borrar nada, por seguridad.
         $this->call(ArgentinaGeographySeeder::class);
         $this->call(SystemDataSeeder::class);
+        $this->call(PropertyTypeSeeder::class);
     }
 }
