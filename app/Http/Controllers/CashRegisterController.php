@@ -24,6 +24,10 @@ class CashRegisterController extends Controller
             $query->where('type', $request->type);
         }
 
+        if ($request->filled('transaction_category_id')) {
+            $query->where('transaction_category_id', $request->transaction_category_id);
+        }
+
         if ($request->filled('date_from')) {
             $query->whereDate('movement_date', '>=', $request->date_from);
         }
@@ -33,6 +37,7 @@ class CashRegisterController extends Controller
         }
 
         $movements = $query->paginate(20);
+        $categories = \App\Models\TransactionCategory::orderBy('name')->get();
 
         $totalBalance = $accounts->sum(function($account) {
             return $account->current_balance;
@@ -42,7 +47,7 @@ class CashRegisterController extends Controller
             return view('cash_register._movements_table', compact('movements'))->render();
         }
 
-        return view('cash_register.index', compact('accounts', 'movements', 'totalBalance'));
+        return view('cash_register.index', compact('accounts', 'movements', 'totalBalance', 'categories'));
     }
 
     public function transfer(Request $request)

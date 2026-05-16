@@ -129,7 +129,10 @@
                         <span class="status-badge {{ $property->activeLease ? 'status-active' : 'status-available' }}">
                             {{ $property->activeLease ? 'Alquilada' : 'Disponible' }}
                         </span>
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button onclick="openQuickUpload({{ $property->id }}, '{{ $property->location }}')" style="background: none; border: none; color: var(--primary-color); cursor: pointer; padding: 0;" title="Subir Documento">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                            </button>
                             <a href="{{ route('properties.edit', $property) }}" style="color: var(--text-light);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
                             @if(!$property->activeLease)
                             <form action="{{ route('properties.destroy', $property) }}" method="POST" onsubmit="return confirm('¿Eliminar propiedad?')">
@@ -203,10 +206,10 @@
                 <tr>
                     <th>Estado</th>
                     <th>Dirección</th>
-                    <th>Ubicación</th>
-                    <th>Tipo / Detalles</th>
                     <th>Propietario</th>
                     <th>Inquilino</th>
+                    <th>Ubicación</th>
+                    <th>Detalle</th>
                     <th style="text-align: right;">Acciones</th>
                 </tr>
             </thead>
@@ -222,14 +225,6 @@
                             <div style="font-weight: 600; color: var(--primary-color);">{{ $property->location }}</div>
                         </td>
                         <td>
-                            <div style="font-weight: 700; color: #2d3748; font-size: 0.95rem;">{{ $property->city->name ?? 'N/A' }}</div>
-                            <div style="font-size: 0.75rem; color: #718096; text-transform: uppercase; font-weight: 600; letter-spacing: 0.02em;">{{ $property->province->name ?? 'N/A' }}</div>
-                        </td>
-                        <td>
-                            <div style="font-size: 0.85rem;">{{ $property->type->name ?? 'Tipo' }}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-light);">{{ $property->rooms }} Amb. | {{ $property->square_meters ?? '0' }} m²</div>
-                        </td>
-                        <td>
                             <a href="{{ route('owners.show', $property->owner) }}" style="color: var(--primary-color); text-decoration: none; font-size: 0.85rem; font-weight: 500;">{{ $property->owner->name }}</a>
                         </td>
                         <td>
@@ -239,10 +234,19 @@
                                 <span style="color: var(--text-light); font-size: 0.85rem;">N/A</span>
                             @endif
                         </td>
+                        <td>
+                            <div style="font-weight: 700; color: #2d3748; font-size: 0.85rem;">{{ $property->city->name ?? 'N/A' }}</div>
+                            <div style="font-size: 0.7rem; color: #718096; text-transform: uppercase;">{{ $property->province->name ?? 'N/A' }}</div>
+                        </td>
+                        <td>
+                            <div style="font-size: 0.85rem; font-weight: 600;">{{ $property->type->name ?? 'Tipo' }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-light);">{{ $property->rooms }} Amb. | {{ $property->square_meters ?? '0' }} m²</div>
+                        </td>
                         <td style="text-align: right;">
-                            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                                <a href="{{ route('properties.show', $property) }}" class="btn" style="background: #edf2f7; color: #4a5568; font-size: 0.7rem;">Ver</a>
-                                <a href="{{ route('properties.edit', $property) }}" class="btn" style="background: #edf2f7; color: #4a5568; font-size: 0.7rem;">Editar</a>
+                            <div style="display: flex; gap: 0.4rem; justify-content: flex-end;">
+                                <button onclick="openQuickUpload({{ $property->id }}, '{{ $property->location }}')" class="btn" style="background: #EBF8FF; color: #3182CE; font-size: 0.7rem; padding: 0.4rem 0.8rem; border: none; cursor: pointer;" title="Subir Documento">📎 Doc</button>
+                                <a href="{{ route('properties.show', $property) }}" class="btn" style="background: #edf2f7; color: #4a5568; font-size: 0.7rem; padding: 0.4rem 0.8rem;">Ver</a>
+                                <a href="{{ route('properties.edit', $property) }}" class="btn" style="background: #edf2f7; color: #4a5568; font-size: 0.7rem; padding: 0.4rem 0.8rem;">Editar</a>
                             </div>
                         </td>
                     </tr>
@@ -256,11 +260,48 @@
     </div>
 </div>
 
+<!-- Modal Rápido Subir Documento -->
+<div id="quickUploadModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+    <div class="card" style="width: 100%; max-width: 500px; padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+                <h2 style="color: var(--primary-color); margin: 0;">Subir Documentación</h2>
+                <p id="quick-prop-name" style="font-size: 0.85rem; color: var(--text-light); margin: 0.2rem 0 0 0; font-weight: 600;"></p>
+            </div>
+            <button onclick="closeQuickUpload()" style="background: none; border: none; font-size: 1.5rem; color: #a0aec0; cursor: pointer;">&times;</button>
+        </div>
+        <form action="{{ route('property-documents.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="property_id" id="quick-property-id">
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #718096; text-transform: uppercase; margin-bottom: 0.5rem;">Seleccionar Archivo (Máx 10MB)</label>
+                <input type="file" name="file" required style="width: 100%; padding: 1rem; border: 2px dashed #e2e8f0; border-radius: 10px; cursor: pointer;">
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" onclick="closeQuickUpload()" class="btn" style="flex: 1; background: #edf2f7; color: #4a5568;">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Subir Archivo</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <style>
     #properties-content.loading { opacity: 0.5; pointer-events: none; }
 </style>
 
 <script>
+    function openQuickUpload(id, location) {
+        document.getElementById('quick-property-id').value = id;
+        document.getElementById('quick-prop-name').innerText = location;
+        document.getElementById('quickUploadModal').style.display = 'flex';
+    }
+
+    function closeQuickUpload() {
+        document.getElementById('quickUploadModal').style.display = 'none';
+    }
+
     function switchView(view) {
         const grid = document.getElementById('grid-view');
         const table = document.getElementById('table-view');

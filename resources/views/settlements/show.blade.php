@@ -280,7 +280,7 @@
 <!-- Modal para Registrar Pago (Solo si no está pagado) -->
 @if($settlement->status !== 'paid')
 <div id="paymentModal" class="no-print" style="display: none; position: fixed; inset: 0; background: rgba(26, 32, 44, 0.7); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-    <div class="card" style="width: 100%; max-width: 950px; padding: 2.5rem; position: relative; max-height: 90vh; overflow-y: auto;">
+    <div class="card" style="width: 100%; max-width: 1000px; padding: 2.5rem; position: relative; max-height: 90vh; overflow-y: auto;">
         <button onclick="document.getElementById('paymentModal').style.display='none'" style="position: absolute; top: 1.5rem; right: 1.5rem; background: #edf2f7; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; color: var(--primary-color); display: flex; align-items: center; justify-content: center;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
@@ -309,7 +309,7 @@
 
             <div id="paymentRowsContainer">
                 <!-- Fila inicial -->
-                <div class="payment-row-premium" style="display: grid; grid-template-columns: 1.2fr 1.5fr 1.5fr 1.2fr 45px; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1.5rem; border-bottom: 1px dashed #e2e8f0;">
+                <div class="payment-row-premium" style="display: grid; grid-template-columns: 1fr 1.8fr 1.8fr 1.1fr 45px; gap: 0.75rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1.5rem; border-bottom: 1px dashed #e2e8f0;">
                     <div>
                         <label class="label-tiny">Importe</label>
                         <input type="number" step="0.01" name="payments[0][amount]" class="payment-amount-field" value="{{ $remaining }}" oninput="recalcPaymentTotal()" required>
@@ -358,7 +358,7 @@
     .label-tiny { display: block; font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
     .payment-amount-field { width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid #cbd5e0; font-weight: 800; font-size: 1.1rem; color: var(--primary-color); outline: none; }
     .payment-amount-field:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.1); }
-    .select-premium, .input-premium { width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid #cbd5e0; font-size: 0.9rem; font-weight: 600; outline: none; }
+    .select-premium, .input-premium { width: 100%; padding: 0.8rem 0.4rem; border-radius: 10px; border: 1px solid #cbd5e0; font-size: 0.82rem; font-weight: 600; outline: none; }
     .select-premium:focus, .input-premium:focus { border-color: var(--accent-color); }
     
     .btn-add-row-premium { background: #ebf8ff; color: #2b6cb0; border: none; padding: 0.8rem 1.5rem; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; margin-top: 1rem; }
@@ -399,7 +399,7 @@
         const container = document.getElementById('paymentRowsContainer');
         const row = document.createElement('div');
         row.className = 'payment-row-premium';
-        row.style = 'display: grid; grid-template-columns: 1.2fr 1.5fr 1.5fr 1.2fr 45px; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1.5rem; border-bottom: 1px dashed #e2e8f0; animation: fadeIn 0.3s ease-out;';
+        row.style = 'display: grid; grid-template-columns: 1fr 1.8fr 1.8fr 1.1fr 45px; gap: 0.75rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1.5rem; border-bottom: 1px dashed #e2e8f0; animation: fadeIn 0.3s ease-out;';
         
         row.innerHTML = `
             <div>

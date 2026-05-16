@@ -28,7 +28,7 @@
         <div style="margin-bottom: 1.5rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light); text-transform: uppercase;">Propiedad (Opcional)</label>
             <select name="property_id" style="width: 100%; padding: 0.8rem; border: 1px solid #d2d6dc; border-radius: 8px;">
-                <option value="">Gasto General de Inmobiliaria</option>
+                <option value="">Seleccionar propiedad (Opcional)</option>
                 @foreach($properties as $property)
                     <option value="{{ $property->id }}">{{ $property->location }}</option>
                 @endforeach

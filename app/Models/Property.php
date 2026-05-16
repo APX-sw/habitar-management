@@ -52,6 +52,11 @@ class Property extends Model
         return $this->hasMany(Expense::class);
     }
 
+    public function documents()
+    {
+        return $this->hasMany(PropertyDocument::class);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()->logFillable();

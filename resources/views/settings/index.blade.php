@@ -65,6 +65,28 @@
         </div>
     </a>
 
+    <!-- CUENTAS COBRO -->
+    <a href="{{ route('settings.agency_bank_accounts') }}" class="config-card" style="text-decoration: none; color: inherit;">
+        <div class="card" style="height: 100%; transition: all 0.3s ease; border-top: 4px solid #E53E3E; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem;">
+            <div style="background: #FFF5F5; color: #C53030; width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            </div>
+            <h3 style="margin: 0 0 0.5rem; color: var(--primary-color);">Cuentas Cobro</h3>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin: 0;">Cuentas bancarias de la inmobiliaria para transferencias.</p>
+        </div>
+    </a>
+
+    <!-- CONTACTO -->
+    <a href="{{ route('settings.contact') }}" class="config-card" style="text-decoration: none; color: inherit;">
+        <div class="card" style="height: 100%; transition: all 0.3s ease; border-top: 4px solid #38B2AC; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem;">
+            <div style="background: #E6FFFA; color: #319795; width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            </div>
+            <h3 style="margin: 0 0 0.5rem; color: var(--primary-color);">Contacto</h3>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin: 0;">Información de contacto (WhatsApp) para el envío de mails.</p>
+        </div>
+    </a>
+
 </div>
 
 <style>

@@ -114,22 +114,46 @@
 
         @if($collection->payments->count() > 0)
             <div class="card" style="padding: 2rem;">
-                <h4 style="margin: 0 0 1.5rem; color: var(--primary-color);">Historial de Pagos</h4>
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    @foreach($collection->payments as $payment)
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #f8fafc; border-radius: 12px; border: 1px solid #edf2f7;">
-                            <div>
-                                <div style="font-weight: 700; color: var(--primary-color);">{{ $payment->account->name ?? 'N/A' }}</div>
-                                <div style="font-size: 0.8rem; color: var(--text-light);">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d/m/Y') }}</div>
-                                @if($payment->notes)
-                                    <div style="font-size: 0.8rem; color: #718096; font-style: italic; margin-top: 0.2rem;">"{{ $payment->notes }}"</div>
-                                @endif
-                            </div>
-                            <div style="font-weight: 800; font-size: 1.1rem; color: #48BB78;">
-                                ${{ number_format($payment->amount, 2) }}
-                            </div>
-                        </div>
-                    @endforeach
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h4 style="margin: 0; color: var(--primary-color); font-weight: 800;">Historial de Pagos</h4>
+                    <span style="background: #edf2f7; color: #4a5568; padding: 0.3rem 0.7rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700;">{{ $collection->payments->count() }} pagos</span>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #edf2f7; text-align: left;">
+                                <th style="padding: 0.75rem 0.5rem; color: #718096; font-size: 0.75rem; text-transform: uppercase;">Fecha</th>
+                                <th style="padding: 0.75rem 0.5rem; color: #718096; font-size: 0.75rem; text-transform: uppercase;">Cuenta / Método</th>
+                                <th style="padding: 0.75rem 0.5rem; color: #718096; font-size: 0.75rem; text-transform: uppercase; text-align: right;">Monto</th>
+                                <th style="padding: 0.75rem 0.5rem; color: #718096; font-size: 0.75rem; text-transform: uppercase; text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($collection->payments as $payment)
+                                <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding: 1rem 0.5rem; font-weight: 600; font-size: 0.85rem; color: #4a5568;">
+                                        {{ \Carbon\Carbon::parse($payment->payment_date)->format('d/m/Y') }}
+                                    </td>
+                                    <td style="padding: 1rem 0.5rem;">
+                                        <div style="font-weight: 700; color: var(--primary-color); font-size: 0.85rem;">{{ $payment->account->name ?? 'N/A' }}</div>
+                                        @if($payment->notes)
+                                            <div style="font-size: 0.75rem; color: #a0aec0; font-style: italic;">{{ Str::limit($payment->notes, 30) }}</div>
+                                        @endif
+                                    </td>
+                                    <td style="padding: 1rem 0.5rem; text-align: right; font-weight: 800; color: #48BB78; font-size: 1rem;">
+                                        ${{ number_format($payment->amount, 2) }}
+                                    </td>
+                                    <td style="padding: 1rem 0.5rem; text-align: right;">
+                                        <a href="{{ route('collections.payment_receipt', [$collection, $payment]) }}" class="btn" style="background: var(--accent-gradient); color: white; padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 800; border: none; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; box-shadow: 0 2px 4px rgba(56, 178, 172, 0.2);">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                            VER RECIBO
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         @endif

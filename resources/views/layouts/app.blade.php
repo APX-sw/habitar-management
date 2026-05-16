@@ -22,6 +22,7 @@
             --sidebar-width: 260px;
             --accent-color: #38B2AC;
             --accent-gradient: linear-gradient(135deg, #38B2AC 0%, #319795 100%);
+            --secondary-color: #edf2f7;
             --text-main: #2d3748;
             --text-light: #718096;
             --bg-body: #f7fafc;
@@ -44,6 +45,38 @@
             display: flex;
         }
 
+        /* Form Styles */
+        input, textarea, select {
+            width: 100% !important;
+            padding: 0.8rem 1rem !important;
+            border-radius: 10px !important;
+            border: 2px solid #e2e8f0 !important;
+            background-color: #ffffff !important;
+            color: var(--text-main) !important;
+            font-size: 0.95rem !important;
+            transition: all var(--transition-speed) !important;
+            outline: none !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02) inset;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--accent-color) !important;
+            box-shadow: 0 0 0 4px rgba(56, 178, 172, 0.1), 0 2px 4px rgba(0,0,0,0.02) inset !important;
+            background-color: #fff !important;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #a0aec0 !important;
+        }
+
+        label {
+            display: block !important;
+            margin-bottom: 0.6rem !important;
+            font-weight: 600 !important;
+            color: var(--primary-color) !important;
+            font-size: 0.9rem !important;
+        }
+
         /* Sidebar Styles */
         .sidebar {
             width: var(--sidebar-width);
@@ -57,6 +90,26 @@
             flex-direction: column;
             z-index: 1000;
             box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 0.2);
         }
 
         .sidebar-brand {

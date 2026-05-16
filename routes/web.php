@@ -22,6 +22,7 @@ use App\Http\Controllers\FixedChargeController;
 use App\Http\Controllers\LeaseDocumentController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\PropertyDocumentController;
 
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\ExpenseController;
@@ -45,6 +46,8 @@ Route::post('leases/{lease}/terminate', [LeaseController::class, 'terminate'])->
 Route::resource('extra-charges', ExtraChargeController::class);
 Route::resource('fixed-charges', FixedChargeController::class);
 Route::resource('lease-documents', LeaseDocumentController::class);
+Route::post('property-documents', [PropertyDocumentController::class, 'store'])->name('property-documents.store');
+Route::delete('property-documents/{propertyDocument}', [PropertyDocumentController::class, 'destroy'])->name('property-documents.destroy');
 
 Route::get('leases/{lease}/documents', [LeaseDocumentController::class, 'index'])->name('leases.documents');
 
@@ -57,6 +60,7 @@ Route::get('collections/{collection}', [CollectionController::class, 'show'])->n
 Route::put('collections/{collection}', [CollectionController::class, 'update'])->name('collections.update');
 Route::post('collections/{collection}/pay', [CollectionController::class, 'pay'])->name('collections.pay');
 Route::post('collections/{collection}/send', [CollectionController::class, 'sendToTenant'])->name('collections.send');
+Route::get('collections/{collection}/receipt/{payment}', [CollectionController::class, 'paymentReceipt'])->name('collections.payment_receipt');
 Route::post('collections/bulk-send', [CollectionController::class, 'bulkSend'])->name('collections.bulk_send');
 
 
@@ -107,6 +111,15 @@ Route::post('settings/index-types', [SettingsController::class, 'storeIndexType'
 Route::delete('settings/index-types/{index}', [SettingsController::class, 'destroyIndexType'])->name('settings.index-types.destroy');
 Route::post('settings/index-values', [SettingsController::class, 'storeIndexValue'])->name('settings.index-values.store');
 Route::delete('settings/index-values/{value}', [SettingsController::class, 'destroyIndexValue'])->name('settings.index-values.destroy');
+
+// Agency Settings
+Route::get('settings/agency-bank-accounts', [SettingsController::class, 'agencyBankAccounts'])->name('settings.agency_bank_accounts');
+Route::post('settings/agency-bank-accounts', [SettingsController::class, 'storeAgencyBankAccount'])->name('settings.agency_bank_accounts.store');
+Route::post('settings/agency-bank-accounts/{account}/default', [SettingsController::class, 'setDefaultAgencyBankAccount'])->name('settings.agency_bank_accounts.default');
+Route::delete('settings/agency-bank-accounts/{account}', [SettingsController::class, 'destroyAgencyBankAccount'])->name('settings.agency_bank_accounts.destroy');
+
+Route::get('settings/contact', [SettingsController::class, 'contact'])->name('settings.contact');
+Route::post('settings/contact', [SettingsController::class, 'storeContact'])->name('settings.contact.store');
 
 // API
 Route::get('api/provinces/{province}/cities', [SettingsController::class, 'getCities']);

@@ -69,7 +69,7 @@
             </div>
 
             <!-- Historial de Alquileres -->
-            <div class="card">
+            <div class="card" style="margin-bottom: 2rem;">
                 <h3 style="color: var(--primary-color); margin-bottom: 1.5rem; border-bottom: 1px solid var(--secondary-color); padding-bottom: 0.5rem;">Historial de Contratos</h3>
                 @forelse($property->leases as $lease)
                     <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
@@ -84,6 +84,39 @@
                 @empty
                     <p style="text-align: center; color: var(--text-light); padding: 2rem;">No hay contratos registrados para esta propiedad.</p>
                 @endforelse
+            </div>
+
+            <!-- Documentación -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--secondary-color); padding-bottom: 0.5rem;">
+                    <h3 style="color: var(--primary-color); margin: 0;">Documentación de Propiedad</h3>
+                    <button onclick="document.getElementById('uploadDocModal').style.display='flex'" class="btn" style="background: var(--secondary-color); color: var(--primary-color); font-size: 0.75rem; padding: 0.4rem 0.8rem;">+ Subir Documento</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                    @forelse($property->documents as $doc)
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: #f7fafc; border-radius: 8px; border: 1px solid #edf2f7;">
+                            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                                <div style="background: #E2E8F0; width: 35px; height: 35px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a5568" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                </div>
+                                <div>
+                                    <p style="font-size: 0.9rem; font-weight: 600; color: #2d3748; margin: 0;">{{ $doc->filename }}</p>
+                                    <p style="font-size: 0.7rem; color: #a0aec0; margin: 0;">{{ number_format($doc->size / 1024 / 1024, 2) }} MB • {{ strtoupper(explode('/', $doc->mime_type)[1] ?? 'FILE') }}</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="{{ asset('storage/' . $doc->path) }}" target="_blank" class="btn" style="background: #edf2f7; color: #4a5568; font-size: 0.7rem; padding: 0.4rem 0.8rem;">Ver</a>
+                                <form action="{{ route('property-documents.destroy', $doc) }}" method="POST" onsubmit="return confirm('¿Eliminar este documento?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn" style="background: #FFF5F5; color: #C53030; font-size: 0.7rem; padding: 0.4rem 0.8rem;">Eliminar</button>
+                                </form>
+                            </div>
+                        </div>
+                    @empty
+                        <p style="text-align: center; color: var(--text-light); padding: 1rem; font-size: 0.9rem;">No hay documentos cargados.</p>
+                    @endforelse
+                </div>
             </div>
         </div>
 
@@ -114,6 +147,35 @@
                 </div>
             @endif
         </div>
+    </div>
+</div>
+
+<!-- Modal Subir Documento -->
+<div id="uploadDocModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+    <div class="card" style="width: 100%; max-width: 500px; padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="color: var(--primary-color); margin: 0;">Subir Documentación</h2>
+            <button onclick="document.getElementById('uploadDocModal').style.display='none'" style="background: none; border: none; font-size: 1.5rem; color: #a0aec0; cursor: pointer;">&times;</button>
+        </div>
+        <form action="{{ route('property-documents.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="property_id" value="{{ $property->id }}">
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #718096; text-transform: uppercase; margin-bottom: 0.5rem;">Seleccionar Archivo (Máx 10MB)</label>
+                <input type="file" name="file" required style="width: 100%; padding: 1rem; border: 2px dashed #e2e8f0; border-radius: 10px; cursor: pointer;">
+            </div>
+
+            <div style="background: #FFF5F5; color: #C53030; padding: 1rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 2rem; display: flex; gap: 0.5rem; align-items: flex-start;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>El archivo será almacenado de forma segura y vinculado a esta propiedad.</span>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" onclick="document.getElementById('uploadDocModal').style.display='none'" class="btn" style="flex: 1; background: #edf2f7; color: #4a5568;">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Subir Archivo</button>
+            </div>
+        </form>
     </div>
 </div>
 @endsection

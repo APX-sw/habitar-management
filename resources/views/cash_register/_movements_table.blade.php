@@ -4,6 +4,7 @@
             <tr style="border-bottom: 2px solid #edf2f7;">
                 <th style="padding: 1rem; text-align: left; color: var(--text-light);">Fecha</th>
                 <th style="padding: 1rem; text-align: left; color: var(--text-light);">Cuenta</th>
+                <th style="padding: 1rem; text-align: left; color: var(--text-light);">Categoría</th>
                 <th style="padding: 1rem; text-align: left; color: var(--text-light);">Descripción</th>
                 <th style="padding: 1rem; text-align: right; color: var(--text-light);">Ingreso</th>
                 <th style="padding: 1rem; text-align: right; color: var(--text-light);">Egreso</th>
@@ -11,24 +12,24 @@
         </thead>
         <tbody>
             @forelse($movements as $movement)
-                <tr style="border-bottom: 1px solid #edf2f7;">
+                <tr style="border-bottom: 1px solid #edf2f7; transition: background 0.2s;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='transparent'">
                     <td style="padding: 1rem;">
                         <div style="font-weight: 600; color: var(--primary-color);">{{ \Carbon\Carbon::parse($movement->movement_date)->format('d/m/Y') }}</div>
                         <div style="font-size: 0.8rem; color: var(--text-light);">{{ \Carbon\Carbon::parse($movement->movement_date)->format('H:i') }} hs</div>
                     </td>
-                    <td style="padding: 1rem; font-weight: 600;">{{ $movement->account->name }}</td>
-                    <td style="padding: 1rem; color: var(--text-light);">
-                        <div style="margin-bottom: 0.3rem;">
-                            @if($movement->transactionCategory)
-                                <span style="display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; background-color: #edf2f7; color: var(--primary-color); text-transform: uppercase;">
-                                    {{ $movement->transactionCategory->name }}
-                                </span>
-                            @else
-                                <span style="display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; background-color: #fbd38d; color: #975a16; text-transform: uppercase;">
-                                    Sin Categoría
-                                </span>
-                            @endif
-                        </div>
+                    <td style="padding: 1rem; font-weight: 600; color: var(--text-main);">{{ $movement->account->name }}</td>
+                    <td style="padding: 1rem;">
+                        @if($movement->transactionCategory)
+                            <span style="display: inline-block; padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.7rem; font-weight: 800; background-color: #EBF8FF; color: #2B6CB0; text-transform: uppercase; border: 1px solid #BEE3F8;">
+                                {{ $movement->transactionCategory->name }}
+                            </span>
+                        @else
+                            <span style="display: inline-block; padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.7rem; font-weight: 800; background-color: #F7FAFC; color: #A0AEC0; text-transform: uppercase; border: 1px solid #E2E8F0;">
+                                Sin Categoría
+                            </span>
+                        @endif
+                    </td>
+                    <td style="padding: 1rem; color: var(--text-main); font-size: 0.9rem;">
                         {{ $movement->description }}
                     </td>
                     <td style="padding: 1rem; text-align: right; font-weight: 700; color: #48BB78;">
@@ -40,7 +41,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-light);">No hay movimientos registrados.</td>
+                    <td colspan="6" style="padding: 3rem; text-align: center; color: var(--text-light);">No hay movimientos registrados.</td>
                 </tr>
             @endforelse
         </tbody>

@@ -20,19 +20,19 @@
 </div>
 
 <!-- Saldos -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
     <!-- Balance Total -->
-    <div class="card account-card" data-account-id="" style="padding: 1.5rem; border-left: 5px solid var(--primary-color); background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); cursor: pointer;">
-        <h3 style="margin: 0 0 0.5rem; color: var(--primary-color); font-size: 0.9rem; text-transform: uppercase; font-weight: 700;">Balance Total de Cuentas</h3>
-        <div style="font-size: 2.2rem; font-weight: 900; color: var(--primary-color);">
+    <div class="card account-card" data-account-id="" style="padding: 1.5rem; border-left: 5px solid var(--primary-color); background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); cursor: pointer; min-height: 130px; display: flex; flex-direction: column; justify-content: center;">
+        <h3 style="margin: 0 0 0.5rem; color: var(--primary-color); font-size: 0.85rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.025em;">Balance Total de Cuentas</h3>
+        <div style="font-size: clamp(1.4rem, 4.5vw, 2rem); font-weight: 900; color: var(--primary-color); line-height: 1.2; word-break: break-all;">
             ${{ number_format($totalBalance, 2) }}
         </div>
     </div>
 
     @foreach($accounts as $account)
-        <div class="card account-card" data-account-id="{{ $account->id }}" style="padding: 1.5rem; border-left: 5px solid {{ $account->type === 'cash' ? '#48BB78' : '#4299E1' }}; cursor: pointer;">
-            <h3 style="margin: 0 0 0.5rem; color: var(--text-light); font-size: 0.9rem; text-transform: uppercase;">{{ $account->name }}</h3>
-            <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary-color);">
+        <div class="card account-card" data-account-id="{{ $account->id }}" style="padding: 1.5rem; border-left: 5px solid {{ $account->type === 'cash' ? '#48BB78' : '#4299E1' }}; cursor: pointer; min-height: 130px; display: flex; flex-direction: column; justify-content: center;">
+            <h3 style="margin: 0 0 0.5rem; color: var(--text-light); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.025em;">{{ $account->name }}</h3>
+            <div style="font-size: clamp(1.2rem, 3.5vw, 1.7rem); font-weight: 800; color: var(--primary-color); line-height: 1.2; word-break: break-all;">
                 ${{ number_format($account->current_balance, 2) }}
             </div>
         </div>
@@ -41,10 +41,10 @@
 
 <!-- Filtros -->
 <div class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
-    <form action="{{ route('cash_register.index') }}" method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; align-items: end;">
+    <form action="{{ route('cash_register.index') }}" method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; align-items: end;">
         <div>
-            <label style="display: block; font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.4rem;">Cuenta</label>
-            <select name="account_id" class="form-control" style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid #e2e8f0; padding: 0 0.75rem;">
+            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-light); margin-bottom: 0.5rem;">Cuenta</label>
+            <select name="account_id" class="form-control" style="width: 100%; height: 45px; border-radius: 10px; border: 2px solid #edf2f7; padding: 0 1rem; font-size: 0.95rem; background: white; appearance: auto;">
                 <option value="">Todas las cuentas</option>
                 @foreach($accounts as $account)
                     <option value="{{ $account->id }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>{{ $account->name }}</option>
@@ -53,20 +53,30 @@
         </div>
 
         <div>
-            <label style="display: block; font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.4rem;">Desde</label>
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control" style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid #e2e8f0; padding: 0 0.75rem;">
+            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-light); margin-bottom: 0.5rem;">Categoría</label>
+            <select name="transaction_category_id" class="form-control" style="width: 100%; height: 45px; border-radius: 10px; border: 2px solid #edf2f7; padding: 0 1rem; font-size: 0.95rem; background: white; appearance: auto;">
+                <option value="">Todas las categorías</option>
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}" {{ request('transaction_category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                @endforeach
+            </select>
         </div>
 
         <div>
-            <label style="display: block; font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.4rem;">Hasta</label>
-            <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control" style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid #e2e8f0; padding: 0 0.75rem;">
+            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-light); margin-bottom: 0.5rem;">Desde</label>
+            <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control" style="width: 100%; height: 45px; border-radius: 10px; border: 2px solid #edf2f7; padding: 0 1rem;">
         </div>
 
-        <div style="display: flex; gap: 0.5rem;">
-            <button type="submit" class="btn btn-primary" style="flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background-color: var(--primary-color); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600;">
+        <div>
+            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-light); margin-bottom: 0.5rem;">Hasta</label>
+            <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control" style="width: 100%; height: 45px; border-radius: 10px; border: 2px solid #edf2f7; padding: 0 1rem;">
+        </div>
+
+        <div style="display: flex; gap: 0.8rem;">
+            <button type="submit" class="btn btn-primary" style="flex: 2; height: 45px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background-color: var(--primary-color); border: none; border-radius: 10px; color: white; cursor: pointer; font-weight: 700; font-size: 1rem;">
                 Filtrar
             </button>
-            <a href="{{ route('cash_register.index') }}" class="btn btn-secondary" style="height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; text-decoration: none; background-color: #edf2f7; border: none; border-radius: 8px; color: #4a5568; font-weight: 900;" title="Limpiar">
+            <a href="{{ route('cash_register.index') }}" class="btn btn-secondary" style="flex: 1; height: 45px; display: flex; align-items: center; justify-content: center; text-decoration: none; background-color: #f7fafc; border: 2px solid #edf2f7; border-radius: 10px; color: #4a5568; font-weight: 900; font-size: 1.2rem;" title="Limpiar">
                 ×
             </a>
         </div>

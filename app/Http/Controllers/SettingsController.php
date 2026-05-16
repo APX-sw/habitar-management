@@ -206,4 +206,52 @@ class SettingsController extends Controller
         $value->delete();
         return response()->json(['success' => 'Registro eliminado.']);
     }
+
+    public function agencyBankAccounts()
+    {
+        $accounts = \App\Models\AgencyBankAccount::all();
+        return view('settings.agency_bank_accounts', compact('accounts'));
+    }
+
+    public function storeAgencyBankAccount(Request $request)
+    {
+        $request->validate([
+            'holder_name' => 'required',
+            'bank_entity' => 'required',
+            'cbu' => 'required',
+            'alias' => 'required',
+        ]);
+
+        \App\Models\AgencyBankAccount::create($request->all());
+
+        return back()->with('success', 'Cuenta bancaria agregada.');
+    }
+
+    public function setDefaultAgencyBankAccount(\App\Models\AgencyBankAccount $account)
+    {
+        \App\Models\AgencyBankAccount::where('id', '!=', $account->id)->update(['is_active' => false]);
+        $account->update(['is_active' => true]);
+
+        return back()->with('success', 'Cuenta marcada como predeterminada para cobros.');
+    }
+
+    public function destroyAgencyBankAccount(\App\Models\AgencyBankAccount $account)
+    {
+        $account->delete();
+        return back()->with('success', 'Cuenta eliminada.');
+    }
+
+    public function contact()
+    {
+        $whatsapp = \App\Models\AgencySetting::get('whatsapp_number');
+        return view('settings.contact', compact('whatsapp'));
+    }
+
+    public function storeContact(Request $request)
+    {
+        $request->validate(['whatsapp_number' => 'required']);
+        \App\Models\AgencySetting::set('whatsapp_number', $request->whatsapp_number);
+
+        return back()->with('success', 'Información de contacto actualizada.');
+    }
 }

@@ -224,7 +224,7 @@ class CollectionController extends Controller
         $payload = $this->prepareWebhookPayload($collection);
 
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(15)->post('https://n8n.dev.jfsdevs.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(15)->post('https://n8n.dev.jfsdevs.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
             
             if (!$response->successful()) {
                 throw new \Exception("Error " . $response->status());
@@ -254,7 +254,7 @@ class CollectionController extends Controller
             if ($collection && $collection->status === 'ready') {
                 $payload = $this->prepareWebhookPayload($collection);
                 try {
-                        \Illuminate\Support\Facades\Http::post('https://n8n.dev.jfsdevs.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
+                        \Illuminate\Support\Facades\Http::withoutVerifying()->post('https://n8n.dev.jfsdevs.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
                     $collection->update(['status' => 'sent']);
                     $count++;
                 } catch (\Exception $e) {
@@ -299,38 +299,42 @@ class CollectionController extends Controller
             $proportion = $paymentAmount / $totalDebt;
             $details = $collection->details;
             
-            // Agrupar por categoría para no generar demasiados movimientos chicos del mismo tipo
-            $amountsByCategory = [];
+            $accumulated = 0;
+            $detailsCount = $details->where('amount', '>', 0)->count();
+            $i = 0;
+
             foreach ($details as $detail) {
                 if ($detail->amount <= 0) continue;
-                $catId = $detail->transaction_category_id ?? 1;
-                $amountsByCategory[$catId] = ($amountsByCategory[$catId] ?? 0) + ($detail->amount * $proportion);
-            }
-            
-            $accumulated = 0;
-            $categoriesCount = count($amountsByCategory);
-            $i = 0;
-            
-            foreach ($amountsByCategory as $catId => $amount) {
                 $i++;
-                // Para evitar errores de redondeo en el último iterador, asignamos el remanente
-                if ($i === $categoriesCount) {
+
+                // Calcular monto proporcional
+                if ($i === $detailsCount) {
                     $amount = $paymentAmount - $accumulated;
                 } else {
-                    $amount = round($amount, 2);
+                    $amount = round(($detail->amount * $proportion), 2);
                 }
                 $accumulated += $amount;
-                
+
                 if ($amount > 0) {
-                    $categoryName = \App\Models\TransactionCategory::find($catId)?->name ?? 'Ingreso';
+                    // Determinar Prefijo de Descripción
+                    $prefix = "Cobro";
+                    if ($detail->type === 'rent') {
+                        $prefix = "Cobro Alquiler";
+                    } elseif ($detail->type === 'fixed_charge') {
+                        $prefix = "Concepto Recurrente: " . $detail->name;
+                    } else {
+                        $prefix = "Cobro (" . $detail->name . ")";
+                    }
+                    
+                    $description = "$prefix: " . $collection->lease->property->location . ' (' . $collection->month . '/' . $collection->year . ')';
                     
                     $payment->movement()->create([
                         'account_id' => $pData['account_id'],
                         'type' => 'income',
                         'amount' => $amount,
-                        'description' => "Cobro ($categoryName): " . $collection->lease->property->location . ' (' . $collection->month . '/' . $collection->year . ')',
+                        'description' => $description,
                         'movement_date' => Carbon::parse($pData['payment_date'])->setTimeFrom(now()),
-                        'transaction_category_id' => $catId
+                        'transaction_category_id' => $detail->transaction_category_id ?? 1
                     ]);
                 }
             }
@@ -350,8 +354,21 @@ class CollectionController extends Controller
         return back()->with('success', 'Pago(s) registrado(s) correctamente.');
     }
 
+    public function paymentReceipt(Collection $collection, \App\Models\CollectionPayment $payment)
+    {
+        // Verificar que el pago pertenezca a la colección
+        if ($payment->collection_id !== $collection->id) {
+            abort(404);
+        }
+
+        return view('collections.receipt', compact('collection', 'payment'));
+    }
+
     private function prepareWebhookPayload(Collection $collection)
     {
+        $defaultAccount = \App\Models\AgencyBankAccount::where('is_active', true)->first();
+        $whatsapp = \App\Models\AgencySetting::get('whatsapp_number');
+
         return [
             'collection_id' => $collection->id,
             'period' => \Carbon\Carbon::createFromDate($collection->year, $collection->month, 1)->translatedFormat('F Y'),
@@ -367,7 +384,17 @@ class CollectionController extends Controller
                     'amount' => $detail->amount,
                     'type' => $detail->type
                 ];
-            })->toArray()
+            })->toArray(),
+            'agency_bank_account' => $defaultAccount ? [
+                'holder_name' => $defaultAccount->holder_name,
+                'bank_entity' => $defaultAccount->bank_entity,
+                'cbu' => $defaultAccount->cbu,
+                'alias' => $defaultAccount->alias,
+            ] : null,
+            'contact' => [
+                'whatsapp' => $whatsapp,
+                'whatsapp_url' => $whatsapp ? "https://wa.me/" . preg_replace('/[^0-9]/', '', $whatsapp) : null
+            ]
         ];
     }
 }
