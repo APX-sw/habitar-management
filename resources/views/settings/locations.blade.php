@@ -172,7 +172,7 @@
     }
 
     async function ajaxDeleteProvince(url, provinceId) {
-        if (!confirm('¿Estás seguro de eliminar esta provincia y todas sus localidades asociadas? Esta acción es irreversible.')) return;
+        if (!await confirmDialog('¿Estás seguro de eliminar esta provincia y todas sus localidades asociadas? Esta acción es irreversible.')) return;
         try {
             const response = await fetch(url, {
                 method: 'DELETE',
@@ -210,7 +210,7 @@
     }
 
     async function ajaxDeleteCity(url, cityId, provinceId) {
-        if (!confirm('¿Estás seguro de eliminar esta localidad?')) return;
+        if (!await confirmDialog('¿Estás seguro de eliminar esta localidad?')) return;
         try {
             const response = await fetch(url, {
                 method: 'DELETE',

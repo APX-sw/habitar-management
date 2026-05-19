@@ -71,7 +71,7 @@
     }
 
     async function ajaxDelete(url, elementId) {
-        if (!confirm('¿Estás seguro de eliminar este registro?')) return;
+        if (!await confirmDialog('¿Estás seguro de eliminar este registro?')) return;
         try {
             const response = await fetch(url, {
                 method: 'DELETE',

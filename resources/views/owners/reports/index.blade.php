@@ -50,8 +50,8 @@
                             <form action="{{ route('reports.destroy', $report) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este reporte del historial?')" style="display: inline;">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn" style="background: #fff5f5; color: #c53030; font-size: 0.85rem; padding: 0.5rem 1rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
+                                <button type="submit" class="btn" style="background: #fff5f5; color: #c53030; font-size: 0.85rem; padding: 0.5rem 1rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem; border: none; cursor: pointer;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
                             </form>
                         </div>

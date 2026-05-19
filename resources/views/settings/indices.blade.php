@@ -145,7 +145,7 @@
     }
 
     async function deleteIndexValue(valueId, indexId) {
-        if (!confirm('¿Eliminar este valor mensual?')) return;
+        if (!await confirmDialog('¿Eliminar este valor mensual?')) return;
         try {
             const response = await fetch(`/settings/index-values/${valueId}`, {
                 method: 'DELETE',
@@ -159,7 +159,7 @@
     }
 
     async function ajaxDelete(url, elementId) {
-        if (!confirm('¿Estás seguro de eliminar este índice?')) return;
+        if (!await confirmDialog('¿Estás seguro de eliminar este índice?')) return;
         try {
             const response = await fetch(url, {
                 method: 'DELETE',

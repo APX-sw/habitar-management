@@ -187,7 +187,7 @@
     }
 
     async function deleteDoc(id) {
-        if (!confirm('¿Eliminar este documento?')) return;
+        if (!await confirmDialog('¿Eliminar este documento?')) return;
         
         try {
             const response = await fetch(`/lease-documents/${id}`, {

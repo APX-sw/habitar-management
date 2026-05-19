@@ -67,7 +67,7 @@ class SettlementController extends Controller
 
             $collections = Collection::whereHas('lease', function($q) use ($propertyIds) {
                 $q->whereIn('property_id', $propertyIds);
-            })->where('month', $month)->where('year', $year)->where('status', 'paid')->get();
+            })->where('month', $month)->where('year', $year)->where('status', '!=', 'draft')->get();
 
             $income = $collections->sum(function($c) {
                 return $c->details->where('destination', 'owner')->sum('amount');
@@ -96,7 +96,7 @@ class SettlementController extends Controller
             $q->whereHas('expenses', function($sq) use ($month, $year) {
                 $sq->whereMonth('date', $month)->whereYear('date', $year);
             })->orWhereHas('leases.collections', function($sq) use ($month, $year) {
-                $sq->where('month', $month)->where('year', $year)->where('status', 'paid');
+                $sq->where('month', $month)->where('year', $year)->where('status', '!=', 'draft');
             });
         })->with('properties')->get();
 
@@ -107,7 +107,7 @@ class SettlementController extends Controller
 
             $collections = Collection::whereHas('lease', function($q) use ($propertyIds) {
                 $q->whereIn('property_id', $propertyIds);
-            })->where('month', $month)->where('year', $year)->where('status', 'paid')->get();
+            })->where('month', $month)->where('year', $year)->where('status', '!=', 'draft')->get();
 
             $income = $collections->sum(function($c) {
                 return $c->details->where('destination', 'owner')->sum('amount');
@@ -216,7 +216,7 @@ class SettlementController extends Controller
             })
             ->where('month', $settlement->month)
             ->where('year', $settlement->year)
-            ->where('status', 'paid')
+            ->where('status', '!=', 'draft')
             ->get();
 
         $expenses = Expense::with('property')
@@ -240,7 +240,7 @@ class SettlementController extends Controller
             })
             ->where('month', $settlement->month)
             ->where('year', $settlement->year)
-            ->where('status', 'paid')
+            ->where('status', '!=', 'draft')
             ->get();
 
         $expenses = Expense::with(['property', 'transactionCategory'])
@@ -298,6 +298,10 @@ class SettlementController extends Controller
                 ];
             });
         }
+
+        $payload['n8n_code'] = ($type === 'settlement')
+            ? \App\Services\N8nCodeService::getSettlementMailCode()
+            : \App\Services\N8nCodeService::getSettlementPaymentConfirmCode();
 
         try {
             // Webhooks diferenciados por tipo

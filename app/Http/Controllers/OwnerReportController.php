@@ -164,6 +164,7 @@ class OwnerReportController extends Controller
                 ];
             }),
             'public_url' => $publicUrl,
+            'n8n_code' => \App\Services\N8nCodeService::getDossierCode(),
         ];
 
         try {

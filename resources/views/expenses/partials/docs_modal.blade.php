@@ -204,7 +204,7 @@
     }
 
     async function deleteExpenseDoc(id) {
-        if (!confirm('¿Eliminar este comprobante?')) return;
+        if (!await confirmDialog('¿Eliminar este comprobante?')) return;
         
         try {
             const response = await fetch(`/expense-documents/${id}`, {

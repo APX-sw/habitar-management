@@ -415,7 +415,8 @@ class CollectionController extends Controller
                 'whatsapp_url' => $whatsapp ? "https://wa.me/" . preg_replace('/[^0-9]/', '', $whatsapp) : null,
                 'agency_email' => $agencyEmail,
                 'agency_address' => $agencyAddress
-            ]
+            ],
+            'n8n_code' => \App\Services\N8nCodeService::getTenantReceiptCode(),
         ];
 
         try {
@@ -501,7 +502,8 @@ class CollectionController extends Controller
             'contact' => [
                 'whatsapp' => $whatsapp,
                 'whatsapp_url' => $whatsapp ? "https://wa.me/" . preg_replace('/[^0-9]/', '', $whatsapp) : null
-            ]
+            ],
+            'n8n_code' => \App\Services\N8nCodeService::getTenantCollectionNotificationCode(),
         ];
     }
 }

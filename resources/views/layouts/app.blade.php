@@ -371,7 +371,191 @@
     </div>
 
     @yield('scripts')
+    
+    <!-- Modal de Confirmación Global Premium (Elimina window.confirm nativo) -->
+    <div id="global-confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+        <div class="card" style="width: 480px; max-width: 95%; background: white; border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); animation: globalModalAppear 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+            <div style="padding: 2rem 1.5rem; text-align: center;">
+                <!-- Icon Container -->
+                <div id="global-confirm-icon-bg" style="background: #fff5f5; color: #e53e3e; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; box-shadow: 0 4px 6px -1px rgba(229, 62, 62, 0.1);">
+                    <svg id="global-confirm-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <!-- Rediseñado dinámicamente -->
+                    </svg>
+                </div>
+                <h3 id="global-confirm-title" style="margin: 0; color: #2d3748; font-size: 1.25rem; font-weight: 800;">¿Confirmás esta acción?</h3>
+                <p id="global-confirm-message" style="margin: 0.6rem 0 0; font-size: 0.95rem; color: #718096; line-height: 1.5; padding: 0 0.5rem;">Esta acción no se puede deshacer.</p>
+            </div>
+            
+            <div style="padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #edf2f7; display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" id="global-confirm-cancel-btn" class="btn" style="background: #edf2f7; color: #4a5568; padding: 0.6rem 1.2rem; font-weight: 700; font-size: 0.9rem; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: background 0.2s; min-width: 100px;">
+                    Cancelar
+                </button>
+                <button type="button" id="global-confirm-ok-btn" class="btn" style="background: #e53e3e; color: white; padding: 0.6rem 1.5rem; font-weight: 700; font-size: 0.9rem; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s; min-width: 120px;">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes globalModalAppear {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+
     <script>
+        let globalConfirmCallback = null;
+        let globalCancelCallback = null;
+
+        // Función global de confirmación por callbacks
+        window.confirmModal = function({
+            title = '¿Confirmás esta acción?',
+            message = 'Esta acción no se puede deshacer.',
+            confirmBtnText = 'Confirmar',
+            cancelBtnText = 'Cancelar',
+            type = 'danger',
+            onConfirm = null,
+            onCancel = null
+        }) {
+            document.getElementById('global-confirm-title').innerText = title;
+            document.getElementById('global-confirm-message').innerText = message;
+            
+            const okBtn = document.getElementById('global-confirm-ok-btn');
+            okBtn.innerText = confirmBtnText;
+            
+            const cancelBtn = document.getElementById('global-confirm-cancel-btn');
+            cancelBtn.innerText = cancelBtnText;
+
+            const iconBg = document.getElementById('global-confirm-icon-bg');
+            const icon = document.getElementById('global-confirm-icon');
+
+            // Personalizar según tipo
+            if (type === 'danger') {
+                iconBg.style.background = '#fff5f5';
+                iconBg.style.color = '#e53e3e';
+                iconBg.style.boxShadow = '0 4px 6px -1px rgba(229, 62, 62, 0.1)';
+                okBtn.style.background = '#e53e3e';
+                okBtn.onmouseover = () => okBtn.style.background = '#c53030';
+                okBtn.onmouseout = () => okBtn.style.background = '#e53e3e';
+                
+                icon.innerHTML = `<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>`;
+            } else if (type === 'warning') {
+                iconBg.style.background = '#fffaf0';
+                iconBg.style.color = '#dd6b20';
+                iconBg.style.boxShadow = '0 4px 6px -1px rgba(221, 107, 32, 0.1)';
+                okBtn.style.background = '#dd6b20';
+                okBtn.onmouseover = () => okBtn.style.background = '#c05621';
+                okBtn.onmouseout = () => okBtn.style.background = '#dd6b20';
+
+                icon.innerHTML = `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>`;
+            } else {
+                iconBg.style.background = '#f0fff4';
+                iconBg.style.color = '#38a169';
+                iconBg.style.boxShadow = '0 4px 6px -1px rgba(56, 161, 105, 0.1)';
+                okBtn.style.background = '#38a169';
+                okBtn.onmouseover = () => okBtn.style.background = '#2f855a';
+                okBtn.onmouseout = () => okBtn.style.background = '#38a169';
+
+                icon.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline>`;
+            }
+
+            globalConfirmCallback = onConfirm;
+            globalCancelCallback = onCancel;
+            document.getElementById('global-confirm-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        };
+
+        function closeGlobalConfirmModal() {
+            document.getElementById('global-confirm-modal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            if (globalCancelCallback) {
+                globalCancelCallback();
+            }
+            globalConfirmCallback = null;
+            globalCancelCallback = null;
+        }
+
+        document.getElementById('global-confirm-cancel-btn').addEventListener('click', closeGlobalConfirmModal);
+
+        document.getElementById('global-confirm-ok-btn').addEventListener('click', function() {
+            if (globalConfirmCallback) {
+                globalConfirmCallback();
+            }
+            // Seteamos callback a null para que closeGlobalConfirmModal no dispare onCancel
+            globalCancelCallback = null;
+            closeGlobalConfirmModal();
+        });
+
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('global-confirm-modal');
+            if (e.target === modal) {
+                closeGlobalConfirmModal();
+            }
+        });
+
+        // Alternativa asíncrona mediante Promise (para usar con await)
+        window.confirmDialog = function(message, title = '¿Confirmás esta acción?', type = 'danger') {
+            return new Promise((resolve) => {
+                window.confirmModal({
+                    title: title,
+                    message: message,
+                    confirmBtnText: 'Confirmar',
+                    cancelBtnText: 'Cancelar',
+                    type: type,
+                    onConfirm: () => resolve(true),
+                    onCancel: () => resolve(false)
+                });
+            });
+        };
+
+        // Interceptor y transformador automático de formularios con onsubmit="return confirm('...')"
+        function setupConfirmForms(container = document) {
+            container.querySelectorAll('form[onsubmit*="confirm("]').forEach(form => {
+                const onsubmitStr = form.getAttribute('onsubmit');
+                const match = onsubmitStr.match(/confirm\(['"](.*)['"]\)/);
+                const message = match ? match[1] : '¿Estás seguro de realizar esta acción?';
+                
+                // Quitamos el onsubmit nativo
+                form.removeAttribute('onsubmit');
+                
+                // Asignamos el interceptor moderno
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    window.confirmModal({
+                        title: '¿Confirmás esta acción?',
+                        message: message,
+                        confirmBtnText: 'Sí, confirmar',
+                        cancelBtnText: 'Cancelar',
+                        type: 'danger',
+                        onConfirm: function() {
+                            HTMLFormElement.prototype.submit.call(form);
+                        }
+                    });
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupConfirmForms();
+            
+            // Observer para manejar formularios dinámicos o inyectados por AJAX
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach(mutation => {
+                    mutation.addedNodes.forEach(node => {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            if (node.matches && node.matches('form[onsubmit*="confirm(")')) {
+                                setupConfirmForms(node.parentElement || document);
+                            } else if (node.querySelectorAll) {
+                                setupConfirmForms(node);
+                            }
+                        }
+                    });
+                });
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+
         // Evitar cambios accidentales al hacer scroll sobre inputs numéricos
         document.addEventListener('wheel', function(e) {
             if (document.activeElement && document.activeElement.type === 'number') {
