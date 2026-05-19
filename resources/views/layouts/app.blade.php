@@ -298,6 +298,12 @@
                     Rendiciones
                 </a>
             </li>
+            <li class="sidebar-item">
+                <a href="{{ route('reports.index') }}" class="sidebar-link {{ request()->is('reports*') ? 'active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    Reportes
+                </a>
+            </li>
 
             <li class="sidebar-item" style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
                 <a href="{{ route('settings.index') }}" class="sidebar-link {{ request()->is('settings*') ? 'active' : '' }}">
@@ -346,10 +352,32 @@
                 </div>
             @endif
 
+            @if($errors->any())
+                <div style="background: #fff5f5; color: #c53030; padding: 1.2rem 1.5rem; border-radius: var(--border-radius); margin-bottom: 2rem; border-left: 5px solid #f56565; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                    <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.6rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <span style="font-weight: 800;">Por favor corrige los siguientes errores:</span>
+                    </div>
+                    <ul style="margin-left: 1.8rem; font-weight: 600; font-size: 0.95rem; line-height: 1.5;">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             @yield('content')
         </main>
     </div>
 
     @yield('scripts')
+    <script>
+        // Evitar cambios accidentales al hacer scroll sobre inputs numéricos
+        document.addEventListener('wheel', function(e) {
+            if (document.activeElement && document.activeElement.type === 'number') {
+                document.activeElement.blur();
+            }
+        });
+    </script>
 </body>
 </html>

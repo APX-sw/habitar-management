@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class Expense extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'property_id', 
@@ -19,6 +22,11 @@ class Expense extends Model
         'is_paid', 
         'transaction_category_id'
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable();
+    }
 
     public function property()
     {
@@ -38,5 +46,10 @@ class Expense extends Model
     public function transactionCategory()
     {
         return $this->belongsTo(TransactionCategory::class);
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(ExpenseDocument::class);
     }
 }

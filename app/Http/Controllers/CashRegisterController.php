@@ -43,11 +43,26 @@ class CashRegisterController extends Controller
             return $account->current_balance;
         });
 
+        $deletedMovements = \App\Models\DeletedMovement::with(['account', 'user'])->latest()->get();
+        $deletedMovementsFormatted = $deletedMovements->map(function($del) {
+            return [
+                'id' => $del->id,
+                'created_at_raw' => $del->created_at->toIso8601String(),
+                'created_at_formatted' => \Carbon\Carbon::parse($del->created_at)->format('d/m/Y H:i') . ' hs',
+                'movement_date_formatted' => \Carbon\Carbon::parse($del->movement_date)->format('d/m/Y'),
+                'account_name' => $del->account->name,
+                'description' => $del->description,
+                'amount' => (float)$del->amount,
+                'user_name' => $del->user ? $del->user->name : 'Administrador',
+                'reason' => $del->reason
+            ];
+        });
+
         if ($request->ajax()) {
             return view('cash_register._movements_table', compact('movements'))->render();
         }
 
-        return view('cash_register.index', compact('accounts', 'movements', 'totalBalance', 'categories'));
+        return view('cash_register.index', compact('accounts', 'movements', 'totalBalance', 'categories', 'deletedMovements', 'deletedMovementsFormatted'));
     }
 
     public function transfer(Request $request)

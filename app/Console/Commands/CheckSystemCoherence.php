@@ -33,14 +33,23 @@ class CheckSystemCoherence extends Command
             // --- SETUP ---
             $this->comment("1. Configurando datos de prueba...");
             
-            // Asegurarnos de tener categorías (por si no se corrieron seeders)
-            if (TransactionCategory::count() == 0) {
-                $this->warn("⚠️ No hay categorías en la DB. Creando esenciales para el test...");
-                TransactionCategory::create(['id' => 1, 'name' => 'Alquileres', 'type' => 'income', 'group' => 'third_party']);
-                TransactionCategory::create(['id' => 2, 'name' => 'Honorarios Inmobiliarios', 'type' => 'income', 'group' => 'agency_profit']);
-                TransactionCategory::create(['id' => 4, 'name' => 'Expensas', 'type' => 'income', 'group' => 'third_party']);
-                TransactionCategory::create(['id' => 5, 'name' => 'Mantenimiento Propiedades', 'type' => 'expense', 'group' => 'third_party']);
-            }
+            // Buscar o crear categorías esenciales dinámicamente para el test
+            $catAlquiler = TransactionCategory::firstOrCreate(
+                ['name' => 'Alquileres'],
+                ['type' => 'income', 'group' => 'third_party', 'is_system' => true]
+            );
+            $catHonorarios = TransactionCategory::firstOrCreate(
+                ['name' => 'Honorarios Inmobiliarios'],
+                ['type' => 'income', 'group' => 'agency_profit', 'is_system' => true]
+            );
+            $catExpensas = TransactionCategory::firstOrCreate(
+                ['name' => 'Expensas'],
+                ['type' => 'income', 'group' => 'third_party', 'is_system' => false]
+            );
+            $catMantenimiento = TransactionCategory::firstOrCreate(
+                ['name' => 'Mantenimiento Propiedades'],
+                ['type' => 'expense', 'group' => 'third_party', 'is_system' => false]
+            );
 
             $owner = Owner::create([
                 'name' => 'Test Owner', 'dni_cuit' => '11-11111111-1', 'email' => 'owner@test.com', 'phone' => '123'
@@ -80,7 +89,7 @@ class CheckSystemCoherence extends Command
             ]);
 
             // Agregar un cargo fijo (Concepto Mensual)
-            $lease->fixedCharges()->create(['name' => 'Expensas', 'amount' => 5000, 'transaction_category_id' => 4]);
+            $lease->fixedCharges()->create(['name' => 'Expensas', 'amount' => 5000, 'transaction_category_id' => $catExpensas->id]);
 
             $this->info("✅ Setup completado.");
 
@@ -94,7 +103,7 @@ class CheckSystemCoherence extends Command
             ]);
 
             $collection->details()->create([
-                'type' => 'rent', 'name' => 'Alquiler Mensual', 'amount' => 100000, 'destination' => 'owner', 'transaction_category_id' => 1
+                'type' => 'rent', 'name' => 'Alquiler Mensual', 'amount' => 100000, 'destination' => 'owner', 'transaction_category_id' => $catAlquiler->id
             ]);
 
             foreach ($lease->fixedCharges as $charge) {
@@ -104,7 +113,7 @@ class CheckSystemCoherence extends Command
             }
 
             $collection->details()->create([
-                'type' => 'extra_charge', 'name' => 'Honorarios Inmobiliarios', 'amount' => 10000, 'transaction_category_id' => 2
+                'type' => 'extra_charge', 'name' => 'Honorarios Inmobiliarios', 'amount' => 10000, 'transaction_category_id' => $catHonorarios->id
             ]);
 
             $collection->update(['total_amount' => $collection->details()->sum('amount')]);
@@ -130,7 +139,7 @@ class CheckSystemCoherence extends Command
             
             $amountsByCategory = [];
             foreach ($details as $detail) {
-                $catId = $detail->transaction_category_id ?? 1;
+                $catId = $detail->transaction_category_id ?? $catAlquiler->id;
                 $amountsByCategory[$catId] = ($amountsByCategory[$catId] ?? 0) + ($detail->amount * $proportion);
             }
 
@@ -158,7 +167,7 @@ class CheckSystemCoherence extends Command
             }
 
             $catIds = $movements->pluck('transaction_category_id')->toArray();
-            if (in_array(1, $catIds) && in_array(2, $catIds) && in_array(4, $catIds)) {
+            if (in_array($catAlquiler->id, $catIds) && in_array($catHonorarios->id, $catIds) && in_array($catExpensas->id, $catIds)) {
                 $this->info("✅ Coherencia de Categorías: Alquiler, Honorarios y Expensas identificados por separado.");
             } else {
                 throw new \Exception("❌ Error: Faltan categorías en el split de caja.");
@@ -183,7 +192,7 @@ class CheckSystemCoherence extends Command
             
             Expense::create([
                 'property_id' => $property->id, 'account_id' => $account->id, 'date' => now(), 'amount' => 2000, 
-                'description' => 'Reparación de grifo', 'is_paid' => true, 'transaction_category_id' => 5
+                'description' => 'Reparación de grifo', 'is_paid' => true, 'transaction_category_id' => $catMantenimiento->id
             ]);
 
             $rentPaid = $collection->details()->where('type', 'rent')->sum('amount');

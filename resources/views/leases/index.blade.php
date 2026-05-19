@@ -44,6 +44,7 @@
                 <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Vigentes</option>
                 <option value="near" {{ request('status') == 'near' ? 'selected' : '' }}>Por Vencer</option>
                 <option value="expired" {{ request('status') == 'expired' ? 'selected' : '' }}>Vencidos</option>
+                <option value="terminated" {{ request('status') == 'terminated' ? 'selected' : '' }}>Finalizados</option>
             </select>
         </div>
 
@@ -67,7 +68,7 @@
                 <tr style="background: #f8fafc; border-bottom: 2px solid var(--secondary-color);">
                     <th style="padding: 1.2rem; color: #718096; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Propiedad</th>
                     <th style="padding: 1.2rem; color: #718096; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Inquilino</th>
-                    <th style="padding: 1.2rem; color: #718096; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Vencimiento</th>
+                    <th style="padding: 1.2rem; color: #718096; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Vigencia</th>
                     <th style="padding: 1.2rem; color: #718096; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Precio Base</th>
                     <th style="padding: 1.2rem; color: #718096; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Valor Actual</th>
                     <th style="padding: 1.2rem; color: #718096; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: right;">Acciones</th>
@@ -96,13 +97,20 @@
                         </td>
                         <td style="padding: 1.2rem;">
                             @php
+                                $startDate = \Carbon\Carbon::parse($lease->start_date);
                                 $endDate = \Carbon\Carbon::parse($lease->end_date);
-                                $isExpired = $endDate->isPast();
-                                $isNear = $endDate->diffInMonths(now()) < 2 && !$isExpired;
+                                $isTerminated = $lease->renewal_status === 'terminated';
+                                $isExpired = $endDate->isPast() && !$isTerminated;
+                                $isNear = $endDate->diffInMonths(now()) < 2 && !$isExpired && !$isTerminated;
                             @endphp
-                            <div style="display: flex; flex-direction: column; gap: 0.3rem;">
-                                <div style="color: {{ $isExpired ? '#C53030' : ($isNear ? '#B7791F' : '#2d3748') }}; font-weight: 700; font-size: 1rem;">
-                                    {{ $endDate->format('d/m/Y') }}
+                            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                <div style="font-size: 0.85rem; color: var(--text-light); font-weight: 500;">
+                                    <span style="font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #a0aec0; display: inline-block; width: 45px;">Inicio:</span>
+                                    <span style="color: #4a5568; font-weight: 600;">{{ $startDate->format('d/m/Y') }}</span>
+                                </div>
+                                <div style="font-size: 0.95rem; font-weight: 700; color: {{ $isTerminated ? '#718096' : ($isExpired ? '#C53030' : ($isNear ? '#B7791F' : '#2d3748')) }};">
+                                    <span style="font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #a0aec0; display: inline-block; width: 45px;">Fin:</span>
+                                    <span>{{ $endDate->format('d/m/Y') }}</span>
                                 </div>
                                 <span style="
                                     display: inline-block;
@@ -112,11 +120,12 @@
                                     font-weight: 800;
                                     text-transform: uppercase;
                                     width: fit-content;
-                                    background: {{ $isExpired ? '#FFF5F5' : ($isNear ? '#FFFAF0' : '#F0FFF4') }};
-                                    color: {{ $isExpired ? '#C53030' : ($isNear ? '#B7791F' : '#38A169') }};
-                                    border: 1px solid {{ $isExpired ? '#FEB2B2' : ($isNear ? '#FBD38D' : '#9AE6B4') }};
+                                    background: {{ $isTerminated ? '#EDF2F7' : ($isExpired ? '#FFF5F5' : ($isNear ? '#FFFAF0' : '#F0FFF4')) }};
+                                    color: {{ $isTerminated ? '#4A5568' : ($isExpired ? '#C53030' : ($isNear ? '#B7791F' : '#38A169')) }};
+                                    border: 1px solid {{ $isTerminated ? '#CBD5E0' : ($isExpired ? '#FEB2B2' : ($isNear ? '#FBD38D' : '#9AE6B4')) }};
+                                    margin-top: 0.1rem;
                                 ">
-                                    {{ $isExpired ? 'Vencido' : ($isNear ? 'Por Vencer' : 'Vigente') }}
+                                    {{ $isTerminated ? 'Finalizado' : ($isExpired ? 'Vencido' : ($isNear ? 'Por Vencer' : 'Vigente')) }}
                                 </span>
                             </div>
                         </td>

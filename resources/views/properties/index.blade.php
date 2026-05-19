@@ -260,46 +260,12 @@
     </div>
 </div>
 
-<!-- Modal Rápido Subir Documento -->
-<div id="quickUploadModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
-    <div class="card" style="width: 100%; max-width: 500px; padding: 2rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <div>
-                <h2 style="color: var(--primary-color); margin: 0;">Subir Documentación</h2>
-                <p id="quick-prop-name" style="font-size: 0.85rem; color: var(--text-light); margin: 0.2rem 0 0 0; font-weight: 600;"></p>
-            </div>
-            <button onclick="closeQuickUpload()" style="background: none; border: none; font-size: 1.5rem; color: #a0aec0; cursor: pointer;">&times;</button>
-        </div>
-        <form action="{{ route('property-documents.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" name="property_id" id="quick-property-id">
-            
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #718096; text-transform: uppercase; margin-bottom: 0.5rem;">Seleccionar Archivo (Máx 10MB)</label>
-                <input type="file" name="file" required style="width: 100%; padding: 1rem; border: 2px dashed #e2e8f0; border-radius: 10px; cursor: pointer;">
-            </div>
-
-            <div style="display: flex; gap: 1rem;">
-                <button type="button" onclick="closeQuickUpload()" class="btn" style="flex: 1; background: #edf2f7; color: #4a5568;">Cancelar</button>
-                <button type="submit" class="btn btn-primary" style="flex: 1;">Subir Archivo</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<style>
-    #properties-content.loading { opacity: 0.5; pointer-events: none; }
-</style>
+<!-- Modal Rápido Subir Documento (Premium) -->
+@include('properties.partials.docs_modal')
 
 <script>
     function openQuickUpload(id, location) {
-        document.getElementById('quick-property-id').value = id;
-        document.getElementById('quick-prop-name').innerText = location;
-        document.getElementById('quickUploadModal').style.display = 'flex';
-    }
-
-    function closeQuickUpload() {
-        document.getElementById('quickUploadModal').style.display = 'none';
+        openPropertyDocsModal(id, location);
     }
 
     function switchView(view) {

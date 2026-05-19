@@ -244,14 +244,23 @@ class SettingsController extends Controller
     public function contact()
     {
         $whatsapp = \App\Models\AgencySetting::get('whatsapp_number');
-        return view('settings.contact', compact('whatsapp'));
+        $agencyEmail = \App\Models\AgencySetting::get('agency_email', 'contacto@habitar.com.ar');
+        $agencyAddress = \App\Models\AgencySetting::get('agency_address', 'Av. Belgrano (N) 450, Santiago del Estero');
+        return view('settings.contact', compact('whatsapp', 'agencyEmail', 'agencyAddress'));
     }
 
     public function storeContact(Request $request)
     {
-        $request->validate(['whatsapp_number' => 'required']);
-        \App\Models\AgencySetting::set('whatsapp_number', $request->whatsapp_number);
+        $request->validate([
+            'whatsapp_number' => 'required',
+            'agency_email' => 'required|email',
+            'agency_address' => 'required'
+        ]);
 
-        return back()->with('success', 'Información de contacto actualizada.');
+        \App\Models\AgencySetting::set('whatsapp_number', $request->whatsapp_number);
+        \App\Models\AgencySetting::set('agency_email', $request->agency_email);
+        \App\Models\AgencySetting::set('agency_address', $request->agency_address);
+
+        return back()->with('success', 'Información de contacto de la inmobiliaria actualizada.');
     }
 }

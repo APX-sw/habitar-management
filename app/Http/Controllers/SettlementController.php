@@ -69,9 +69,16 @@ class SettlementController extends Controller
                 $q->whereIn('property_id', $propertyIds);
             })->where('month', $month)->where('year', $year)->where('status', 'paid')->get();
 
-            $income = $collections->sum('total_amount');
+            $income = $collections->sum(function($c) {
+                return $c->details->where('destination', 'owner')->sum('amount');
+            });
             $rentTotal = $collections->sum('rent_amount');
             
+            // Pagos ya transferidos directo al propietario
+            $directPayments = $collections->sum(function($c) {
+                return $c->payments->where('transferred_to_owner', true)->sum('amount');
+            });
+
             $expenses = Expense::whereIn('property_id', $propertyIds)
                 ->whereMonth('date', $month)
                 ->whereYear('date', $year)
@@ -80,7 +87,7 @@ class SettlementController extends Controller
             $expense = $expenses->sum('amount');
         }
 
-        return view('settlements.create', compact('owners', 'ownerId', 'month', 'year', 'income', 'expense', 'collections', 'expenses', 'rentTotal', 'commissionPercentage'));
+        return view('settlements.create', compact('owners', 'ownerId', 'month', 'year', 'income', 'expense', 'collections', 'expenses', 'rentTotal', 'commissionPercentage', 'directPayments'));
     }
 
     public function bulkPreview($month, $year)
@@ -102,9 +109,15 @@ class SettlementController extends Controller
                 $q->whereIn('property_id', $propertyIds);
             })->where('month', $month)->where('year', $year)->where('status', 'paid')->get();
 
-            $income = $collections->sum('total_amount');
+            $income = $collections->sum(function($c) {
+                return $c->details->where('destination', 'owner')->sum('amount');
+            });
             $rentBaseForCommission = $collections->sum('rent_amount');
             
+            $directPayments = $collections->sum(function($c) {
+                return $c->payments->where('transferred_to_owner', true)->sum('amount');
+            });
+
             $expensesSum = Expense::whereIn('property_id', $propertyIds)
                 ->whereMonth('date', $month)
                 ->whereYear('date', $year)
@@ -112,15 +125,16 @@ class SettlementController extends Controller
 
             // La comisión se cobra SOLO sobre los alquileres (sin incluir extras)
             $agencyCommission = $rentBaseForCommission * (($owner->commission_percentage ?? 10) / 100);
-            $net = $income - $expensesSum - $agencyCommission;
+            $net = $income - $expensesSum - $agencyCommission - $directPayments;
 
             // Solo agregamos si hay movimientos o si el neto no es cero
-            if ($income > 0 || $expensesSum > 0) {
+            if ($income > 0 || $expensesSum > 0 || $directPayments > 0) {
                 $previews[] = [
                     'owner' => $owner,
                     'income' => $income,
                     'expenses' => $expensesSum,
                     'agency_commission' => $agencyCommission,
+                    'direct_payments' => $directPayments,
                     'net' => $net,
                     'rent_total' => $rentBaseForCommission // Base para recalcular en JS
                 ];
@@ -229,7 +243,7 @@ class SettlementController extends Controller
             ->where('status', 'paid')
             ->get();
 
-        $expenses = Expense::with('property')
+        $expenses = Expense::with(['property', 'transactionCategory'])
             ->whereIn('property_id', $propertyIds)
             ->whereMonth('date', $settlement->month)
             ->whereYear('date', $settlement->year)
@@ -254,10 +268,11 @@ class SettlementController extends Controller
                     return [
                         'property' => $c->lease->property->location,
                         'tenant' => $c->lease->tenant->name,
-                        'items' => $c->details()->where('destination', 'owner')->get()->map(function($d) {
+                        'items' => $c->details()->get()->map(function($d) {
                             return [
                                 'concept' => $d->name,
-                                'amount' => $d->amount
+                                'amount' => $d->amount,
+                                'destination' => $d->destination // 'owner' o 'agency'
                             ];
                         })
                     ];
@@ -265,7 +280,7 @@ class SettlementController extends Controller
                 'expenses' => $expenses->map(function($e) {
                     return [
                         'property' => $e->property->location,
-                        'description' => $e->description,
+                        'description' => $e->description ?? ($e->transactionCategory->name ?? 'Gasto Extraordinario'),
                         'amount' => $e->amount
                     ];
                 })
@@ -277,6 +292,8 @@ class SettlementController extends Controller
                 return [
                     'amount' => $p->amount,
                     'bank' => $p->ownerBankAccount->cbu_alias,
+                    'holder' => $p->ownerBankAccount->holder_name,
+                    'cuit' => $p->ownerBankAccount->holder_cuit,
                     'date' => $p->date
                 ];
             });
@@ -311,22 +328,46 @@ class SettlementController extends Controller
             'payments.*.date' => 'required|date',
         ]);
 
+        // 1. Validar que cada cuenta tenga saldo suficiente antes de procesar cualquier movimiento
+        $requestedDebits = [];
         foreach ($request->payments as $pData) {
-            $payment = $settlement->payments()->create($pData);
-
-            // Generar movimiento de caja (Egreso)
-            $payment->movement()->create([
-                'account_id' => $pData['account_id'],
-                'type' => 'expense',
-                'amount' => $pData['amount'],
-                'description' => 'Pago Rendición a: ' . $settlement->owner->name . ' (' . $settlement->month . '/' . $settlement->year . ')',
-                'movement_date' => Carbon::parse($pData['date'])->setTimeFrom(now()),
-                'transaction_category_id' => 5 // Pago Rendición a Propietario
-            ]);
+            $accountId = $pData['account_id'];
+            $amount = (float)$pData['amount'];
+            if (!isset($requestedDebits[$accountId])) {
+                $requestedDebits[$accountId] = 0.0;
+            }
+            $requestedDebits[$accountId] += $amount;
         }
 
+        foreach ($requestedDebits as $accountId => $totalDebit) {
+            $account = Account::findOrFail($accountId);
+            if ($account->current_balance < $totalDebit) {
+                return back()->withErrors([
+                    'payments' => "Saldo insuficiente en la cuenta \"{$account->name}\". Saldo disponible: \$" . number_format($account->current_balance, 2, ',', '.') . " e intentaste pagar \$" . number_format($totalDebit, 2, ',', '.') . "."
+                ])->withInput();
+            }
+        }
+
+        // 2. Transacción de base de datos para guardar todo de forma atómica
+        \DB::transaction(function () use ($request, $settlement) {
+            foreach ($request->payments as $pData) {
+                $payment = $settlement->payments()->create($pData);
+
+                // Generar movimiento de caja (Egreso)
+                $payment->movement()->create([
+                    'account_id' => $pData['account_id'],
+                    'type' => 'expense',
+                    'amount' => $pData['amount'],
+                    'description' => 'Pago Rendición a: ' . $settlement->owner->name . ' (' . $settlement->month . '/' . $settlement->year . ')',
+                    'movement_date' => Carbon::parse($pData['date'])->setTimeFrom(now()),
+                    'transaction_category_id' => 5 // Pago Rendición a Propietario
+                ]);
+            }
+        });
+
         $totalPaid = $settlement->payments()->sum('amount');
-        if ($totalPaid >= $settlement->net_amount) {
+        // Toleramos hasta $1.00 ARS de diferencia por el redondeo de centavos habitual en Argentina
+        if (($settlement->net_amount - $totalPaid) <= 1.00) {
             $settlement->update(['status' => 'paid']);
         }
 

@@ -27,15 +27,20 @@
         <div style="display: flex; flex-direction: column; gap: 2rem;">
             <!-- Ingresos -->
             <div class="card" style="padding: 1.5rem; border-top: 4px solid #48BB78;">
-                <h3 style="margin: 0 0 1rem; color: #22543D; font-size: 1.1rem;">Cobros Registrados (+)</h3>
+                <h3 style="margin: 0 0 1rem; color: #22543D; font-size: 1.1rem;">Cobros a Favor del Propietario (+)</h3>
                 @forelse($collections as $col)
-                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #edf2f7;">
-                        <div>
-                            <span style="font-weight: 600;">{{ $col->lease->property->location }}</span><br>
-                            <span style="font-size: 0.8rem; color: var(--text-light);">Inquilino: {{ $col->lease->tenant->name }}</span>
+                    @php
+                        $ownerAmount = $col->details->where('destination', 'owner')->sum('amount');
+                    @endphp
+                    @if($ownerAmount > 0)
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #edf2f7;">
+                            <div>
+                                <span style="font-weight: 600;">{{ $col->lease->property->location }}</span><br>
+                                <span style="font-size: 0.8rem; color: var(--text-light);">Inquilino: {{ $col->lease->tenant->name }}</span>
+                            </div>
+                            <span style="font-weight: 700; color: #48BB78; align-self: center;">${{ number_format($ownerAmount, 2) }}</span>
                         </div>
-                        <span style="font-weight: 700; color: #48BB78; align-self: center;">${{ number_format($col->total_amount, 2) }}</span>
-                    </div>
+                    @endif
                 @empty
                     <p style="font-size: 0.9rem; color: var(--text-light);">No hay cobros pagados este mes para este propietario.</p>
                 @endforelse
@@ -82,6 +87,34 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Cobros de Inmobiliaria (Informativo) -->
+            <div class="card" style="padding: 1.5rem; border-top: 4px solid #718096; background: #f7fafc;">
+                <h3 style="margin: 0 0 1rem; color: #4A5568; font-size: 1.1rem;">Conceptos para Inmobiliaria (Informativo)</h3>
+                <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1rem;">
+                    Estos montos fueron cobrados a los inquilinos pero pertenecen a la inmobiliaria (ej: gastos que paga Habitar, multas, comisiones). <strong>No se suman ni restan</strong> del total a rendir al propietario.
+                </p>
+                @php $agencyTotal = 0; @endphp
+                @foreach($collections as $col)
+                    @foreach($col->details->where('destination', 'agency') as $detail)
+                        @php $agencyTotal += $detail->amount; @endphp
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #edf2f7; opacity: 0.8;">
+                            <div>
+                                <span style="font-weight: 600; color: #4A5568;">{{ $detail->name }}</span><br>
+                                <span style="font-size: 0.8rem; color: var(--text-light);">{{ $col->lease->property->location }}</span>
+                            </div>
+                            <span style="font-weight: 700; color: #718096; align-self: center;">${{ number_format($detail->amount, 2) }}</span>
+                        </div>
+                    @endforeach
+                @endforeach
+                @if($agencyTotal == 0)
+                    <p style="font-size: 0.9rem; color: var(--text-light);">No hubo cobros destinados a la inmobiliaria este mes.</p>
+                @else
+                    <div style="text-align: right; margin-top: 1rem; font-size: 1.1rem; font-weight: 800; color: #4A5568;">
+                        Subtotal Informativo: ${{ number_format($agencyTotal, 2) }}
+                    </div>
+                @endif
+            </div>
         </div>
 
         <div>
@@ -104,6 +137,13 @@
                     <span style="opacity: 0.8;">Honorarios Inmo:</span>
                     <span style="color: #90CDF4;" id="summaryCommissionDisplay">${{ number_format($agencyCommission, 2) }}</span>
                 </div>
+                
+                @if($directPayments > 0)
+                <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 0.5rem;">
+                    <span style="opacity: 0.8;">Ya transferido directo:</span>
+                    <span style="color: #FBD38D;">-${{ number_format($directPayments, 2) }}</span>
+                </div>
+                @endif
                 
                 <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 1.5rem;">
                     <div style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 0.5rem;">NETO A RENDIR</div>
@@ -137,12 +177,13 @@
     const rentTotal = {{ $rentTotal }};
     const income = {{ $income }};
     const expense = {{ $expense }};
+    const directPayments = {{ $directPayments }};
 
     function recalculateNet() {
         let percent = parseFloat(document.getElementById('commissionPercentageInput').value) || 0;
         
         let commission = rentTotal * (percent / 100);
-        let net = income - expense - commission;
+        let net = income - expense - commission - directPayments;
 
         // Formato para mostrar
         let formattedCommission = '$' + commission.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});

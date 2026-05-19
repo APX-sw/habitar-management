@@ -29,10 +29,21 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\SettlementController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\TransactionCategoryController;
-Route::get('/', function () {
-    return view('welcome');
-});
+use App\Http\Controllers\DashboardController;
 
+Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+use App\Http\Controllers\OwnerReportController;
+
+Route::get('reports', [OwnerReportController::class, 'index'])->name('reports.index');
+Route::get('reports/create', [OwnerReportController::class, 'create'])->name('reports.create');
+Route::post('reports', [OwnerReportController::class, 'store'])->name('reports.store');
+Route::get('reports/{report}', [OwnerReportController::class, 'show'])->name('reports.show');
+Route::get('reports/{report}/owner/{owner_id}', [OwnerReportController::class, 'showIndividual'])->name('reports.show_individual');
+Route::get('public/reports/{report}/owner/{owner_id}', [OwnerReportController::class, 'showPublic'])->name('reports.show_public');
+Route::get('reports/{report}/batch', [OwnerReportController::class, 'showBatch'])->name('reports.show_batch');
+Route::post('reports/{report}/owner/{owner_id}/send-email', [OwnerReportController::class, 'sendEmail'])->name('reports.send_email');
+Route::delete('reports/{report}', [OwnerReportController::class, 'destroy'])->name('reports.destroy');
 Route::resource('owners', OwnerController::class);
 Route::resource('properties', PropertyController::class);
 Route::resource('tenants', TenantController::class);
@@ -50,6 +61,7 @@ Route::post('property-documents', [PropertyDocumentController::class, 'store'])-
 Route::delete('property-documents/{propertyDocument}', [PropertyDocumentController::class, 'destroy'])->name('property-documents.destroy');
 
 Route::get('leases/{lease}/documents', [LeaseDocumentController::class, 'index'])->name('leases.documents');
+Route::get('properties/{property}/documents', [PropertyDocumentController::class, 'index'])->name('properties.documents');
 
 // Cobros de Alquiler
 Route::get('collections', [CollectionController::class, 'index'])->name('collections.index');
@@ -61,6 +73,8 @@ Route::put('collections/{collection}', [CollectionController::class, 'update'])-
 Route::post('collections/{collection}/pay', [CollectionController::class, 'pay'])->name('collections.pay');
 Route::post('collections/{collection}/send', [CollectionController::class, 'sendToTenant'])->name('collections.send');
 Route::get('collections/{collection}/receipt/{payment}', [CollectionController::class, 'paymentReceipt'])->name('collections.payment_receipt');
+Route::post('collections/{collection}/receipt/{payment}/send', [CollectionController::class, 'sendReceiptToTenant'])->name('collections.send_receipt');
+Route::post('collections/{collection}/receipt/{payment}/transfer', [CollectionController::class, 'transferPaymentToOwner'])->name('collections.transfer_payment');
 Route::post('collections/bulk-send', [CollectionController::class, 'bulkSend'])->name('collections.bulk_send');
 
 
@@ -71,7 +85,13 @@ Route::get('cash-register', [CashRegisterController::class, 'index'])->name('cas
 Route::post('cash-register/transfer', [CashRegisterController::class, 'transfer'])->name('cash_register.transfer');
 Route::post('cash-register/adjust', [CashRegisterController::class, 'adjust'])->name('cash_register.adjust');
 
-Route::resource('expenses', ExpenseController::class)->except(['show', 'edit', 'update', 'destroy']);
+Route::resource('expenses', ExpenseController::class)->except(['show', 'edit']);
+Route::put('expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
+
+use App\Http\Controllers\ExpenseDocumentController;
+Route::get('expenses/{expense}/documents', [ExpenseDocumentController::class, 'index'])->name('expenses.documents');
+Route::post('expense-documents', [ExpenseDocumentController::class, 'store'])->name('expense-documents.store');
+Route::delete('expense-documents/{expenseDocument}', [ExpenseDocumentController::class, 'destroy'])->name('expense-documents.destroy');
 
 Route::resource('settlements', SettlementController::class)->except(['edit', 'update', 'destroy']);
 Route::post('settlements/bulk', [SettlementController::class, 'bulkStore'])->name('settlements.bulk_store');

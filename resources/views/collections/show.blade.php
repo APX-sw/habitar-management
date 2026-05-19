@@ -23,10 +23,14 @@
             <button onclick="document.getElementById('paymentModal').style.display='flex'" class="btn" style="background: #48BB78; color: white; font-weight: 700; padding: 0.8rem 1.5rem;">Registrar Pago</button>
         @endif
         @if($collection->status !== 'paid')
-            <form action="{{ route('collections.send', $collection) }}" method="POST">
-                @csrf
-                <button type="submit" class="btn" style="background: #4299E1; color: white; font-weight: 700; padding: 0.8rem 1.5rem;">📧 {{ $collection->status === 'sent' ? 'Re-enviar Mail' : 'Enviar al Inquilino' }}</button>
-            </form>
+            @if($collection->status === 'draft' || $collection->status === 'incompleto')
+                <button type="button" class="btn" style="background: #e2e8f0; color: #a0aec0; font-weight: 700; padding: 0.8rem 1.5rem; border: 1px solid #cbd5e0; cursor: not-allowed;" title="Debes guardar y marcar como listo para cobrar antes de enviar" disabled>📧 Enviar al Inquilino</button>
+            @else
+                <form action="{{ route('collections.send', $collection) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn" style="background: #4299E1; color: white; font-weight: 700; padding: 0.8rem 1.5rem;">📧 {{ $collection->status === 'sent' ? 'Re-enviar Mail' : 'Enviar al Inquilino' }}</button>
+                </form>
+            @endif
         @endif
     </div>
 </div>
@@ -145,10 +149,30 @@
                                         ${{ number_format($payment->amount, 2) }}
                                     </td>
                                     <td style="padding: 1rem 0.5rem; text-align: right;">
-                                        <a href="{{ route('collections.payment_receipt', [$collection, $payment]) }}" class="btn" style="background: var(--accent-gradient); color: white; padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 800; border: none; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; box-shadow: 0 2px 4px rgba(56, 178, 172, 0.2);">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                            VER RECIBO
-                                        </a>
+                                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                            @if(!$payment->transferred_to_owner)
+                                                <form action="{{ route('collections.transfer_payment', [$collection, $payment]) }}" method="POST" style="display: inline;" onsubmit="return confirm('¿Confirmas que este monto ya fue transferido al propietario directamente? Esto generará una salida en caja automáticamente.')">
+                                                    @csrf
+                                                    <button type="submit" class="btn" style="background: #FFF5F5; color: #C53030; padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 800; border: 1px solid #FEB2B2; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.3rem;" title="Marcar como pago directo al propietario">
+                                                        💸 PAGO DIRECTO
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span style="background: #E6FFFA; color: #319795; padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 800; border: 1px solid #B2F5EA; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.3rem;" title="Este pago ya fue transferido al propietario">
+                                                    ✅ TRANSFERIDO
+                                                </span>
+                                            @endif
+                                            <a href="{{ route('collections.payment_receipt', [$collection, $payment]) }}" class="btn" style="background: #EDF2F7; color: var(--primary-color); padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 800; border: 1px solid #CBD5E0; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                                RECIBO
+                                            </a>
+                                            <form action="{{ route('collections.send_receipt', [$collection, $payment]) }}" method="POST" style="display: inline;">
+                                                @csrf
+                                                <button type="submit" class="btn" style="background: var(--accent-gradient); color: white; padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 800; border: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.3rem; box-shadow: 0 2px 4px rgba(56, 178, 172, 0.2);">
+                                                    📧 ENVIAR
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -306,8 +330,12 @@
                     <div>
                         <!-- No delete for first row -->
                     </div>
-                    <div style="grid-column: span 4; margin-top: 0.5rem;">
-                        <input type="text" name="payments[0][notes]" placeholder="Notas adicionales..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #edf2f7; font-size: 0.8rem;">
+                    <div style="grid-column: span 4; margin-top: 0.5rem; display: flex; gap: 1rem; align-items: center;">
+                        <input type="text" name="payments[0][notes]" placeholder="Notas adicionales..." style="flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid #edf2f7; font-size: 0.8rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 700; color: #E53E3E; cursor: pointer; background: #FFF5F5; padding: 0.5rem 0.8rem; border-radius: 6px; border: 1px solid #FEB2B2; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                            <input type="checkbox" name="payments[0][transferred_to_owner]" value="1" style="width: 16px; height: 16px; accent-color: #E53E3E;">
+                            Transferido directo al propietario
+                        </label>
                     </div>
                 </div>
             </div>
@@ -349,8 +377,12 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 </button>
             </div>
-            <div style="grid-column: span 4; margin-top: 0.5rem;">
-                <input type="text" name="payments[${paymentRowCount}][notes]" placeholder="Notas adicionales..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #edf2f7; font-size: 0.8rem;">
+            <div style="grid-column: span 4; margin-top: 0.5rem; display: flex; gap: 1rem; align-items: center;">
+                <input type="text" name="payments[${paymentRowCount}][notes]" placeholder="Notas adicionales..." style="flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid #edf2f7; font-size: 0.8rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 700; color: #E53E3E; cursor: pointer; background: #FFF5F5; padding: 0.5rem 0.8rem; border-radius: 6px; border: 1px solid #FEB2B2; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                    <input type="checkbox" name="payments[${paymentRowCount}][transferred_to_owner]" value="1" style="width: 16px; height: 16px; accent-color: #E53E3E;">
+                    Transferido directo al propietario
+                </label>
             </div>
         `;
         container.appendChild(newRow);

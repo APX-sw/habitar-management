@@ -11,7 +11,7 @@ class ExpenseController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Expense::with(['property', 'account', 'transactionCategory'])->orderBy('date', 'desc');
+        $query = Expense::with(['property', 'account', 'transactionCategory', 'documents'])->orderBy('date', 'desc');
 
         if ($request->filled('property_id')) {
             if ($request->property_id === 'none') {
@@ -67,13 +67,8 @@ class ExpenseController extends Controller
             'date' => 'required|date',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:255',
-            'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
-
-        $attachmentPath = null;
-        if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('expenses', 'public');
-        }
 
         $expense = Expense::create([
             'property_id' => $request->property_id,
@@ -81,10 +76,21 @@ class ExpenseController extends Controller
             'date' => $request->date,
             'amount' => $request->amount,
             'description' => $request->description,
-            'attachment_path' => $attachmentPath,
             'transaction_category_id' => $request->transaction_category_id,
             'is_paid' => true,
         ]);
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('expenses/' . $expense->id, 'public');
+                $expense->documents()->create([
+                    'filename' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'size' => $file->getSize(),
+                    'mime_type' => $file->getMimeType(),
+                ]);
+            }
+        }
 
         // Generate movement
         $expense->movement()->create([
@@ -103,20 +109,59 @@ class ExpenseController extends Controller
     {
         $request->validate([
             'description' => 'nullable|string|max:255',
-            'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
-        $data = $request->only('description');
+        $expense->update($request->only('description'));
 
-        if ($request->hasFile('attachment')) {
-            if ($expense->attachment_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($expense->attachment_path);
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('expenses/' . $expense->id, 'public');
+                $expense->documents()->create([
+                    'filename' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'size' => $file->getSize(),
+                    'mime_type' => $file->getMimeType(),
+                ]);
             }
-            $data['attachment_path'] = $request->file('attachment')->store('expenses', 'public');
         }
 
-        $expense->update($data);
-
         return back()->with('success', 'Gasto actualizado correctamente.');
+    }
+
+    public function destroy(Expense $expense)
+    {
+        \DB::transaction(function() use ($expense) {
+            // Find related cash movement
+            $movement = $expense->movement;
+            if ($movement) {
+                // Log deleted movement to audit trail
+                \App\Models\DeletedMovement::create([
+                    'original_movement_id' => $movement->id,
+                    'account_id' => $movement->account_id,
+                    'type' => $movement->type,
+                    'amount' => $movement->amount,
+                    'description' => $movement->description . ' (Gasto eliminado permanentemente)',
+                    'movement_date' => $movement->movement_date,
+                    'transaction_category_id' => $movement->transaction_category_id,
+                    'deleted_by_user_id' => auth()->id(),
+                    'reason' => 'Eliminación voluntaria de gasto por error de carga.',
+                ]);
+
+                // Delete cash movement (this automatically restores the account balance)
+                $movement->delete();
+            }
+
+            // Delete associated file attachments physically from storage
+            foreach ($expense->documents as $doc) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($doc->path);
+                $doc->delete();
+            }
+
+            // Delete the expense itself
+            $expense->delete();
+        });
+
+        return redirect()->route('expenses.index')->with('success', 'Gasto eliminado correctamente y saldo de caja restablecido.');
     }
 }

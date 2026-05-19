@@ -12,7 +12,11 @@ class FixedCharge extends Model
 {
     use HasFactory, LogsActivity;
 
-    protected $fillable = ['lease_id', 'name', 'amount', 'transaction_category_id'];
+    protected $fillable = ['lease_id', 'name', 'amount', 'transaction_category_id', 'is_paid_by_agency'];
+
+    protected $casts = [
+        'is_paid_by_agency' => 'boolean',
+    ];
 
     public function lease()
     {

@@ -13,6 +13,7 @@ class FixedChargeController extends Controller
             'lease_id' => 'required|exists:leases,id',
             'name' => 'required|string|max:255',
             'transaction_category_id' => 'nullable|exists:transaction_categories,id',
+            'is_paid_by_agency' => 'nullable|boolean',
         ]);
 
         FixedCharge::create([
@@ -20,6 +21,7 @@ class FixedChargeController extends Controller
             'name' => $request->name,
             'amount' => 0, // Siempre 0 por defecto como pidió el usuario
             'transaction_category_id' => $request->transaction_category_id,
+            'is_paid_by_agency' => $request->boolean('is_paid_by_agency'),
         ]);
 
         return back()->with('success', 'Concepto mensual añadido.');

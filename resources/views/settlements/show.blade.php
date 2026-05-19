@@ -57,7 +57,7 @@
                 </div>
                 <p style="color: var(--text-light); font-size: 0.95rem; line-height: 1.4; margin: 0;">
                     Gestión Integral de Propiedades<br>
-                    Rosario, Santa Fe, Argentina<br>
+                    {{ \App\Models\AgencySetting::get('agency_address', 'Av. Belgrano (N) 450, Santiago del Estero') }}<br>
                     <strong>Liquidación de Cuentas</strong>
                 </p>
             </div>
@@ -114,6 +114,10 @@
                 }
                 $propertiesWithMovements[$pid]['collections'][] = $col;
                 $propertiesWithMovements[$pid]['income_total'] += $col->total_amount;
+                
+                // Sumamos los conceptos destinados a la inmobiliaria a los egresos de la propiedad para compensar visualmente
+                $agencySum = $col->details->where('destination', 'agency')->sum('amount');
+                $propertiesWithMovements[$pid]['expenses_total'] += $agencySum;
             }
             foreach($expenses as $exp) {
                 $pid = $exp->property_id;
@@ -158,6 +162,7 @@
                             </thead>
                             <tbody>
                                 @foreach($data['collections'] as $col)
+                                    {{-- Conceptos que van al propietario --}}
                                     @foreach($col->details->where('destination', 'owner') as $detail)
                                         <tr style="border-bottom: 1px solid #f1f5f9;">
                                             <td style="padding: 0.75rem 1.5rem;">
@@ -167,6 +172,28 @@
                                                 ${{ number_format($detail->amount, 2) }}
                                             </td>
                                             <td style="padding: 0.75rem 1.5rem; text-align: right;">-</td>
+                                        </tr>
+                                    @endforeach
+
+                                    {{-- Conceptos retenidos por la Inmobiliaria (Informativos y compensatorios) --}}
+                                    @foreach($col->details->where('destination', 'agency') as $detail)
+                                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                                            <td style="padding: 0.75rem 1.5rem;">
+                                                <strong>{{ $detail->name }}</strong> (Inq: {{ $col->lease->tenant->name }}) <span style="font-size: 0.75rem; color: #718096; font-weight: 600; background: #edf2f7; padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: 0.5rem;">Cobrado Inq.</span>
+                                            </td>
+                                            <td style="padding: 0.75rem 1.5rem; text-align: right; color: #38a169; font-weight: 700;">
+                                                ${{ number_format($detail->amount, 2) }}
+                                            </td>
+                                            <td style="padding: 0.75rem 1.5rem; text-align: right;">-</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #f1f5f9; background: #faf5ff;">
+                                            <td style="padding: 0.75rem 1.5rem; color: #6b46c1; font-style: italic;">
+                                                ↳ Retención: {{ $detail->name }} (Pago a cargo de Inmobiliaria)
+                                            </td>
+                                            <td style="padding: 0.75rem 1.5rem; text-align: right;">-</td>
+                                            <td style="padding: 0.75rem 1.5rem; text-align: right; color: #e53e3e; font-weight: 700;">
+                                                ${{ number_format($detail->amount, 2) }}
+                                            </td>
                                         </tr>
                                     @endforeach
                                 @endforeach
@@ -212,6 +239,20 @@
                         </div>
                         <span style="font-weight: 700; color: #e53e3e;">- ${{ number_format($settlement->agency_commission, 2) }}</span>
                     </div>
+
+                    @php
+                        // Calcular si hay diferencia por pagos directos transferidos
+                        $directDiff = $settlement->total_income - $settlement->total_expense - $settlement->agency_commission - $settlement->net_amount;
+                    @endphp
+                    @if($directDiff > 0.01)
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; font-size: 1.1rem; padding-bottom: 1.5rem; border-bottom: 1px dashed #edf2f7;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="color: var(--text-light); font-weight: 600;">Ya transferido directo:</span>
+                            <span style="font-size: 0.75rem; color: var(--text-light); font-style: italic;">(Fondos que el inquilino transfirió al propietario)</span>
+                        </div>
+                        <span style="font-weight: 700; color: #F6AD55;">- ${{ number_format($directDiff, 2) }}</span>
+                    </div>
+                    @endif
                     
                     <div style="background: var(--primary-color); color: white; padding: 1.5rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(26, 32, 44, 0.15);">
                         <span style="font-weight: 700; font-size: 1.2rem;">NETO FINAL:</span>

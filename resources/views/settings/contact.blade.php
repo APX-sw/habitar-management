@@ -29,6 +29,32 @@
                 </p>
             </div>
 
+            <div style="margin-bottom: 2rem;">
+                <label style="font-size: 1.1rem; margin-bottom: 1rem;">Correo Electrónico de la Inmobiliaria</label>
+                <div style="display: flex; gap: 1rem;">
+                    <div style="background: #EBF8FF; color: #3182CE; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    </div>
+                    <input type="email" name="agency_email" value="{{ $agencyEmail }}" required placeholder="Ej: contacto@inmobiliaria.com" style="font-size: 1.1rem; font-weight: 600;">
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-light); margin-top: 0.8rem;">
+                    Este correo se mostrará impreso en la cabecera de todos los recibos de pago.
+                </p>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <label style="font-size: 1.1rem; margin-bottom: 1rem;">Dirección Física de la Inmobiliaria</label>
+                <div style="display: flex; gap: 1rem;">
+                    <div style="background: #FEFCBF; color: #B7791F; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </div>
+                    <input type="text" name="agency_address" value="{{ $agencyAddress }}" required placeholder="Ej: Av. Belgrano 123, Santiago del Estero" style="font-size: 1.1rem; font-weight: 600;">
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-light); margin-top: 0.8rem;">
+                    Esta dirección y localidad aparecerá impresa en los recibos emitidos a tus inquilinos.
+                </p>
+            </div>
+
             <div style="background: #ebf8ff; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; border-left: 5px solid #4299e1;">
                 <h4 style="color: #2b6cb0; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>

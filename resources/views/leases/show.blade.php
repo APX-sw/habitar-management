@@ -76,6 +76,27 @@
     <!-- Column 1: Core Info -->
     <div style="display: flex; flex-direction: column; gap: 2rem;">
         
+        @if($lease->renewal_status === 'terminated')
+            @php
+                $terminationPenalty = $lease->extraCharges->where('description', 'Multa por Rescisión Anticipada')->first();
+                $reason = $lease->termination_reason ?: ($terminationPenalty->notes ?? null);
+            @endphp
+            <div class="card" style="border-left: 5px solid #e53e3e; background: #fff5f5; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <h3 style="color: #c53030; margin: 0 0 0.5rem 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    Contrato Finalizado (Rescindido)
+                </h3>
+                <p style="color: #9b2c2c; margin: 0; font-size: 0.95rem; font-weight: 500;">
+                    Este contrato fue rescindido formalmente el día <strong>{{ \Carbon\Carbon::parse($lease->end_date)->format('d/m/Y') }}</strong>.
+                </p>
+                @if($reason)
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #fed7d7; font-size: 0.9rem; color: #742a2a; font-weight: 500;">
+                        <strong>Motivo de la finalización:</strong> {{ $reason }}
+                    </div>
+                @endif
+            </div>
+        @endif
+
         <!-- Propiedad & Inquilino -->
         <div class="card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2rem;">
             <div style="border-right: 1px solid #edf2f7; padding-right: 2rem;">
@@ -177,6 +198,10 @@
                                 <option value="{{ $cat->id }}" {{ $cat->id == 4 ? 'selected' : '' }}>{{ $cat->name }}</option>
                             @endforeach
                         </select>
+                        <select name="is_paid_by_agency" required style="padding: 0.5rem; border: 1px solid #d2d6dc; border-radius: 6px;">
+                            <option value="1">Lo paga Habitar</option>
+                            <option value="0">Lo paga Propietario</option>
+                        </select>
                         <button type="submit" class="btn" style="background: var(--accent-color); color: white; padding: 0.5rem 1rem; font-size: 0.8rem;">Guardar</button>
                     </form>
                 </div>
@@ -185,6 +210,11 @@
                     @forelse($lease->fixedCharges as $charge)
                         <div class="fixed-charge-badge" style="background: white; border: 1px solid #edf2f7; padding: 0.6rem 1rem; border-radius: 50px; display: flex; align-items: center; gap: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                             <span style="font-weight: 700; color: var(--primary-color);">{{ $charge->name }}</span>
+                            @if($charge->is_paid_by_agency)
+                                <span title="El inquilino lo abona, pero el dinero no se rinde al propietario ya que Habitar efectúa el pago final" style="font-size: 0.65rem; background: #edf2f7; color: #4a5568; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 800; text-transform: uppercase;">Habitar</span>
+                            @else
+                                <span title="El dinero de este concepto se le rinde directamente al propietario" style="font-size: 0.65rem; background: #e6fffa; color: #319795; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 800; text-transform: uppercase;">Propietario</span>
+                            @endif
                             <form action="{{ route('fixed-charges.destroy', $charge) }}" method="POST" style="display: inline;">
                                 @csrf @method('DELETE')
                                 <button type="submit" style="background: none; border: none; color: #cbd5e0; cursor: pointer; font-size: 1.1rem; padding: 0; line-height: 1; transition: color 0.2s;" onmouseover="this.style.color='#c53030'" onmouseout="this.style.color='#cbd5e0'">&times;</button>

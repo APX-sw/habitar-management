@@ -90,7 +90,7 @@
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--secondary-color); padding-bottom: 0.5rem;">
                     <h3 style="color: var(--primary-color); margin: 0;">Documentación de Propiedad</h3>
-                    <button onclick="document.getElementById('uploadDocModal').style.display='flex'" class="btn" style="background: var(--secondary-color); color: var(--primary-color); font-size: 0.75rem; padding: 0.4rem 0.8rem;">+ Subir Documento</button>
+                    <button onclick="openPropertyDocsModal({{ $property->id }}, '{{ $property->location }}')" class="btn" style="background: var(--secondary-color); color: var(--primary-color); font-size: 0.75rem; padding: 0.4rem 0.8rem;">+ Subir Documento</button>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
@@ -150,32 +150,6 @@
     </div>
 </div>
 
-<!-- Modal Subir Documento -->
-<div id="uploadDocModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
-    <div class="card" style="width: 100%; max-width: 500px; padding: 2rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h2 style="color: var(--primary-color); margin: 0;">Subir Documentación</h2>
-            <button onclick="document.getElementById('uploadDocModal').style.display='none'" style="background: none; border: none; font-size: 1.5rem; color: #a0aec0; cursor: pointer;">&times;</button>
-        </div>
-        <form action="{{ route('property-documents.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" name="property_id" value="{{ $property->id }}">
-            
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #718096; text-transform: uppercase; margin-bottom: 0.5rem;">Seleccionar Archivo (Máx 10MB)</label>
-                <input type="file" name="file" required style="width: 100%; padding: 1rem; border: 2px dashed #e2e8f0; border-radius: 10px; cursor: pointer;">
-            </div>
-
-            <div style="background: #FFF5F5; color: #C53030; padding: 1rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 2rem; display: flex; gap: 0.5rem; align-items: flex-start;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                <span>El archivo será almacenado de forma segura y vinculado a esta propiedad.</span>
-            </div>
-
-            <div style="display: flex; gap: 1rem;">
-                <button type="button" onclick="document.getElementById('uploadDocModal').style.display='none'" class="btn" style="flex: 1; background: #edf2f7; color: #4a5568;">Cancelar</button>
-                <button type="submit" class="btn btn-primary" style="flex: 1;">Subir Archivo</button>
-            </div>
-        </form>
-    </div>
-</div>
+<!-- Modal Premium de Carga de Documentos -->
+@include('properties.partials.docs_modal')
 @endsection

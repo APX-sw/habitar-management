@@ -11,10 +11,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // En un DatabaseSeeder estándar solo llamamos a los datos del sistema
-        // sin borrar nada, por seguridad.
-        $this->call(ArgentinaGeographySeeder::class);
+        // Consolidado en un único seeder de sistema para facilitar el mantenimiento.
         $this->call(SystemDataSeeder::class);
-        $this->call(PropertyTypeSeeder::class);
     }
 }

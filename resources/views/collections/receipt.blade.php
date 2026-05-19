@@ -8,8 +8,14 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         Volver a la Gestión
     </a>
-    <div style="display: flex; gap: 1rem;">
-        <button onclick="window.print()" class="btn" style="background: var(--primary-color); color: white; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+    <div style="display: flex; gap: 1rem; align-items: center;">
+        <form action="{{ route('collections.send_receipt', [$collection, $payment]) }}" method="POST" style="display: inline; margin: 0;">
+            @csrf
+            <button type="submit" class="btn" style="background: var(--accent-gradient); color: white; display: flex; align-items: center; gap: 0.5rem; font-weight: 700; border: none; padding: 0.7rem 1.2rem; cursor: pointer; box-shadow: 0 4px 6px rgba(56, 178, 172, 0.15);">
+                📧 Enviar al Inquilino
+            </button>
+        </form>
+        <button onclick="window.print()" class="btn" style="background: var(--primary-color); color: white; display: flex; align-items: center; gap: 0.5rem; font-weight: 700; padding: 0.7rem 1.2rem; border: none; cursor: pointer;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
             Imprimir Recibo
         </button>
@@ -29,8 +35,8 @@
                 </div>
                 <p style="font-size: 0.9rem; color: var(--text-light); line-height: 1.5; margin: 0;">
                     Soluciones Inmobiliarias<br>
-                    Rosario, Santa Fe<br>
-                    contacto@habitar.com.ar
+                    {{ \App\Models\AgencySetting::get('agency_address', 'Av. Belgrano (N) 450, Santiago del Estero') }}<br>
+                    {{ \App\Models\AgencySetting::get('agency_email', 'contacto@habitar.com.ar') }}
                 </p>
             </div>
             <div style="text-align: right;">
@@ -69,7 +75,15 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                     <td style="padding: 0.8rem 0; color: var(--text-light); font-size: 0.9rem;">Método de Pago:</td>
-                    <td style="padding: 0.8rem 0; text-align: right; font-weight: 700; color: var(--primary-color);">{{ $payment->account->name ?? 'N/A' }}</td>
+                    <td style="padding: 0.8rem 0; text-align: right; font-weight: 700; color: var(--primary-color);">
+                        @if(($payment->account->type ?? '') === 'cash')
+                            Efectivo
+                        @elseif(($payment->account->type ?? '') === 'bank')
+                            Transferencia Bancaria
+                        @else
+                            {{ $payment->account->name ?? 'N/A' }}
+                        @endif
+                    </td>
                 </tr>
                 @if($payment->notes)
                 <tr>
@@ -98,11 +112,42 @@
 
 <style>
     @media print {
-        .no-print { display: none !important; }
-        body { background: white !important; padding: 0 !important; margin: 0 !important; }
-        .card { border: none !important; box-shadow: none !important; padding: 0 !important; }
-        #receipt-container { width: 100% !important; max-width: 100% !important; }
-        .main-content { padding: 0 !important; margin: 0 !important; }
+        .no-print, .sidebar, .top-bar, [style*="background: #f0fff4"], [style*="background: #fff5f5"] { 
+            display: none !important; 
+        }
+        body { 
+            background: white !important; 
+            padding: 0 !important; 
+            margin: 0 !important; 
+            display: block !important;
+        }
+        .app-container {
+            margin-left: 0 !important;
+            padding: 0 !important;
+            min-height: auto !important;
+            display: block !important;
+        }
+        .main-content { 
+            padding: 0 !important; 
+            margin: 0 !important; 
+            width: 100% !important;
+            display: block !important;
+        }
+        .card { 
+            border: none !important; 
+            box-shadow: none !important; 
+            padding: 0 !important; 
+        }
+        #receipt-container { 
+            width: 100% !important; 
+            max-width: 100% !important; 
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        @page {
+            size: auto;
+            margin: 15mm 20mm;
+        }
     }
 </style>
 @endsection

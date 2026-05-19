@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\Storage;
 
 class PropertyDocumentController extends Controller
 {
+    public function index(Property $property)
+    {
+        return response()->json($property->documents);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -27,13 +32,28 @@ class PropertyDocumentController extends Controller
             'mime_type' => $file->getMimeType(),
         ]);
 
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Documento subido correctamente.',
+                'document' => $doc
+            ]);
+        }
+
         return back()->with('success', 'Documento subido correctamente.');
     }
 
-    public function destroy(PropertyDocument $propertyDocument)
+    public function destroy(PropertyDocument $propertyDocument, Request $request)
     {
         Storage::disk('public')->delete($propertyDocument->path);
         $propertyDocument->delete();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Documento eliminado.'
+            ]);
+        }
 
         return back()->with('success', 'Documento eliminado.');
     }

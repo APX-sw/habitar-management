@@ -33,7 +33,8 @@ class Lease extends Model
         'parent_lease_id',
         'property_review_status',
         'property_review_notes',
-        'renewal_status'
+        'renewal_status',
+        'termination_reason'
     ];
 
     public function parentLease()
@@ -104,7 +105,9 @@ class Lease extends Model
         } else {
             $currentPrice = $this->base_price;
             for ($p = 1; $p <= $periods; $p++) {
-                $pStart = $startDate->copy()->addMonths(($p - 1) * $this->update_frequency_months);
+                // Aplicamos un mes de desfase hacia atrás (lag) porque el índice del último mes
+                // del período aún no está publicado al momento de iniciar el cobro (ej. al 1 de Abril no está Marzo, se usa Dic-Ene-Feb)
+                $pStart = $startDate->copy()->addMonths(($p - 1) * $this->update_frequency_months)->subMonth();
                 $pEnd = $pStart->copy()->addMonths($this->update_frequency_months - 1);
                 
                 // Verificar que existan TODOS los meses en el rango
@@ -123,11 +126,16 @@ class Lease extends Model
                     });
 
                 if ($existingValues->count() < $requiredMonthsCount) {
-                    throw new \Exception("Faltan cargar porcentajes para el índice '{$this->indexType->name}' entre {$pStart->format('m/Y')} y {$pEnd->format('m/Y')}. Por favor, cárgalos en Configuración antes de generar el cobro.");
+                    throw new \Exception("Faltan cargar porcentajes para el índice '{$this->indexType->name}' entre {$pStart->format('m/Y')} y {$pEnd->format('m/Y')} (considerando el mes de rezago por publicación). Por favor, cárgalos en Configuración antes de generar el cobro.");
                 }
 
-                $accumulatedPercentage = $existingValues->sum('percentage');
-                $currentPrice = $currentPrice * (1 + ($accumulatedPercentage / 100));
+                $accumulatedFactor = 1.0;
+                // Ordenar por año y mes para acumular correctamente en orden cronológico
+                $values = $existingValues->orderBy('year', 'asc')->orderBy('month', 'asc')->get();
+                foreach ($values as $val) {
+                    $accumulatedFactor *= (1 + ($val->percentage / 100));
+                }
+                $currentPrice = $currentPrice * $accumulatedFactor;
             }
             return round($currentPrice, 2);
         }

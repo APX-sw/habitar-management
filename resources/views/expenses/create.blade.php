@@ -62,13 +62,13 @@
         </div>
 
         <div style="margin-bottom: 2.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light); text-transform: uppercase;">Adjuntar Comprobante (Imagen o PDF)</label>
-            <div style="position: relative; border: 2px dashed #d2d6dc; border-radius: 12px; padding: 1.5rem; text-align: center; transition: all 0.3s ease; background: #f9fafb;">
-                <input type="file" name="attachment" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
-                <div style="pointer-events: none;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light); text-transform: uppercase;">Adjuntar Comprobantes (Imagen o PDF)</label>
+            <div id="attachment-container" style="position: relative; border: 2px dashed #d2d6dc; border-radius: 12px; padding: 1.5rem; text-align: center; transition: all 0.3s ease; background: #f9fafb;">
+                <input type="file" name="attachments[]" id="attachment-input" multiple style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                <div id="attachment-text-container">
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" style="margin-bottom: 0.5rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                    <p style="margin: 0; font-size: 0.9rem; color: #4a5568;">Haz clic o arrastra un archivo aquí</p>
-                    <p style="margin: 0.2rem 0 0; font-size: 0.75rem; color: #a0aec0;">PDF, JPG, PNG (Máx 5MB)</p>
+                    <p style="margin: 0; font-size: 0.9rem; color: #4a5568; font-weight: 600;">Haz clic o arrastra tus archivos aquí</p>
+                    <p style="margin: 0.2rem 0 0; font-size: 0.75rem; color: #a0aec0;">Puedes seleccionar varios archivos PDF, JPG, PNG (Máx 5MB c/u)</p>
                 </div>
             </div>
         </div>
@@ -78,4 +78,58 @@
         </div>
     </form>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.getElementById('attachment-input').addEventListener('change', function(e) {
+        const files = e.target.files;
+        const container = document.getElementById('attachment-container');
+        const textContainer = document.getElementById('attachment-text-container');
+        
+        if (files.length > 0) {
+            let filesHtml = '';
+            let totalSize = 0;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                totalSize += file.size;
+                filesHtml += `
+                    <div style="font-size: 0.85rem; color: #2f855a; font-weight: 600; margin-top: 0.4rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                        <span>📄</span>
+                        <span style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</span>
+                        <span style="color: #276749;">(${fileSizeMB} MB)</span>
+                    </div>
+                `;
+            }
+            const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+            container.style.borderColor = '#38a169';
+            container.style.background = '#f0fff4';
+            textContainer.innerHTML = `
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#38a169" stroke-width="2.5" style="margin-bottom: 0.5rem;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <p style="margin: 0; font-size: 0.95rem; color: #276749; font-weight: 700;">¡${files.length} archivo(s) seleccionado(s)!</p>
+                <div style="margin-top: 0.5rem; max-height: 150px; overflow-y: auto; padding: 0.2rem;">${filesHtml}</div>
+                <p style="margin: 0.6rem 0 0; font-size: 0.75rem; color: #2f855a; font-weight: 700;">Total: ${totalSizeMB} MB</p>
+                <button type="button" onclick="clearSelectedFiles(event)" style="margin-top: 0.8rem; background: #e53e3e; color: white; border: none; padding: 0.4rem 1rem; border-radius: 6px; font-weight: 700; font-size: 0.75rem; cursor: pointer; transition: background 0.2s;">Quitar Todos</button>
+            `;
+        }
+    });
+
+    function clearSelectedFiles(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const input = document.getElementById('attachment-input');
+        input.value = '';
+        const container = document.getElementById('attachment-container');
+        const textContainer = document.getElementById('attachment-text-container');
+        
+        container.style.borderColor = '#d2d6dc';
+        container.style.background = '#f9fafb';
+        textContainer.innerHTML = `
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" style="margin-bottom: 0.5rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <p style="margin: 0; font-size: 0.9rem; color: #4a5568; font-weight: 600;">Haz clic o arrastra tus archivos aquí</p>
+            <p style="margin: 0.2rem 0 0; font-size: 0.75rem; color: #a0aec0;">Puedes seleccionar varios archivos PDF, JPG, PNG (Máx 5MB c/u)</p>
+        `;
+    }
+</script>
 @endsection

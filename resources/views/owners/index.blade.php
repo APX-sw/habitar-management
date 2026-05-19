@@ -4,8 +4,14 @@
 
 @section('content')
 <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <h1 style="color: var(--primary-color);">Gestión de Propietarios</h1>
-    <a href="{{ route('owners.create') }}" class="btn btn-primary">+ Nuevo Propietario</a>
+    <h1 style="color: var(--primary-color); margin: 0;">Gestión de Propietarios</h1>
+    <div style="display: flex; gap: 1rem;">
+        <a href="{{ route('reports.create') }}" class="btn" style="background: #e6fffa; color: #319795; border: 1px solid #b2f5ea; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            Generar Dossiers
+        </a>
+        <a href="{{ route('owners.create') }}" class="btn btn-primary">+ Nuevo Propietario</a>
+    </div>
 </div>
 
 <!-- Filtro de Búsqueda Compacto -->

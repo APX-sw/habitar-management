@@ -197,8 +197,12 @@
             </div>
             
             <div id="fixed-charges-container">
-                <div style="display: grid; grid-template-columns: 1fr 40px; gap: 1rem; margin-bottom: 1rem;" class="charge-row">
+                <div style="display: grid; grid-template-columns: 1fr 200px 40px; gap: 1rem; margin-bottom: 1rem; align-items: center;" class="charge-row">
                     <input type="text" name="fixed_charges[0][name]" placeholder="Concepto (Ej: Expensas, TGI, Agua)" class="form-control" style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color);">
+                    <select name="fixed_charges[0][is_paid_by_agency]" style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color); background: white; font-weight: 600; font-size: 0.85rem; color: #4A5568;">
+                        <option value="1">Lo paga Habitar</option>
+                        <option value="0">Lo paga Propietario</option>
+                    </select>
                     <div></div>
                 </div>
             </div>
@@ -250,11 +254,16 @@
         const container = document.getElementById('fixed-charges-container');
         const row = document.createElement('div');
         row.style.display = 'grid';
-        row.style.gridTemplateColumns = '1fr 40px';
+        row.style.gridTemplateColumns = '1fr 200px 40px';
         row.style.gap = '1rem';
         row.style.marginBottom = '1rem';
+        row.style.alignItems = 'center';
         row.innerHTML = `
             <input type="text" name="fixed_charges[${chargeCount}][name]" placeholder="Concepto Mensual" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+            <select name="fixed_charges[${chargeCount}][is_paid_by_agency]" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--secondary-color); background: white; font-weight: 600; font-size: 0.85rem; color: #4A5568;">
+                <option value="1">Lo paga Habitar</option>
+                <option value="0">Lo paga Propietario</option>
+            </select>
             <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: #C53030; cursor: pointer; font-size: 1.2rem;">&times;</button>
         `;
         container.appendChild(row);

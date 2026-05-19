@@ -23,12 +23,13 @@
                         <th style="padding: 1rem; text-align: right; color: var(--text-light);">Cobros Brutos (+)</th>
                         <th style="padding: 1rem; text-align: right; color: var(--text-light);">Gastos Dueño (-)</th>
                         <th style="padding: 1rem; text-align: right; color: var(--text-light);">Honorarios Inmo. (-)</th>
+                        <th style="padding: 1rem; text-align: right; color: var(--text-light);">Transferido Directo (-)</th>
                         <th style="padding: 1rem; text-align: right; color: var(--text-light);">Neto a Rendir</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($previews as $index => $preview)
-                        <tr style="border-bottom: 1px solid #edf2f7;" class="preview-row">
+                        <tr style="border-bottom: 1px solid #edf2f7;" class="preview-row" data-direct-payments="{{ $preview['direct_payments'] }}">
                             <td style="padding: 1rem; text-align: center;">
                                 <input type="checkbox" name="owners[{{ $index }}][selected]" checked value="1">
                                 <input type="hidden" name="owners[{{ $index }}][owner_id]" value="{{ $preview['owner']->id }}">
@@ -51,6 +52,13 @@
                                 <div class="row-commission-display" style="font-size: 0.9rem; font-weight: 800; color: #4299E1; margin-top: 0.3rem;">
                                     ${{ number_format($preview['agency_commission'], 2) }}
                                 </div>
+                            </td>
+                            <td style="padding: 1rem; text-align: right; color: #F6AD55; font-weight: 600;">
+                                @if($preview['direct_payments'] > 0)
+                                    -${{ number_format($preview['direct_payments'], 2) }}
+                                @else
+                                    -
+                                @endif
                             </td>
                             <td style="padding: 1rem; text-align: right; font-weight: 900; font-size: 1.2rem; color: var(--primary-color);" class="row-net-display">
                                 ${{ number_format($preview['net'], 2) }}
@@ -82,10 +90,11 @@
         const rentTotal = parseFloat(row.querySelector('.row-rent-total').value);
         const income = parseFloat(row.querySelector('.row-income').value);
         const expenses = parseFloat(row.querySelector('.row-expenses').value);
+        const directPayments = parseFloat(row.dataset.directPayments || 0);
 
         // Nuevo cálculo de comisión
         const newCommission = rentTotal * (percentage / 100);
-        const newNet = income - expenses - newCommission;
+        const newNet = income - expenses - newCommission - directPayments;
 
         // Actualizar inputs ocultos que se envían al form
         row.querySelector('.row-commission-val').value = newCommission.toFixed(2);

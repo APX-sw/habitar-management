@@ -45,11 +45,13 @@ class LeaseController extends Controller
             $nearThreshold = now()->addMonths(2);
 
             if ($request->status === 'expired') {
-                $query->where('end_date', '<', $today);
+                $query->where('end_date', '<', $today)->where('renewal_status', '!=', 'terminated');
             } elseif ($request->status === 'near') {
-                $query->whereBetween('end_date', [$today, $nearThreshold]);
+                $query->whereBetween('end_date', [$today, $nearThreshold])->where('renewal_status', '!=', 'terminated');
             } elseif ($request->status === 'active') {
-                $query->where('end_date', '>', $nearThreshold);
+                $query->where('end_date', '>', $nearThreshold)->where('renewal_status', '!=', 'terminated');
+            } elseif ($request->status === 'terminated') {
+                $query->where('renewal_status', 'terminated');
             }
         }
 
@@ -103,6 +105,7 @@ class LeaseController extends Controller
                     $lease->fixedCharges()->create([
                         'name' => $charge['name'],
                         'amount' => $charge['amount'] ?? 0,
+                        'is_paid_by_agency' => isset($charge['is_paid_by_agency']) ? (bool)$charge['is_paid_by_agency'] : false,
                     ]);
                 }
             }
@@ -194,7 +197,8 @@ class LeaseController extends Controller
         foreach ($lease->fixedCharges as $charge) {
             $newLease->fixedCharges()->create([
                 'name' => $charge->name,
-                'amount' => $charge->amount
+                'amount' => $charge->amount,
+                'is_paid_by_agency' => $charge->is_paid_by_agency,
             ]);
         }
 
@@ -284,7 +288,8 @@ class LeaseController extends Controller
         foreach ($lease->fixedCharges as $charge) {
             $newLease->fixedCharges()->create([
                 'name' => $charge->name,
-                'amount' => $charge->amount
+                'amount' => $charge->amount,
+                'is_paid_by_agency' => $charge->is_paid_by_agency,
             ]);
         }
 
@@ -353,7 +358,8 @@ class LeaseController extends Controller
         $lease->update([
             'is_active' => false,
             'end_date' => $request->termination_date,
-            'renewal_status' => 'terminated'
+            'renewal_status' => 'terminated',
+            'termination_reason' => $request->reason
         ]);
 
         return redirect()->route('leases.index')->with('success', 'Contrato finalizado correctamente. Se ha generado la multa correspondiente.');
