@@ -200,7 +200,7 @@ class CollectionController extends Controller
 
     public function show(Collection $collection)
     {
-        $collection->load(['lease.property', 'lease.tenant', 'details', 'lease.fixedCharges', 'lease.extraCharges', 'payments.account']);
+        $collection->load(['lease.property.owner', 'lease.tenant', 'details', 'lease.fixedCharges', 'lease.extraCharges', 'payments.account']);
         $accounts = \App\Models\Account::where('is_active', true)->get();
         $categories = \App\Models\TransactionCategory::all();
         return view('collections.show', compact('collection', 'accounts', 'categories'));

@@ -19,12 +19,12 @@
             </div>
         </div>
     </div>
-    <div style="display: flex; gap: 1rem;">
-        <a href="{{ route('leases.renew', $lease) }}" class="btn" style="background: var(--primary-color); color: white; border: none; font-weight: 700; text-decoration: none; display: flex; align-items: center;">♻️ Renovar</a>
-        <a href="{{ route('leases.renegotiate', $lease) }}" class="btn" style="background: #E9D8FD; color: #553C9A; border: 1px solid #D6BCFA; font-weight: 700; text-decoration: none; display: flex; align-items: center;">📝 Renegociar</a>
-        <button onclick="openDocsModal({{ $lease->id }}, '{{ $lease->property->location }}')" class="btn" style="background: #ebf4ff; color: #2b6cb0; border: 1px solid #bee3f8; font-weight: 700;">📂 Documentos</button>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+        <a href="{{ route('leases.renew', $lease) }}" class="btn" style="background: var(--primary-color); color: white; border: 1px solid var(--primary-color); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 42px; padding: 0 1.25rem;">♻️ Renovar</a>
+        <a href="{{ route('leases.renegotiate', $lease) }}" class="btn" style="background: #E9D8FD; color: #553C9A; border: 1px solid #D6BCFA; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 42px; padding: 0 1.25rem;">📝 Renegociar</a>
+        <button onclick="openDocsModal({{ $lease->id }}, '{{ $lease->property->location }}')" class="btn" style="background: #ebf4ff; color: #2b6cb0; border: 1px solid #bee3f8; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 42px; padding: 0 1.25rem;">📂 Documentos</button>
         @if($lease->is_active)
-            <button onclick="document.getElementById('terminateModal').style.display='flex'" class="btn" style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; font-weight: 700;">Finalizar Contrato</button>
+            <button onclick="document.getElementById('terminateModal').style.display='flex'" class="btn" style="background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 42px; padding: 0 1.25rem;">Finalizar Contrato</button>
         @endif
     </div>
 </div>
@@ -155,6 +155,22 @@
                 Condiciones y Actualización
             </h3>
             
+            @php
+                $startDate = \Carbon\Carbon::parse($lease->start_date);
+                $endDate = \Carbon\Carbon::parse($lease->end_date);
+                $today = now()->startOfMonth();
+                
+                $monthsDiff = $startDate->diffInMonths($today);
+                $periodsElapsed = floor($monthsDiff / $lease->update_frequency_months);
+                
+                $nextPeriodNumber = $periodsElapsed + 1;
+                $nextUpdateDate = $startDate->copy()->addMonths($nextPeriodNumber * $lease->update_frequency_months);
+                
+                $nextUpdateText = $nextUpdateDate->lessThanOrEqualTo($endDate) 
+                    ? $nextUpdateDate->translatedFormat('F Y') 
+                    : 'Fin del contrato';
+            @endphp
+
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #edf2f7;">
                 <div>
                     <label style="display: block; color: #a0aec0; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem;">PRECIO BASE</label>
@@ -166,6 +182,13 @@
                         {{ $lease->update_type === 'fixed' ? 'Incremento Fijo (' . $lease->update_value . '%)' : 'Indexado (' . ($lease->indexType->name ?? 'N/A') . ')' }}
                         <div style="font-size: 0.8rem; color: var(--text-light);">Cada {{ $lease->update_frequency_months }} meses</div>
                     </div>
+                </div>
+                
+                <div style="grid-column: span 2; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #edf2f7; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                    <span style="color: var(--text-light); font-weight: 600;">Próxima Actualización de Precio:</span>
+                    <span style="font-weight: 800; color: #3182CE; background: #EBF8FF; padding: 0.3rem 0.8rem; border-radius: 6px; text-transform: capitalize;">
+                        {{ $nextUpdateText }}
+                    </span>
                 </div>
             </div>
 
@@ -237,6 +260,55 @@
 
     <!-- Column 2: Extras & Installments -->
     <div style="display: flex; flex-direction: column; gap: 2rem;">
+        
+        <div class="card" style="padding: 2rem;">
+            <h3 style="margin: 0 0 1.5rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                Cobros Recientes del Contrato
+            </h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #edf2f7; text-align: left; color: #a0aec0; font-size: 0.75rem; text-transform: uppercase;">
+                            <th style="padding: 0.5rem 0.2rem;">Periodo</th>
+                            <th style="padding: 0.5rem 0.2rem;">Monto</th>
+                            <th style="padding: 0.5rem 0.2rem; text-align: right;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($lease->collections as $col)
+                            @php
+                                $badgeBg = '#EDF2F7'; $badgeColor = '#4A5568'; $lbl = 'Borrador';
+                                if($col->status === 'paid') { $badgeBg = '#C6F6D5'; $badgeColor = '#22543D'; $lbl = 'Cobrado'; }
+                                elseif($col->status === 'partial') { $badgeBg = '#E9D8FD'; $badgeColor = '#553C9A'; $lbl = 'Parcial'; }
+                                elseif($col->status === 'ready' || $col->status === 'sent') { $badgeBg = '#FEFCBF'; $badgeColor = '#744210'; $lbl = 'Pendiente'; }
+                            @endphp
+                            <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                <td style="padding: 0.75rem 0.2rem; font-weight: 700; text-transform: capitalize;">
+                                    <a href="{{ route('collections.show', $col) }}" style="color: var(--primary-color); text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                        {{ \Carbon\Carbon::createFromDate(null, $col->month, 1)->translatedFormat('F') }} {{ $col->year }}
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                    </a>
+                                </td>
+                                <td style="padding: 0.75rem 0.2rem; font-weight: 700; color: #4a5568;">
+                                    ${{ number_format($col->total_amount, 2) }}
+                                </td>
+                                <td style="padding: 0.75rem 0.2rem; text-align: right;">
+                                    <span style="background: {{ $badgeBg }}; color: {{ $badgeColor }}; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">
+                                        {{ $lbl }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-light); font-size: 0.85rem;">No se registran cobros en este contrato.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="card" style="padding: 2rem;">
             <h3 style="margin: 0 0 1.5rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>

@@ -77,7 +77,10 @@ class TenantController extends Controller
     public function show(Tenant $tenant)
     {
         $tenant->load('leases.property');
-        return view('tenants.show', compact('tenant'));
+        $pendingCollections = $tenant->getPendingCollections();
+        $totalDebt = $pendingCollections->sum('pending_amount');
+        
+        return view('tenants.show', compact('tenant', 'pendingCollections', 'totalDebt'));
     }
 
     public function showApi(Tenant $tenant)

@@ -28,6 +28,8 @@
     <div style="display: grid; grid-template-columns: 350px 1fr; gap: 2.5rem; align-items: start;">
         <!-- Left Column: Owner Information -->
         <aside style="display: grid; gap: 2rem;">
+
+
             <!-- Profile Info Card -->
             <div class="card-premium" style="padding: 2rem;">
                 <h3 class="section-title-small">Datos de Contacto</h3>
@@ -60,8 +62,11 @@
                     @forelse($owner->bankAccounts as $account)
                         <div style="background: #ebf8ff; border: 1px solid #bee3f8; padding: 1.25rem; border-radius: 12px;">
                             <div style="font-weight: 700; color: #2c5282; font-size: 1rem; margin-bottom: 0.5rem;">{{ $account->holder_name }}</div>
-                            <div style="font-size: 0.85rem; color: #4a5568; font-family: monospace; letter-spacing: 0.05em; background: rgba(255,255,255,0.5); padding: 0.4rem; border-radius: 4px; margin-bottom: 0.5rem;">
-                                {{ $account->cbu_alias }}
+                            <div style="font-size: 0.85rem; color: #4a5568; font-family: monospace; letter-spacing: 0.05em; background: rgba(255,255,255,0.65); padding: 0.5rem 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; border: 1px solid rgba(190, 227, 248, 0.5);">
+                                <span style="user-select: all;">{{ $account->cbu_alias }}</span>
+                                <button onclick="navigator.clipboard.writeText('{{ $account->cbu_alias }}'); this.innerText='✅'; setTimeout(() => this.innerText='📋', 1500);" style="background: none; border: none; cursor: pointer; font-size: 0.95rem; padding: 0; display: flex; align-items: center;" title="Copiar CBU/Alias">
+                                    📋
+                                </button>
                             </div>
                             <div style="font-size: 0.75rem; color: #718096; font-weight: 600;">CUIT: {{ $account->holder_cuit }}</div>
                         </div>
@@ -177,11 +182,13 @@
         background: white;
         color: var(--primary-color);
         text-decoration: none;
-        padding: 0.75rem 1.5rem;
+        height: 42px;
+        padding: 0 1.5rem;
         border-radius: 12px;
         font-weight: 700;
-        display: flex;
+        display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 0.5rem;
         border: 1px solid #e2e8f0;
         transition: all 0.2s;
@@ -197,7 +204,11 @@
         background: var(--accent-gradient);
         color: white;
         text-decoration: none;
-        padding: 0.6rem 1.2rem;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 1.5rem;
         border-radius: 10px;
         font-weight: 600;
         font-size: 0.9rem;

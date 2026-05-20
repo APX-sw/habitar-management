@@ -367,7 +367,15 @@ class LeaseController extends Controller
 
     public function show(Lease $lease)
     {
-        $lease->load(['property', 'tenant', 'fixedCharges', 'extraCharges']);
+        $lease->load([
+            'property', 
+            'tenant', 
+            'fixedCharges', 
+            'extraCharges', 
+            'collections' => function($q) {
+                $q->orderBy('year', 'desc')->orderBy('month', 'desc')->take(4);
+            }
+        ]);
         $categories = \App\Models\TransactionCategory::all();
         return view('leases.show', compact('lease', 'categories'));
     }

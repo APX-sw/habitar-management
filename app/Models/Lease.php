@@ -140,4 +140,20 @@ class Lease extends Model
             return round($currentPrice, 2);
         }
     }
+
+    /**
+     * Determina si una fecha específica coincide con un periodo de actualización de alquiler.
+     */
+    public function isUpdateMonthForDate($month, $year)
+    {
+        $targetDate = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $startDate = \Carbon\Carbon::parse($this->start_date)->startOfMonth();
+        
+        if ($targetDate->lessThanOrEqualTo($startDate)) {
+            return false;
+        }
+
+        $monthsDiff = $startDate->diffInMonths($targetDate);
+        return ($monthsDiff > 0 && ($monthsDiff % $this->update_frequency_months === 0));
+    }
 }

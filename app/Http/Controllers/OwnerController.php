@@ -65,7 +65,7 @@ class OwnerController extends Controller
 
     public function show(Owner $owner)
     {
-        $owner->load('properties.activeLease.tenant');
+        $owner->load(['properties.activeLease.tenant', 'bankAccounts']);
         return view('owners.show', compact('owner'));
     }
 

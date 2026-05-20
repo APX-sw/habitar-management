@@ -14,21 +14,20 @@
             {{ $collection->lease->property->location }} • {{ \Carbon\Carbon::createFromDate(null, $collection->month, 1)->translatedFormat('F') }} {{ $collection->year }}
         </p>
     </div>
-    
-    <div style="display: gap; gap: 1rem; display: flex;">
+    <div style="display: flex; gap: 1rem; align-items: center;">
         @if($collection->status === 'incompleto' || $collection->status === 'ready' || $collection->status === 'draft' || $collection->status === 'partial')
-            <button onclick="document.getElementById('extraChargeModal').style.display='flex'" class="btn" style="background: var(--secondary-color); color: var(--primary-color); font-weight: 700; padding: 0.8rem 1.5rem; border: 1px solid #d2d6dc;">➕ Añadir Cargo Extra</button>
+            <button onclick="document.getElementById('extraChargeModal').style.display='flex'" class="btn" style="background: var(--secondary-color); color: var(--primary-color); font-weight: 700; display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 1.5rem; border: 1px solid #d2d6dc; gap: 0.5rem;">➕ Añadir Cargo Extra</button>
         @endif
         @if($collection->status === 'ready' || $collection->status === 'sent' || $collection->status === 'partial')
-            <button onclick="document.getElementById('paymentModal').style.display='flex'" class="btn" style="background: #48BB78; color: white; font-weight: 700; padding: 0.8rem 1.5rem;">Registrar Pago</button>
+            <button onclick="document.getElementById('paymentModal').style.display='flex'" class="btn" style="background: #48BB78; color: white; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 1.5rem; border: 1px solid #38a169;">Registrar Pago</button>
         @endif
         @if($collection->status !== 'paid')
             @if($collection->status === 'draft' || $collection->status === 'incompleto')
-                <button type="button" class="btn" style="background: #e2e8f0; color: #a0aec0; font-weight: 700; padding: 0.8rem 1.5rem; border: 1px solid #cbd5e0; cursor: not-allowed;" title="Debes guardar y marcar como listo para cobrar antes de enviar" disabled>📧 Enviar al Inquilino</button>
+                <button type="button" class="btn" style="background: #e2e8f0; color: #a0aec0; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 1.5rem; border: 1px solid #cbd5e0; cursor: not-allowed;" title="Debes guardar y marcar como listo para cobrar antes de enviar" disabled>📧 Enviar al Inquilino</button>
             @else
-                <form action="{{ route('collections.send', $collection) }}" method="POST">
+                <form action="{{ route('collections.send', $collection) }}" method="POST" style="margin: 0;">
                     @csrf
-                    <button type="submit" class="btn" style="background: #4299E1; color: white; font-weight: 700; padding: 0.8rem 1.5rem;">📧 {{ $collection->status === 'sent' ? 'Re-enviar Mail' : 'Enviar al Inquilino' }}</button>
+                    <button type="submit" class="btn" style="background: #4299E1; color: white; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 1.5rem; border: 1px solid #3182ce;">📧 {{ $collection->status === 'sent' ? 'Re-enviar Mail' : 'Enviar al Inquilino' }}</button>
                 </form>
             @endif
         @endif
@@ -38,6 +37,20 @@
 <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem;">
     <!-- Column 1: Details and Edits -->
     <div style="display: flex; flex-direction: column; gap: 2rem;">
+        @php
+            $isUpdateMonth = $collection->lease->isUpdateMonthForDate($collection->month, $collection->year);
+        @endphp
+        
+        @if($isUpdateMonth)
+            <div style="background: #EBF8FF; border-left: 4px solid #3182CE; color: #2B6CB0; padding: 1rem 1.5rem; border-radius: 8px; display: flex; align-items: center; gap: 1rem; font-size: 0.95rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <span style="font-size: 1.4rem;">🔄</span>
+                <div>
+                    <strong style="display: block; margin-bottom: 0.2rem; color: #2B6CB0; font-weight: 800;">Mes de Actualización de Alquiler</strong>
+                    Este periodo corresponde a la indexación del precio del alquiler (cada {{ $collection->lease->update_frequency_months }} meses) por el índice <strong>{{ $collection->lease->indexType->name ?? 'Fijo' }}</strong>.
+                </div>
+            </div>
+        @endif
+
         <div class="card" style="padding: 2rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #edf2f7; padding-bottom: 1rem;">
                 <h3 style="margin: 0; color: var(--primary-color);">Desglose del Cobro</h3>
@@ -206,6 +219,42 @@
                     <span style="font-weight: 600;">{{ $collection->lease->tenant->phone }}</span>
                 </div>
             </div>
+        </div>
+
+        <div class="card" style="padding: 1.5rem;">
+            <h4 style="margin: 0 0 1.2rem; color: var(--primary-color); font-size: 0.9rem; text-transform: uppercase;">Información del Propietario</h4>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="background: #edf2f7; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--primary-color);">
+                    {{ substr($collection->lease->property->owner->name ?? 'P', 0, 1) }}
+                </div>
+                <div>
+                    <div style="font-weight: 700;">{{ $collection->lease->property->owner->name ?? 'N/A' }}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-light);">Propietario del inmueble</div>
+                </div>
+            </div>
+            @if($collection->lease->property->owner)
+                <div style="margin-top: 1.5rem; font-size: 0.9rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="color: var(--text-light);">Teléfono:</span>
+                        <span style="font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem;">
+                            {{ $collection->lease->property->owner->phone ?? 'N/A' }}
+                            @if($collection->lease->property->owner->phone)
+                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $collection->lease->property->owner->phone) }}" target="_blank" style="text-decoration: none; font-size: 0.95rem;" title="Enviar WhatsApp">
+                                    💬
+                                </a>
+                            @endif
+                        </span>
+                    </div>
+                    @if($collection->lease->property->owner->email)
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-light);">Email:</span>
+                            <span style="font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 170px;" title="{{ $collection->lease->property->owner->email }}">
+                                {{ $collection->lease->property->owner->email }}
+                            </span>
+                        </div>
+                    @endif
+                </div>
+            @endif
         </div>
 
         <div class="card" style="padding: 1.5rem;">
