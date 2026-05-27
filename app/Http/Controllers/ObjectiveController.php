@@ -151,6 +151,8 @@ class ObjectiveController extends Controller
         ]);
 
         return redirect()->route('workspace.index')->with('success', 'Notas del objetivo actualizadas.');
+    }
+
     /**
      * Store a new comment/note for the objective
      */
