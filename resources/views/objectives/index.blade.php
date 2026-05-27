@@ -39,7 +39,7 @@
             <select name="employee_id" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0;">
                 <option value="">Todos los empleados</option>
                 @foreach($employees as $emp)
-                    <option value="{{ $emp->id }}" {{ request('employee_id') == $emp->id ? 'selected' : '' }}>{{ $emp->last_name }}, {{ $emp->name }}</option>
+                    <option value="{{ $emp->id }}" {{ request('employee_id') == $emp->id ? 'selected' : '' }}>{{ $emp->last_name }}, {{ $emp->first_name }}</option>
                 @endforeach
             </select>
         </div>
@@ -87,10 +87,10 @@
                         <td style="padding: 1rem; vertical-align: top;">
                             <div style="display: flex; align-items: center; gap: 0.8rem;">
                                 <div style="background: #e2e8f0; color: #4a5568; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
-                                    {{ substr($obj->employee->name ?? 'E', 0, 1) }}{{ substr($obj->employee->last_name ?? '', 0, 1) }}
+                                    {{ substr($obj->employee->first_name ?? 'E', 0, 1) }}{{ substr($obj->employee->last_name ?? '', 0, 1) }}
                                 </div>
                                 <div>
-                                    <div style="font-weight: 600; color: var(--primary-color);">{{ $obj->employee->last_name }}, {{ $obj->employee->name }}</div>
+                                    <div style="font-weight: 600; color: var(--primary-color);">{{ $obj->employee->last_name }}, {{ $obj->employee->first_name }}</div>
                                     <div style="font-size: 0.8rem; color: #718096;">Asignado por: {{ $obj->creator->name ?? 'Admin' }}</div>
                                 </div>
                             </div>

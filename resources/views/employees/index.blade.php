@@ -13,9 +13,6 @@
             <a href="{{ route('attendances.index') }}" class="btn" style="background: var(--secondary-color); color: var(--text-main);">
                 Reporte de Asistencias
             </a>
-            <a href="{{ route('absence-reasons.index') }}" class="btn" style="background: var(--secondary-color); color: var(--text-main);">
-                Configurar Motivos
-            </a>
             <a href="{{ route('employees.create') }}" class="btn btn-primary">
                 Registrar Empleado
             </a>

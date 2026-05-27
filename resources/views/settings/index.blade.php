@@ -87,6 +87,17 @@
         </div>
     </a>
 
+    <!-- RRHH - MOTIVOS -->
+    <a href="{{ route('absence-reasons.index') }}" class="config-card" style="text-decoration: none; color: inherit;">
+        <div class="card" style="height: 100%; transition: all 0.3s ease; border-top: 4px solid #3182CE; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem;">
+            <div style="background: #EBF8FF; color: #2B6CB0; width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+            <h3 style="margin: 0 0 0.5rem; color: var(--primary-color);">Motivos de Ausencia</h3>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin: 0;">Configuración de los motivos de inasistencia para empleados.</p>
+        </div>
+    </a>
+
 </div>
 
 <style>
