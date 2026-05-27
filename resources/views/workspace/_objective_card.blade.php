@@ -21,12 +21,6 @@
         </div>
     @endif
 
-    @if($obj->admin_comment)
-        <div style="background: #fffaf0; border-left: 3px solid #ed8936; padding: 0.5rem; margin-bottom: 1rem; font-size: 0.8rem; color: #7b341e; max-height: 100px; overflow-y: auto;">
-            <strong style="display: block; margin-bottom: 0.2rem;">Historial de Feedback Admin:</strong>
-            <div style="white-space: pre-wrap;">{{ $obj->admin_comment }}</div>
-        </div>
-    @endif
 
     <div style="display: flex; gap: 0.5rem; justify-content: flex-end; border-top: 1px solid #edf2f7; padding-top: 0.8rem;">
         <button onclick="openNotesModal({{ $obj->id }})" style="background: none; border: none; color: #4a5568; cursor: pointer; display: flex; align-items: center; gap: 0.2rem; font-size: 0.8rem; font-weight: 600; padding: 0.4rem 0.6rem; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='#edf2f7'" onmouseout="this.style.background='none'">
@@ -47,29 +41,74 @@
     </div>
 </div>
 
-<!-- Modal para Notas de Empleado (Unique per objective) -->
+<!-- Modal de Detalles del Objetivo -->
 <div id="notes-modal-{{ $obj->id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
-    <div class="card" style="width: 480px; max-width: 95%; background: white; border-radius: 12px; padding: 2rem;">
-        <h3 style="margin-bottom: 1.5rem; color: var(--primary-color); font-weight: 700;">Notas / Avances del Objetivo</h3>
-        
-        <form action="{{ route('objectives.update_notes', $obj) }}" method="POST">
-            @csrf
+    <div class="card" style="width: 700px; max-width: 95%; max-height: 90vh; background: white; border-radius: 12px; padding: 2rem; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; border-bottom: 1px solid #edf2f7; padding-bottom: 1rem;">
+            <div>
+                <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-color); font-weight: 800; font-size: 1.4rem;">{{ $obj->title }}</h3>
+                <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: #718096;">
+                    <span><strong style="color: #4a5568;">Asignado por:</strong> {{ $obj->creator->name ?? 'Admin' }}</span>
+                    @if($obj->due_date)
+                        <span><strong style="color: #4a5568;">Vence:</strong> {{ \Carbon\Carbon::parse($obj->due_date)->format('d/m/Y') }}</span>
+                    @endif
+                </div>
+            </div>
+            <button type="button" onclick="closeNotesModal({{ $obj->id }})" style="background: none; border: none; cursor: pointer; color: #a0aec0; transition: color 0.2s;" onmouseover="this.style.color='#4a5568'" onmouseout="this.style.color='#a0aec0'">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; padding-right: 0.5rem; margin-bottom: 1.5rem;">
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Agregar Nueva Nota / Avance</label>
-                <textarea name="employee_notes" rows="3" placeholder="Registrá acá los avances sobre este objetivo." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1rem;"></textarea>
-                
-                @if($obj->employee_notes)
-                    <div style="background: #f7fafc; padding: 1rem; border-radius: 8px; max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0;">
-                        <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: #4a5568;">Historial de Notas:</strong>
-                        <div style="font-size: 0.9rem; color: #2d3748; white-space: pre-wrap;">{{ $obj->employee_notes }}</div>
-                    </div>
-                @endif
+                <h4 style="font-size: 0.95rem; color: #4a5568; margin: 0 0 0.5rem 0;">Descripción del Objetivo</h4>
+                <p style="margin: 0; font-size: 0.95rem; color: #2d3748; line-height: 1.5; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">{{ $obj->description }}</p>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 1rem;">
-                <button type="button" onclick="closeNotesModal({{ $obj->id }})" class="btn" style="background: #edf2f7; color: var(--text-main);">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Guardar Notas</button>
+            <h4 style="font-size: 0.95rem; color: #4a5568; margin: 0 0 1rem 0; border-bottom: 2px solid #edf2f7; padding-bottom: 0.5rem;">Historial y Comentarios</h4>
+            
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                @forelse($obj->comments as $comment)
+                    <div style="background: {{ $comment->user_id === \Illuminate\Support\Facades\Auth::id() ? '#ebf8ff' : '#f7fafc' }}; padding: 1rem; border-radius: 8px; border: 1px solid {{ $comment->user_id === \Illuminate\Support\Facades\Auth::id() ? '#bee3f8' : '#e2e8f0' }};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <strong style="font-size: 0.85rem; color: {{ $comment->user_id === \Illuminate\Support\Facades\Auth::id() ? '#2b6cb0' : '#4a5568' }};">{{ $comment->user->name ?? 'Usuario' }}</strong>
+                            <span style="font-size: 0.75rem; color: #a0aec0;">{{ $comment->created_at->format('d/m/Y H:i') }}</span>
+                        </div>
+                        <div style="font-size: 0.95rem; color: #2d3748; white-space: pre-wrap; margin-bottom: {{ $comment->file_path ? '0.8rem' : '0' }};">{{ $comment->comment }}</div>
+                        
+                        @if($comment->file_path)
+                            <a href="{{ Storage::url($comment->file_path) }}" target="_blank" style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; background: white; padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid #cbd5e0; color: #4a5568; text-decoration: none; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.borderColor='#a0aec0'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)'" onmouseout="this.style.borderColor='#cbd5e0'; this.style.boxShadow='none'">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                {{ $comment->file_name ?? 'Ver archivo adjunto' }}
+                            </a>
+                        @endif
+                    </div>
+                @empty
+                    <div style="text-align: center; padding: 2rem; color: #a0aec0; font-size: 0.9rem; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e0;">
+                        No hay comentarios o avances registrados aún.
+                    </div>
+                @endforelse
             </div>
+        </div>
+        
+        <form action="{{ route('objectives.comments.store', $obj) }}" method="POST" enctype="multipart/form-data" style="margin: 0; background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #edf2f7;">
+            @csrf
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: #4a5568; font-size: 0.9rem;">Agregar Comentario o Avance</label>
+            <textarea name="comment" rows="2" required placeholder="Escribí acá tu comentario..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #cbd5e0; margin-bottom: 0.8rem; resize: vertical;"></textarea>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="position: relative; overflow: hidden; display: inline-block;">
+                    <button type="button" class="btn" style="background: white; border: 1px solid #cbd5e0; color: #4a5568; padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 6px; display: flex; align-items: center; gap: 0.4rem;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                        Adjuntar archivo
+                    </button>
+                    <input type="file" name="attachment" style="position: absolute; top: 0; left: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;" onchange="document.getElementById('file-name-{{ $obj->id }}').innerText = this.files.length > 0 ? this.files[0].name : '';">
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.2rem; font-size: 0.9rem;">
+                    Enviar Comentario
+                </button>
+            </div>
+            <div id="file-name-{{ $obj->id }}" style="font-size: 0.8rem; color: #718096; margin-top: 0.5rem; font-weight: 600;"></div>
         </form>
     </div>
 </div>

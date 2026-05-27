@@ -151,5 +151,33 @@ class ObjectiveController extends Controller
         ]);
 
         return redirect()->route('workspace.index')->with('success', 'Notas del objetivo actualizadas.');
+    /**
+     * Store a new comment/note for the objective
+     */
+    public function storeComment(Request $request, Objective $objective)
+    {
+        $request->validate([
+            'comment' => 'required|string',
+            'attachment' => 'nullable|file|max:10240' // 10MB
+        ]);
+
+        $comment = new \App\Models\ObjectiveComment([
+            'objective_id' => $objective->id,
+            'user_id' => Auth::id(),
+            'comment' => $request->comment,
+        ]);
+
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $fileName = $file->getClientOriginalName();
+            $path = $file->store('objective_attachments', 'public');
+            
+            $comment->file_name = $fileName;
+            $comment->file_path = $path;
+        }
+
+        $comment->save();
+
+        return back()->with('success', 'Comentario guardado correctamente.');
     }
 }

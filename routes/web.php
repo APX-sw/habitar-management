@@ -38,6 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/workspace', [WorkspaceController::class, 'index'])->name('workspace.index');
     Route::post('/objectives/status/{objective}', [ObjectiveController::class, 'updateStatus'])->name('objectives.update_status');
     Route::post('/objectives/notes/{objective}', [ObjectiveController::class, 'updateNotes'])->name('objectives.update_notes');
+    Route::post('/objectives/{objective}/comments', [ObjectiveController::class, 'storeComment'])->name('objectives.comments.store');
     Route::post('/objectives/employee-create', [ObjectiveController::class, 'employeeStore'])->name('objectives.employee_store');
 
     // Gestión de Usuarios y Roles

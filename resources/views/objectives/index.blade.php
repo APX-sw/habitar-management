@@ -105,38 +105,7 @@
                                 </div>
                             @endif
 
-                            @if($obj->employee_notes || $obj->admin_comment)
-                                <button onclick="openDetailsModal({{ $obj->id }})" style="margin-top: 0.5rem; background: none; border: none; color: #3182ce; cursor: pointer; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem; padding: 0;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                    Ver Notas y Feedback
-                                </button>
-                                
-                                <!-- Modales de Detalles Generados aquí mismo -->
-                                <div id="details-modal-{{ $obj->id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
-                                    <div class="card" style="width: 550px; max-width: 95%; background: white; border-radius: 12px; padding: 2rem; white-space: normal;">
-                                        <h3 style="margin-bottom: 0.5rem; color: var(--primary-color); font-weight: 700;">{{ $obj->title }}</h3>
-                                        <p style="margin-bottom: 1.5rem; font-size: 0.95rem; color: #4a5568;">{{ $obj->description }}</p>
-                                        
-                                        @if($obj->employee_notes)
-                                            <div style="background: #f7fafc; padding: 1rem; border-radius: 8px; border-left: 4px solid #4a5568; margin-bottom: 1.5rem;">
-                                                <div style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #a0aec0; margin-bottom: 0.5rem;">Notas del Empleado</div>
-                                                <div style="font-size: 0.95rem; color: #2d3748; white-space: pre-wrap;">{{ $obj->employee_notes }}</div>
-                                            </div>
-                                        @endif
 
-                                        @if($obj->admin_comment)
-                                            <div style="background: #fffaf0; padding: 1rem; border-radius: 8px; border-left: 4px solid #ed8936; margin-bottom: 1.5rem;">
-                                                <div style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #dd6b20; margin-bottom: 0.5rem;">Feedback del Admin</div>
-                                                <div style="font-size: 0.95rem; color: #7b341e; white-space: pre-wrap;">{{ $obj->admin_comment }}</div>
-                                            </div>
-                                        @endif
-
-                                        <div style="text-align: right;">
-                                            <button type="button" onclick="closeDetailsModal({{ $obj->id }})" class="btn" style="background: #edf2f7; color: var(--text-main);">Cerrar</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
                         </td>
                         <td style="padding: 1rem; text-align: center; vertical-align: top;">
                             @php
@@ -166,10 +135,10 @@
                         </td>
                         <td style="padding: 1rem; text-align: center; vertical-align: top;">
                             <div style="display: flex; justify-content: center; gap: 0.5rem;">
-                                <!-- Dar Feedback Button -->
-                                <button onclick="openFeedbackModal({{ $obj->id }})" class="btn" style="background: #fffaf0; color: #dd6b20; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 0.2rem;" title="Dar Feedback">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                                    Feedback
+                                <!-- Ver Detalles Button -->
+                                <button onclick="openDetailsModal({{ $obj->id }})" class="btn" style="background: #ebf8ff; color: #2b6cb0; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 0.2rem;" title="Ver Detalles">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    Detalles
                                 </button>
 
                                 <form action="{{ route('objectives.destroy', $obj) }}" method="POST" style="margin: 0;" onsubmit="return confirm('¿Seguro que deseás eliminar este objetivo?');">
@@ -181,30 +150,74 @@
                                 </form>
                             </div>
 
-                            <!-- Modal para Dar Feedback -->
-                            <div id="feedback-modal-{{ $obj->id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(4px); text-align: left;">
-                                <div class="card" style="width: 500px; max-width: 95%; background: white; border-radius: 12px; padding: 2rem; white-space: normal;">
-                                    <h3 style="margin-bottom: 0.5rem; color: var(--primary-color); font-weight: 700;">Feedback Administrativo</h3>
-                                    <p style="margin-bottom: 1.5rem; font-size: 0.9rem; color: #718096;">Dejar un comentario o devolución sobre el objetivo <strong>{{ $obj->title }}</strong> de {{ $obj->employee->name }}.</p>
-                                    
-                                    <form action="{{ route('objectives.feedback', $obj) }}" method="POST">
-                                        @csrf
+                            <!-- Modal de Detalles del Objetivo (Reutilizado para Admin) -->
+                            <div id="details-modal-{{ $obj->id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(4px); text-align: left;">
+                                <div class="card" style="width: 700px; max-width: 95%; max-height: 90vh; background: white; border-radius: 12px; padding: 2rem; display: flex; flex-direction: column;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; border-bottom: 1px solid #edf2f7; padding-bottom: 1rem;">
+                                        <div>
+                                            <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-color); font-weight: 800; font-size: 1.4rem;">{{ $obj->title }}</h3>
+                                            <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: #718096;">
+                                                <span><strong style="color: #4a5568;">Empleado:</strong> {{ $obj->employee->full_name ?? 'Empleado' }}</span>
+                                                @if($obj->due_date)
+                                                    <span><strong style="color: #4a5568;">Vence:</strong> {{ \Carbon\Carbon::parse($obj->due_date)->format('d/m/Y') }}</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="closeDetailsModal({{ $obj->id }})" style="background: none; border: none; cursor: pointer; color: #a0aec0; transition: color 0.2s;" onmouseover="this.style.color='#4a5568'" onmouseout="this.style.color='#a0aec0'">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                        </button>
+                                    </div>
+
+                                    <div style="flex: 1; overflow-y: auto; padding-right: 0.5rem; margin-bottom: 1.5rem;">
                                         <div style="margin-bottom: 1.5rem;">
-                                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Agregar Nuevo Comentario</label>
-                                            <textarea name="admin_comment" rows="3" required placeholder="Escriba su feedback aquí..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1rem;"></textarea>
-                                            
-                                            @if($obj->admin_comment)
-                                                <div style="background: #fffaf0; padding: 1rem; border-radius: 8px; max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0;">
-                                                    <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: #dd6b20;">Historial de Feedback:</strong>
-                                                    <div style="font-size: 0.9rem; color: #7b341e; white-space: pre-wrap;">{{ $obj->admin_comment }}</div>
-                                                </div>
-                                            @endif
+                                            <h4 style="font-size: 0.95rem; color: #4a5568; margin: 0 0 0.5rem 0;">Descripción del Objetivo</h4>
+                                            <p style="margin: 0; font-size: 0.95rem; color: #2d3748; line-height: 1.5; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">{{ $obj->description }}</p>
                                         </div>
 
-                                        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
-                                            <button type="button" onclick="closeFeedbackModal({{ $obj->id }})" class="btn" style="background: #edf2f7; color: var(--text-main);">Cancelar</button>
-                                            <button type="submit" class="btn btn-primary">Guardar Feedback</button>
+                                        <h4 style="font-size: 0.95rem; color: #4a5568; margin: 0 0 1rem 0; border-bottom: 2px solid #edf2f7; padding-bottom: 0.5rem;">Historial y Comentarios</h4>
+                                        
+                                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                            @forelse($obj->comments as $comment)
+                                                <div style="background: {{ $comment->user_id === \Illuminate\Support\Facades\Auth::id() ? '#ebf8ff' : '#f7fafc' }}; padding: 1rem; border-radius: 8px; border: 1px solid {{ $comment->user_id === \Illuminate\Support\Facades\Auth::id() ? '#bee3f8' : '#e2e8f0' }};">
+                                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                                        <strong style="font-size: 0.85rem; color: {{ $comment->user_id === \Illuminate\Support\Facades\Auth::id() ? '#2b6cb0' : '#4a5568' }};">{{ $comment->user->name ?? 'Usuario' }}</strong>
+                                                        <span style="font-size: 0.75rem; color: #a0aec0;">{{ $comment->created_at->format('d/m/Y H:i') }}</span>
+                                                    </div>
+                                                    <div style="font-size: 0.95rem; color: #2d3748; white-space: pre-wrap; margin-bottom: {{ $comment->file_path ? '0.8rem' : '0' }};">{{ $comment->comment }}</div>
+                                                    
+                                                    @if($comment->file_path)
+                                                        <a href="{{ Storage::url($comment->file_path) }}" target="_blank" style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; background: white; padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid #cbd5e0; color: #4a5568; text-decoration: none; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.borderColor='#a0aec0'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)'" onmouseout="this.style.borderColor='#cbd5e0'; this.style.boxShadow='none'">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                                            {{ $comment->file_name ?? 'Ver archivo adjunto' }}
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            @empty
+                                                <div style="text-align: center; padding: 2rem; color: #a0aec0; font-size: 0.9rem; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e0;">
+                                                    No hay comentarios o avances registrados aún.
+                                                </div>
+                                            @endforelse
                                         </div>
+                                    </div>
+                                    
+                                    <form action="{{ route('objectives.comments.store', $obj) }}" method="POST" enctype="multipart/form-data" style="margin: 0; background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #edf2f7;">
+                                        @csrf
+                                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: #4a5568; font-size: 0.9rem;">Agregar Feedback o Documento</label>
+                                        <textarea name="comment" rows="2" required placeholder="Escribí acá tu comentario..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #cbd5e0; margin-bottom: 0.8rem; resize: vertical;"></textarea>
+                                        
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div style="position: relative; overflow: hidden; display: inline-block;">
+                                                <button type="button" class="btn" style="background: white; border: 1px solid #cbd5e0; color: #4a5568; padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 6px; display: flex; align-items: center; gap: 0.4rem;">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                                    Adjuntar archivo
+                                                </button>
+                                                <input type="file" name="attachment" style="position: absolute; top: 0; left: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;" onchange="document.getElementById('file-name-admin-{{ $obj->id }}').innerText = this.files.length > 0 ? this.files[0].name : '';">
+                                            </div>
+                                            <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.2rem; font-size: 0.9rem;">
+                                                Enviar
+                                            </button>
+                                        </div>
+                                        <div id="file-name-admin-{{ $obj->id }}" style="font-size: 0.8rem; color: #718096; margin-top: 0.5rem; font-weight: 600;"></div>
                                     </form>
                                 </div>
                             </div>
@@ -283,8 +296,6 @@
 <script>
     function openCreateObjectiveModal() { document.getElementById('create-objective-modal').style.display = 'flex'; }
     function closeCreateObjectiveModal() { document.getElementById('create-objective-modal').style.display = 'none'; }
-    function openFeedbackModal(id) { document.getElementById('feedback-modal-' + id).style.display = 'flex'; }
-    function closeFeedbackModal(id) { document.getElementById('feedback-modal-' + id).style.display = 'none'; }
     function openDetailsModal(id) { document.getElementById('details-modal-' + id).style.display = 'flex'; }
     function closeDetailsModal(id) { document.getElementById('details-modal-' + id).style.display = 'none'; }
 </script>

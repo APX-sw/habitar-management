@@ -34,4 +34,9 @@ class Objective extends Model
     {
         return $this->belongsTo(User::class, 'creator_id');
     }
+
+    public function comments()
+    {
+        return $this->hasMany(ObjectiveComment::class)->orderBy('created_at', 'asc');
+    }
 }
