@@ -31,6 +31,25 @@
     </form>
 </div>
 
+<!-- Banner de Espacio de Trabajo (Workspace) -->
+@if(isset($employee) && $employee)
+    <div style="background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%); padding: 1.5rem; border-radius: 12px; color: white; display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; box-shadow: 0 4px 10px rgba(49, 130, 206, 0.2);">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="background: rgba(255,255,255,0.2); width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            </div>
+            <div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: white;">Mi Espacio de Trabajo</h3>
+                <p style="margin: 0.2rem 0 0; font-size: 0.95rem; opacity: 0.9;">Registrá tu asistencia diaria y gestioná tus metas desde tu Workspace unificado.</p>
+            </div>
+        </div>
+        <a href="{{ route('workspace.index') }}" class="btn" style="background: white; color: #2b6cb0; font-weight: 700; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            Abrir Workspace
+        </a>
+    </div>
+@endif
+
+@can('dashboard.read')
 <!-- KPI Cards -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
     <div class="card" style="display: flex; align-items: center; gap: 1.2rem; padding: 1.5rem; border-left: 4px solid #3182ce; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
@@ -330,4 +349,15 @@
         @endif
     </div>
 </div>
+@else
+<div class="card" style="padding: 3rem; text-align: center; background: white; border-radius: 12px; margin-top: 1rem; border-left: 4px solid var(--accent-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    <h2 style="color: var(--primary-color); font-weight: 700; margin-bottom: 1rem;">Bienvenido/a a Habitar, {{ Auth::user()->name }}</h2>
+    <p style="color: var(--text-light); font-size: 1.05rem; max-width: 600px; margin: 0 auto 1.5rem; line-height: 1.6;">
+        Tu ingreso diario se encuentra habilitado para registrarse. Podés marcar tu presente o avisar ausencias desde el panel superior en esta misma pantalla.
+    </p>
+    <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">
+        Utilizá el menú lateral izquierdo para acceder a las secciones autorizadas para tu puesto de trabajo.
+    </div>
+</div>
+@endcan
 @endsection
