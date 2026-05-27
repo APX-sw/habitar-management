@@ -50,7 +50,7 @@ class PropertyController extends Controller
             }
         }
 
-        $properties = $query->latest()->paginate(12)->withQueryString();
+        $properties = $query->latest()->paginate(15)->withQueryString();
         
         $owners = Owner::orderBy('name')->get();
         $cities = City::orderBy('name')->get();

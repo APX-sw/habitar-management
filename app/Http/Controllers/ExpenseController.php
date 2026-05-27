@@ -37,7 +37,7 @@ class ExpenseController extends Controller
             $query->whereDate('date', '<=', $request->date_to);
         }
 
-        $expenses = $query->paginate(20)->withQueryString();
+        $expenses = $query->paginate(15)->withQueryString();
 
         $properties = Property::orderBy('location')->get();
         $accounts = Account::orderBy('name')->get();
