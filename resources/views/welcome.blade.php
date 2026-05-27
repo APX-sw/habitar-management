@@ -264,6 +264,11 @@
                             'User' => 'Usuario',
                             'AgencySetting' => 'Configuración de Agencia',
                             'AgencyBankAccount' => 'Cuenta Bancaria de Agencia',
+                            'Attendance' => 'Asistencia',
+                            'AbsenceReason' => 'Motivo de Ausencia',
+                            'Employee' => 'Legajo de Empleado',
+                            'Objective' => 'Objetivo',
+                            'ObjectiveComment' => 'Comentario de Objetivo',
                         ];
                         $translatedModel = $modelTranslations[$modelName] ?? $modelName;
                         
@@ -310,6 +315,20 @@
                                 $subjectDetails = ' - ' . ($subject->collection->lease->property->location ?? 'Cobro') . ' ($' . number_format($subject->amount ?? 0, 2, ',', '.') . ')';
                             } elseif ($modelName === 'SettlementPayment') {
                                 $subjectDetails = ' - ' . ($subject->settlement->owner->name ?? 'Liquidación') . ' ($' . number_format($subject->amount ?? 0, 2, ',', '.') . ')';
+                            } elseif ($modelName === 'Objective') {
+                                $employeeName = ($subject->employee->name ?? '') . ' ' . ($subject->employee->last_name ?? '');
+                                $subjectDetails = ' - ' . ($subject->title ?? '') . ' (' . $employeeName . ')';
+                            } elseif ($modelName === 'ObjectiveComment') {
+                                $employeeName = ($subject->objective->employee->name ?? '') . ' ' . ($subject->objective->employee->last_name ?? '');
+                                $subjectDetails = ' - ' . ($subject->objective->title ?? '') . ' (' . $employeeName . ')';
+                            } elseif ($modelName === 'Employee') {
+                                $subjectDetails = ' - ' . ($subject->name ?? '') . ' ' . ($subject->last_name ?? '');
+                            } elseif ($modelName === 'Attendance') {
+                                $employeeName = ($subject->employee->name ?? '') . ' ' . ($subject->employee->last_name ?? '');
+                                $dateStr = $subject->date ? \Carbon\Carbon::parse($subject->date)->format('d/m') : '';
+                                $subjectDetails = ' - ' . $employeeName . ' (' . $dateStr . ')';
+                            } elseif ($modelName === 'AbsenceReason') {
+                                $subjectDetails = ' - ' . ($subject->name ?? '');
                             }
                         } else {
                             // Fallback dinámico si el elemento fue eliminado (para poder mostrar la información histórica guardada en properties)
