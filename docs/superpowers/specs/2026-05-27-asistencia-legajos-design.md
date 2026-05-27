@@ -80,7 +80,8 @@ Registro de asistencia y ausencias.
   - Motivo de ausencia (para poder cuantificar, por ejemplo, los días tomados por vacaciones).
 
 ## Consideraciones de Seguridad y Acceso
-- Solo los administradores o usuarios con permisos específicos de RRHH podrán acceder al Panel de Administración (ABM de Legajos, Motivos y Reportes).
+- **Nuevos Permisos:** Se deben registrar y mapear los nuevos módulos en el sistema de Roles y Permisos (ej: `rrhh_ver`, `rrhh_crear`, etc.) para que la dueña pueda asignarlos desde el panel de configuración de roles.
+- Solo los administradores o usuarios con los permisos específicos de RRHH podrán acceder al Panel de Administración (ABM de Legajos, Motivos y Reportes).
 - Los empleados regulares solo verán el panel de Autogestión y solo podrán registrar asistencia para su propio usuario (`employee_id` asociado a su `user_id`).
 
 ## Revisión de Especificación (Self-Review)

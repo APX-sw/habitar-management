@@ -244,73 +244,114 @@
         </a>
 
         <ul class="sidebar-nav">
+            @can('dashboard.read')
             <li class="sidebar-item">
                 <a href="/" class="sidebar-link {{ request()->is('/') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                     Tablero
                 </a>
             </li>
+            @endcan
+            @can('properties.read')
             <li class="sidebar-item">
                 <a href="{{ route('properties.index') }}" class="sidebar-link {{ request()->is('properties*') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
                     Propiedades
                 </a>
             </li>
+            @endcan
+            @can('owners.read')
             <li class="sidebar-item">
                 <a href="{{ route('owners.index') }}" class="sidebar-link {{ request()->is('owners*') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     Propietarios
                 </a>
             </li>
+            @endcan
+            @can('tenants.read')
             <li class="sidebar-item">
                 <a href="{{ route('tenants.index') }}" class="sidebar-link {{ request()->is('tenants*') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     Inquilinos
                 </a>
             </li>
+            @endcan
+            @can('leases.read')
             <li class="sidebar-item">
                 <a href="{{ route('leases.index') }}" class="sidebar-link {{ request()->is('leases*') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     Contratos
                 </a>
             </li>
+            @endcan
+            @can('collections.read')
             <li class="sidebar-item">
                 <a href="{{ route('collections.index') }}" class="sidebar-link {{ request()->is('collections*') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                     Cobros
                 </a>
             </li>
+            @endcan
+            @can('cash_register.read')
             <li class="sidebar-item">
                 <a href="{{ route('cash_register.index') }}" class="sidebar-link {{ request()->is('cash-register*') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
                     Caja
                 </a>
             </li>
+            @endcan
+            @can('expenses.read')
             <li class="sidebar-item">
                 <a href="{{ route('expenses.index') }}" class="sidebar-link {{ request()->is('expenses*') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
                     Gastos
                 </a>
             </li>
+            @endcan
+            @can('settlements.read')
             <li class="sidebar-item">
                 <a href="{{ route('settlements.index') }}" class="sidebar-link {{ request()->is('settlements*') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     Rendiciones
                 </a>
             </li>
+            @endcan
+            @can('reports.read')
             <li class="sidebar-item">
                 <a href="{{ route('reports.index') }}" class="sidebar-link {{ request()->is('reports*') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                     Reportes
                 </a>
             </li>
+            @endcan
 
-            <li class="sidebar-item" style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+            @canany(['users.read', 'roles.read', 'cfg_locations.read'])
+            <li class="sidebar-item" style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem; list-style: none; height: 1px;"></li>
+            @endcanany
+            @can('users.read')
+            <li class="sidebar-item">
+                <a href="{{ route('users.index') }}" class="sidebar-link {{ request()->is('users*') ? 'active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Usuarios
+                </a>
+            </li>
+            @endcan
+            @can('roles.read')
+            <li class="sidebar-item">
+                <a href="{{ route('roles.index') }}" class="sidebar-link {{ request()->is('roles*') ? 'active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    Roles y Permisos
+                </a>
+            </li>
+            @endcan
+            @can('cfg_locations.read')
+            <li class="sidebar-item">
                 <a href="{{ route('settings.index') }}" class="sidebar-link {{ request()->is('settings*') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     Configuración
                 </a>
             </li>
+            @endcan
         </ul>
 
         <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
@@ -318,10 +359,16 @@
                 <div style="background: #4a5568; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">
                     {{ substr(Auth::user()->name ?? 'U', 0, 1) }}
                 </div>
-                <div style="overflow: hidden;">
+                <div style="overflow: hidden; flex: 1;">
                     <div style="font-size: 0.85rem; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">{{ Auth::user()->name ?? 'Usuario' }}</div>
                     <div style="font-size: 0.7rem; color: #718096;">Administrador</div>
                 </div>
+                <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+                    @csrf
+                    <button type="submit" style="background: none; border: none; color: #fc8181; cursor: pointer; padding: 0.2rem; transition: color 0.2s;" title="Cerrar sesión" onmouseover="this.style.color='#f56565'" onmouseout="this.style.color='#fc8181'">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                </form>
             </div>
         </div>
     </aside>

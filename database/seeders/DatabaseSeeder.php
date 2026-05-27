@@ -13,5 +13,6 @@ class DatabaseSeeder extends Seeder
     {
         // Consolidado en un único seeder de sistema para facilitar el mantenimiento.
         $this->call(SystemDataSeeder::class);
+        $this->call(RolesAndPermissionsSeeder::class);
     }
 }
