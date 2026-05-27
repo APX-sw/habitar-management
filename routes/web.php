@@ -25,6 +25,8 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AbsenceReasonController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\WorkspaceController;
+use App\Http\Controllers\ObjectiveController;
 
 // Auth routes
 Route::get('login', [AuthController::class, 'showLogin'])->name('login');
@@ -33,6 +35,10 @@ Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/workspace', [WorkspaceController::class, 'index'])->name('workspace.index');
+    Route::post('/objectives/status/{objective}', [ObjectiveController::class, 'updateStatus'])->name('objectives.update_status');
+    Route::post('/objectives/notes/{objective}', [ObjectiveController::class, 'updateNotes'])->name('objectives.update_notes');
+    Route::post('/objectives/employee-create', [ObjectiveController::class, 'employeeStore'])->name('objectives.employee_store');
 
     // Gestión de Usuarios y Roles
     Route::resource('users', UserController::class)->middleware('can:users.read');
@@ -49,6 +55,10 @@ Route::middleware(['auth'])->group(function () {
         // Control de Asistencia y Reportes (Admin)
         Route::get('attendances/office', [AttendanceController::class, 'office'])->name('attendances.office');
         Route::get('attendances', [AttendanceController::class, 'index'])->name('attendances.index');
+
+        // Objetivos (Admin)
+        Route::resource('objectives', ObjectiveController::class);
+        Route::post('objectives/{objective}/feedback', [ObjectiveController::class, 'storeFeedback'])->name('objectives.feedback');
     });
 
     // Autogestión de Asistencia para Empleados
