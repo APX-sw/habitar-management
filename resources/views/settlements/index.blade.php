@@ -8,8 +8,60 @@
         <h1 style="color: var(--primary-color); font-size: 2.2rem; margin: 0;">Rendiciones a Propietarios</h1>
         <p style="color: var(--text-light); margin-top: 0.5rem;">Gestión de pagos y liquidaciones mensuales.</p>
     </div>
-    <a href="{{ route('settlements.create') }}" class="btn btn-primary" style="padding: 0.8rem 1.5rem; font-weight: 700;">➕ Nueva Rendición</a>
+    <button onclick="openPeriodModal()" class="btn btn-primary" style="padding: 0.8rem 1.5rem; font-weight: 700; border: none; cursor: pointer;">➕ Nueva Rendición</button>
 </div>
+
+<!-- Modal Selección de Período -->
+<div id="periodModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="color: var(--primary-color); margin-top: 0; margin-bottom: 0.5rem; font-size: 1.25rem;">Generar Rendiciones</h3>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.5rem;">Seleccioná el mes para el cual querés generar los borradores. El año será el actual.</p>
+        
+        <form action="{{ route('settlements.create') }}" method="GET">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #4a5568; margin-bottom: 0.5rem; text-transform: uppercase;">Mes a Liquidar</label>
+                <select name="month" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 1rem; color: #2d3748;">
+                    @php
+                        $meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                        $mesActual = date('n');
+                    @endphp
+                    @foreach($meses as $index => $nombreMes)
+                        <option value="{{ $index + 1 }}" {{ $mesActual == ($index + 1) ? 'selected' : '' }}>
+                            {{ $nombreMes }}
+                        </option>
+                    @endforeach
+                </select>
+                <input type="hidden" name="year" value="{{ date('Y') }}">
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="closePeriodModal()" class="btn" style="background: #edf2f7; color: #4a5568;">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="border: none; cursor: pointer;">Continuar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openPeriodModal() {
+        const modal = document.getElementById('periodModal');
+        modal.style.display = 'flex';
+        // Add subtle animation
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.transition = 'opacity 0.2s ease-in-out';
+            modal.style.opacity = '1';
+        }, 10);
+    }
+    
+    function closePeriodModal() {
+        const modal = document.getElementById('periodModal');
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 200);
+    }
+</script>
 
 <!-- FILTROS -->
 <div class="card" style="padding: 1.5rem; margin-bottom: 2rem; background: #f8fafc;">
