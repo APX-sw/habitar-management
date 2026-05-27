@@ -94,8 +94,12 @@ class ObjectiveController extends Controller
             'admin_comment' => 'required|string'
         ]);
 
+        $timestamp = now()->format('d/m/Y H:i');
+        $newComment = "[{$timestamp}] " . $request->admin_comment;
+        $updatedComment = $objective->admin_comment ? $newComment . "\n\n" . $objective->admin_comment : $newComment;
+
         $objective->update([
-            'admin_comment' => $request->admin_comment
+            'admin_comment' => $updatedComment
         ]);
 
         return back()->with('success', 'Feedback guardado correctamente.');
@@ -138,8 +142,12 @@ class ObjectiveController extends Controller
             'employee_notes' => 'required|string'
         ]);
 
+        $timestamp = now()->format('d/m/Y H:i');
+        $newNote = "[{$timestamp}] " . $request->employee_notes;
+        $updatedNotes = $objective->employee_notes ? $newNote . "\n\n" . $objective->employee_notes : $newNote;
+
         $objective->update([
-            'employee_notes' => $request->employee_notes
+            'employee_notes' => $updatedNotes
         ]);
 
         return redirect()->route('workspace.index')->with('success', 'Notas del objetivo actualizadas.');

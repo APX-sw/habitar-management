@@ -22,14 +22,14 @@
     @endif
 
     @if($obj->admin_comment)
-        <div style="background: #fffaf0; border-left: 3px solid #ed8936; padding: 0.5rem; margin-bottom: 1rem; font-size: 0.8rem; color: #7b341e;">
-            <strong style="display: block; margin-bottom: 0.2rem;">Comentario Admin:</strong>
-            {{ $obj->admin_comment }}
+        <div style="background: #fffaf0; border-left: 3px solid #ed8936; padding: 0.5rem; margin-bottom: 1rem; font-size: 0.8rem; color: #7b341e; max-height: 100px; overflow-y: auto;">
+            <strong style="display: block; margin-bottom: 0.2rem;">Historial de Feedback Admin:</strong>
+            <div style="white-space: pre-wrap;">{{ $obj->admin_comment }}</div>
         </div>
     @endif
 
     <div style="display: flex; gap: 0.5rem; justify-content: flex-end; border-top: 1px solid #edf2f7; padding-top: 0.8rem;">
-        <button onclick="openNotesModal({{ $obj->id }}, '{{ addslashes($obj->employee_notes) }}')" style="background: none; border: none; color: #4a5568; cursor: pointer; display: flex; align-items: center; gap: 0.2rem; font-size: 0.8rem; font-weight: 600; padding: 0.4rem 0.6rem; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='#edf2f7'" onmouseout="this.style.background='none'">
+        <button onclick="openNotesModal({{ $obj->id }})" style="background: none; border: none; color: #4a5568; cursor: pointer; display: flex; align-items: center; gap: 0.2rem; font-size: 0.8rem; font-weight: 600; padding: 0.4rem 0.6rem; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='#edf2f7'" onmouseout="this.style.background='none'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Notas
         </button>
@@ -55,8 +55,15 @@
         <form action="{{ route('objectives.update_notes', $obj) }}" method="POST">
             @csrf
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Mis Notas</label>
-                <textarea name="employee_notes" rows="5" placeholder="Registrá acá los avances o notas sobre este objetivo." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0;">{{ $obj->employee_notes }}</textarea>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Agregar Nueva Nota / Avance</label>
+                <textarea name="employee_notes" rows="3" placeholder="Registrá acá los avances sobre este objetivo." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1rem;"></textarea>
+                
+                @if($obj->employee_notes)
+                    <div style="background: #f7fafc; padding: 1rem; border-radius: 8px; max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0;">
+                        <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: #4a5568;">Historial de Notas:</strong>
+                        <div style="font-size: 0.9rem; color: #2d3748; white-space: pre-wrap;">{{ $obj->employee_notes }}</div>
+                    </div>
+                @endif
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 1rem;">

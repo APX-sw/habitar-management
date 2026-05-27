@@ -15,6 +15,22 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        // 0. Datos de Autogestión del Empleado (si tiene legajo)
+        $employee = \App\Models\Employee::where('user_id', \Illuminate\Support\Facades\Auth::id())->first();
+        $todayAttendance = null;
+        $activeAbsenceReasons = [];
+
+        if ($employee) {
+            // Redirect non-admins directly to their workspace
+            if (!\Illuminate\Support\Facades\Auth::user()->can('dashboard.read')) {
+                return redirect()->route('workspace.index');
+            }
+
+            $todayAttendance = \App\Models\Attendance::where('employee_id', $employee->id)
+                ->whereDate('date', date('Y-m-d'))
+                ->first();
+            $activeAbsenceReasons = \App\Models\AbsenceReason::where('is_active', true)->get();
+        }
         $selectedMonth = intval($request->input('month', Carbon::now()->month));
         $selectedYear = intval($request->input('year', Carbon::now()->year));
 
@@ -72,7 +88,10 @@ class DashboardController extends Controller
             'upcomingExpirations',
             'recentActivity',
             'selectedMonth',
-            'selectedYear'
+            'selectedYear',
+            'employee',
+            'todayAttendance',
+            'activeAbsenceReasons'
         ));
     }
 }

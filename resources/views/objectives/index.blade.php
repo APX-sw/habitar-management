@@ -167,7 +167,7 @@
                         <td style="padding: 1rem; text-align: center; vertical-align: top;">
                             <div style="display: flex; justify-content: center; gap: 0.5rem;">
                                 <!-- Dar Feedback Button -->
-                                <button onclick="openFeedbackModal({{ $obj->id }}, '{{ addslashes($obj->admin_comment) }}')" class="btn" style="background: #fffaf0; color: #dd6b20; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 0.2rem;" title="Dar Feedback">
+                                <button onclick="openFeedbackModal({{ $obj->id }})" class="btn" style="background: #fffaf0; color: #dd6b20; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 0.2rem;" title="Dar Feedback">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                                     Feedback
                                 </button>
@@ -190,7 +190,15 @@
                                     <form action="{{ route('objectives.feedback', $obj) }}" method="POST">
                                         @csrf
                                         <div style="margin-bottom: 1.5rem;">
-                                            <textarea name="admin_comment" rows="4" required placeholder="Escriba su feedback aquí..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0;">{{ $obj->admin_comment }}</textarea>
+                                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Agregar Nuevo Comentario</label>
+                                            <textarea name="admin_comment" rows="3" required placeholder="Escriba su feedback aquí..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1rem;"></textarea>
+                                            
+                                            @if($obj->admin_comment)
+                                                <div style="background: #fffaf0; padding: 1rem; border-radius: 8px; max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0;">
+                                                    <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: #dd6b20;">Historial de Feedback:</strong>
+                                                    <div style="font-size: 0.9rem; color: #7b341e; white-space: pre-wrap;">{{ $obj->admin_comment }}</div>
+                                                </div>
+                                            @endif
                                         </div>
 
                                         <div style="display: flex; justify-content: flex-end; gap: 1rem;">
