@@ -639,6 +639,20 @@
                 document.activeElement.blur();
             }
         });
+
+        // Mantener el scroll del sidebar al cambiar de página
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                const scrollPos = sessionStorage.getItem('sidebarScrollPos');
+                if (scrollPos) {
+                    sidebar.scrollTop = scrollPos;
+                }
+                window.addEventListener('beforeunload', () => {
+                    sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop);
+                });
+            }
+        });
     </script>
 </body>
 </html>
