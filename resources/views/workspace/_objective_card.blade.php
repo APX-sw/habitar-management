@@ -1,4 +1,4 @@
-<div class="card" style="padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)';">
+<div class="card" onclick="openNotesModal({{ $obj->id }})" style="padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)';">
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
         <h4 style="margin: 0; font-size: 1rem; color: #2d3748; font-weight: 700;">{{ $obj->title }}</h4>
         @php
@@ -23,13 +23,13 @@
 
 
     <div style="display: flex; gap: 0.5rem; justify-content: flex-end; border-top: 1px solid #edf2f7; padding-top: 0.8rem;">
-        <button onclick="openNotesModal({{ $obj->id }})" style="background: none; border: none; color: #4a5568; cursor: pointer; display: flex; align-items: center; gap: 0.2rem; font-size: 0.8rem; font-weight: 600; padding: 0.4rem 0.6rem; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='#edf2f7'" onmouseout="this.style.background='none'">
+        <button type="button" onclick="event.stopPropagation(); openNotesModal({{ $obj->id }}, true)" style="background: none; border: none; color: #4a5568; cursor: pointer; display: flex; align-items: center; gap: 0.2rem; font-size: 0.8rem; font-weight: 600; padding: 0.4rem 0.6rem; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='#edf2f7'" onmouseout="this.style.background='none'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Notas
         </button>
 
         @if($obj->status !== 'completed')
-            <form action="{{ route('objectives.update_status', $obj) }}" method="POST" style="margin: 0;">
+            <form action="{{ route('objectives.update_status', $obj) }}" method="POST" style="margin: 0;" onclick="event.stopPropagation();">
                 @csrf
                 <input type="hidden" name="status" value="{{ $obj->status === 'pending' ? 'in_progress' : 'completed' }}">
                 <button type="submit" style="background: {{ $obj->status === 'pending' ? '#ebf8ff' : '#f0fff4' }}; border: 1px solid {{ $obj->status === 'pending' ? '#bee3f8' : '#c6f6d5' }}; color: {{ $obj->status === 'pending' ? '#2b6cb0' : '#22543d' }}; cursor: pointer; display: flex; align-items: center; gap: 0.2rem; font-size: 0.8rem; font-weight: 600; padding: 0.4rem 0.6rem; border-radius: 4px;">
@@ -94,7 +94,7 @@
         <form action="{{ route('objectives.comments.store', $obj) }}" method="POST" enctype="multipart/form-data" style="margin: 0; background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #edf2f7;">
             @csrf
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: #4a5568; font-size: 0.9rem;">Agregar Comentario o Avance</label>
-            <textarea name="comment" rows="2" required placeholder="Escribí acá tu comentario..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #cbd5e0; margin-bottom: 0.8rem; resize: vertical;"></textarea>
+            <textarea id="comment-input-{{ $obj->id }}" name="comment" rows="2" required placeholder="Escribí acá tu comentario..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #cbd5e0; margin-bottom: 0.8rem; resize: vertical;"></textarea>
             
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="position: relative; overflow: hidden; display: inline-block;">
@@ -114,6 +114,16 @@
 </div>
 
 <script>
-    function openNotesModal(id) { document.getElementById('notes-modal-' + id).style.display = 'flex'; }
-    function closeNotesModal(id) { document.getElementById('notes-modal-' + id).style.display = 'none'; }
+    function openNotesModal(id, focusInput = false) { 
+        document.getElementById('notes-modal-' + id).style.display = 'flex'; 
+        if (focusInput) {
+            setTimeout(() => {
+                document.getElementById('comment-input-' + id).focus();
+            }, 50);
+        }
+    }
+    function closeNotesModal(id) { 
+        event.stopPropagation();
+        document.getElementById('notes-modal-' + id).style.display = 'none'; 
+    }
 </script>
