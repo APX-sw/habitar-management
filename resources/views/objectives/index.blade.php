@@ -36,7 +36,7 @@
     <form action="{{ route('objectives.index') }}" method="GET" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 200px;">
             <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-light);">Empleado</label>
-            <select name="employee_id" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <select name="employee_id" onchange="this.form.submit()" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0;">
                 <option value="">Todos los empleados</option>
                 @foreach($employees as $emp)
                     <option value="{{ $emp->id }}" {{ request('employee_id') == $emp->id ? 'selected' : '' }}>{{ $emp->last_name }}, {{ $emp->first_name }}</option>
@@ -45,7 +45,7 @@
         </div>
         <div style="flex: 1; min-width: 150px;">
             <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-light);">Estado</label>
-            <select name="status" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <select name="status" onchange="this.form.submit()" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0;">
                 <option value="">Todos los estados</option>
                 <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pendiente</option>
                 <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>En Proceso</option>
@@ -54,7 +54,7 @@
         </div>
         <div style="flex: 1; min-width: 150px;">
             <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-light);">Periodicidad</label>
-            <select name="period" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <select name="period" onchange="this.form.submit()" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0;">
                 <option value="">Todas</option>
                 <option value="daily" {{ request('period') == 'daily' ? 'selected' : '' }}>Diario</option>
                 <option value="weekly" {{ request('period') == 'weekly' ? 'selected' : '' }}>Semanal</option>
@@ -62,8 +62,7 @@
             </select>
         </div>
         <div>
-            <button type="submit" class="btn" style="background: #edf2f7; color: #4a5568; padding: 0.6rem 1.5rem; font-weight: 600; border-radius: 6px;">Filtrar</button>
-            <a href="{{ route('objectives.index') }}" class="btn" style="color: #718096; text-decoration: none; padding: 0.6rem 1rem;">Limpiar</a>
+            <a href="{{ route('objectives.index') }}" class="btn" style="color: #718096; background: #edf2f7; border-radius: 6px; text-decoration: none; padding: 0.6rem 1.5rem; font-weight: 600; display: inline-block;">Limpiar</a>
         </div>
     </form>
 </div>
