@@ -22,6 +22,9 @@ use App\Http\Controllers\ExpenseDocumentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\AbsenceReasonController;
+use App\Http\Controllers\AttendanceController;
 
 // Auth routes
 Route::get('login', [AuthController::class, 'showLogin'])->name('login');
@@ -29,11 +32,29 @@ Route::post('login', [AuthController::class, 'login']);
 Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard')->middleware('can:dashboard.read');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // Gestión de Usuarios y Roles
     Route::resource('users', UserController::class)->middleware('can:users.read');
     Route::resource('roles', RoleController::class)->middleware('can:roles.read');
+
+    // Gestión de Recursos Humanos (Legajos y Motivos)
+    Route::middleware('can:rrhh.read')->group(function () {
+        Route::resource('employees', EmployeeController::class);
+        Route::post('employees/{employee}/documents', [EmployeeController::class, 'storeDocument'])->name('employees.documents.store');
+        Route::delete('employee-documents/{document}', [EmployeeController::class, 'destroyDocument'])->name('employees.documents.destroy');
+
+        Route::resource('absence-reasons', AbsenceReasonController::class)->except(['create', 'edit', 'show']);
+
+        // Control de Asistencia y Reportes (Admin)
+        Route::get('attendances/office', [AttendanceController::class, 'office'])->name('attendances.office');
+        Route::get('attendances', [AttendanceController::class, 'index'])->name('attendances.index');
+    });
+
+    // Autogestión de Asistencia para Empleados
+    Route::post('attendances/check-in', [AttendanceController::class, 'checkIn'])->name('attendances.check_in');
+    Route::post('attendances/check-out', [AttendanceController::class, 'checkOut'])->name('attendances.check_out');
+    Route::post('attendances/absence', [AttendanceController::class, 'reportAbsence'])->name('attendances.absence');
 
     // Reportes
     Route::middleware('can:reports.read')->group(function () {
