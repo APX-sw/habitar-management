@@ -36,7 +36,7 @@ class CashRegisterController extends Controller
             $query->whereDate('movement_date', '<=', $request->date_to);
         }
 
-        $movements = $query->paginate(20);
+        $movements = $query->paginate(15);
         $categories = \App\Models\TransactionCategory::orderBy('name')->get();
 
         $totalBalance = $accounts->sum(function($account) {
