@@ -45,21 +45,31 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('users', UserController::class)->middleware('can:users.read');
     Route::resource('roles', RoleController::class)->middleware('can:roles.read');
 
-    // Gestión de Recursos Humanos (Legajos y Motivos)
-    Route::middleware('can:rrhh.read')->group(function () {
+    // Gestión de Recursos Humanos: Legajos
+    Route::middleware('can:rrhh_employees.read')->group(function () {
         Route::resource('employees', EmployeeController::class);
         Route::post('employees/{employee}/documents', [EmployeeController::class, 'storeDocument'])->name('employees.documents.store');
         Route::delete('employee-documents/{document}', [EmployeeController::class, 'destroyDocument'])->name('employees.documents.destroy');
+    });
 
+    // Motivos de ausencia (Configuración)
+    Route::middleware('can:cfg_absence_reasons.read')->group(function () {
         Route::resource('absence-reasons', AbsenceReasonController::class)->except(['create', 'edit', 'show']);
+    });
 
-        // Control de Asistencia y Reportes (Admin)
+    // Control de Asistencia y Reportes (Admin)
+    Route::middleware('can:rrhh_office.read')->group(function () {
         Route::get('attendances/office', [AttendanceController::class, 'office'])->name('attendances.office');
-        Route::get('attendances', [AttendanceController::class, 'index'])->name('attendances.index');
+    });
 
-        // Objetivos (Admin)
+    Route::middleware('can:rrhh_attendances.read')->group(function () {
+        Route::get('attendances', [AttendanceController::class, 'index'])->name('attendances.index');
+    });
+
+    // Objetivos (Admin)
+    Route::middleware('can:rrhh_objectives.read')->group(function () {
         Route::resource('objectives', ObjectiveController::class);
-        Route::post('objectives/{objective}/feedback', [ObjectiveController::class, 'storeFeedback'])->name('objectives.feedback');
+        Route::delete('objective-comments/{comment}', [ObjectiveController::class, 'destroyComment'])->name('objectives.comments.destroy');
     });
 
     // Autogestión de Asistencia para Empleados

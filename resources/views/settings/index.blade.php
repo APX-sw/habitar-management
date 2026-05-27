@@ -88,6 +88,7 @@
     </a>
 
     <!-- RRHH - MOTIVOS -->
+    @can('cfg_absence_reasons.read')
     <a href="{{ route('absence-reasons.index') }}" class="config-card" style="text-decoration: none; color: inherit;">
         <div class="card" style="height: 100%; transition: all 0.3s ease; border-top: 4px solid #3182CE; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem;">
             <div style="background: #EBF8FF; color: #2B6CB0; width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
@@ -97,6 +98,7 @@
             <p style="font-size: 0.9rem; color: var(--text-light); margin: 0;">Configuración de los motivos de inasistencia para empleados.</p>
         </div>
     </a>
+    @endcan
 
 </div>
 
