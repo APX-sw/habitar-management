@@ -448,8 +448,28 @@ Object.values(propertiesMap).forEach(prop => {
   `;
 });
 
-// 5. Cálculo Dinámico de Pagos Directos a Propietario (Diferencia)
-const directDiff = (parseFloat(totals.total_income) || 0) - (parseFloat(totals.total_expenses) || 0) - (parseFloat(totals.agency_commission) || 0) - (parseFloat(totals.net_amount) || 0);
+// 5. Cálculo Dinámico de Honorarios Extra y Pagos Directos a Propietario
+let extraFeesHtml = "";
+const extraFees = body.details.extra_fees || [];
+if (extraFees.length > 0) {
+  extraFeesHtml += `
+    <tr>
+      <td colspan="2" style="padding: 15px 0 5px 0; font-weight: 800; color: #4a5568; font-size: 0.9em; border-bottom: 1px solid #edf2f7;">
+        Honorarios Extra / Descuentos Adicionales
+      </td>
+    </tr>
+  `;
+  extraFees.forEach(ef => {
+    extraFeesHtml += `
+      <tr>
+        <td style="padding: 8px 0; font-weight: 500; color: #718096; padding-left: 10px;">↳ ${ef.description}</td>
+        <td style="text-align: right; font-weight: bold; color: #e53e3e;">- ${fmt(ef.amount)}</td>
+      </tr>
+    `;
+  });
+}
+
+const directDiff = (parseFloat(totals.total_income) || 0) - (parseFloat(totals.total_expenses) || 0) - (parseFloat(totals.agency_commission) || 0) - (parseFloat(totals.extra_fees_total) || 0) - (parseFloat(totals.net_amount) || 0);
 let directRowHtml = "";
 if (directDiff > 0.01) {
   directRowHtml = `
@@ -498,15 +518,24 @@ const htmlContent = `
           <td style="padding: 8px 0; font-weight: 600;">Honorarios Inmobiliaria:</td>
           <td style="text-align: right; font-weight: bold; color: #e53e3e;">- ${fmt(totals.agency_commission)}</td>
         </tr>
+        ${extraFeesHtml}
         ${directRowHtml}
       </table>
     </div>
 
     <!-- Bloque Neto Final -->
-    <div style="margin-top: 20px; background: #1a202c; color: white; padding: 25px; border-radius: 12px; text-align: center;">
-      <span style="font-size: 14px; font-weight: 800; opacity: 0.8; display: block; margin-bottom: 5px;">NETO FINAL A TRANSFERIR</span>
-      <span style="font-size: 32px; font-weight: 900; color: #ffffff;">${fmt(totals.net_amount)}</span>
-    </div>
+    ${(parseFloat(totals.net_amount) || 0) < 0 ? `
+      <div style="margin-top: 20px; background: #FFF5F5; border: 2px solid #FC8181; color: #9B2C2C; padding: 25px; border-radius: 12px; text-align: center;">
+        <span style="font-size: 14px; font-weight: 800; display: block; margin-bottom: 5px; text-transform: uppercase;">SALDO A FAVOR DE HABITAR</span>
+        <span style="font-size: 32px; font-weight: 900; color: #E53E3E;">${fmt(totals.net_amount)}</span>
+        <p style="margin: 15px 0 0 0; font-size: 13px; font-weight: 600; color: #C53030; line-height: 1.5;">Por favor, recuerde transferir este monto a las cuentas bancarias de la Inmobiliaria para regularizar su cuenta corriente.</p>
+      </div>
+    ` : `
+      <div style="margin-top: 20px; background: #1a202c; color: white; padding: 25px; border-radius: 12px; text-align: center;">
+        <span style="font-size: 14px; font-weight: 800; opacity: 0.8; display: block; margin-bottom: 5px;">NETO FINAL A TRANSFERIR</span>
+        <span style="font-size: 32px; font-weight: 900; color: #ffffff;">${fmt(totals.net_amount)}</span>
+      </div>
+    `}
 
   </div>
 </div>
@@ -731,8 +760,28 @@ for (const item of $input.all()) {
     } catch(e) {}
   }
 
-  // 5. Cálculo Dinámico de Pagos Directos a Propietario (Diferencia)
-  const directDiff = (parseFloat(totals.total_income) || 0) - (parseFloat(totals.total_expenses) || 0) - (parseFloat(totals.agency_commission) || 0) - (parseFloat(totals.net_amount) || 0);
+  // 5. Cálculo Dinámico de Honorarios Extra y Pagos Directos a Propietario
+  let extraFeesHtml = "";
+  const extraFees = data?.details?.extra_fees || [];
+  if (extraFees.length > 0) {
+    extraFeesHtml += `
+      <tr>
+        <td colspan="2" style="padding: 15px 0 5px 0; font-weight: 800; color: #4a5568; font-size: 0.9em; border-bottom: 1px solid #edf2f7;">
+          Honorarios Extra / Descuentos Adicionales
+        </td>
+      </tr>
+    `;
+    extraFees.forEach(ef => {
+      extraFeesHtml += `
+        <tr>
+          <td style="padding: 8px 0; font-weight: 500; color: #718096; padding-left: 10px;">↳ ${ef.description}</td>
+          <td style="text-align: right; font-weight: bold; color: #e53e3e;">- ${fmt(ef.amount)}</td>
+        </tr>
+      `;
+    });
+  }
+
+  const directDiff = (parseFloat(totals.total_income) || 0) - (parseFloat(totals.total_expenses) || 0) - (parseFloat(totals.agency_commission) || 0) - (parseFloat(totals.extra_fees_total) || 0) - (parseFloat(totals.net_amount) || 0);
   let directRowHtml = "";
   if (directDiff > 0.01) {
     directRowHtml = `
@@ -755,7 +804,7 @@ for (const item of $input.all()) {
     <div style="padding: 30px;">
       
       <p style="font-size: 16px; margin-top: 0; color: #4a5568;">Estimado/a <strong>${owner.name || 'Propietario'}</strong>,</p>
-      <p style="font-size: 15px; color: #718096; line-height: 1.6; margin-bottom: 30px;">Te informamos que hemos procesado exitosamente la transferencia correspondiente a la liquidación de tus propiedades. A continuación, te adjuntamos los detalles de los depósitos realizados y el resumen de tu rendición.</p>
+      <p style="font-size: 15px; color: #718096; line-height: 1.6; margin-bottom: 30px;">${(parseFloat(totals.net_amount) || 0) < 0 ? 'Hemos procesado exitosamente la recepción de tu pago para regularizar el saldo deudor de esta liquidación. A continuación le adjuntamos el recibo detallado.' : 'Te informamos que hemos procesado exitosamente la transferencia correspondiente a la liquidación de tus propiedades. A continuación, te adjuntamos los detalles de los depósitos realizados y el resumen de tu rendición.'}</p>
 
       <!-- Sección Dinámica de Transferencias -->
       <h3 style="color: #22543D; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center;">
@@ -785,10 +834,11 @@ for (const item of $input.all()) {
             <td style="padding: 8px 0; font-weight: 600; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">Honorarios Inmobiliaria:</td>
             <td style="text-align: right; font-weight: bold; color: #e53e3e; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">- ${fmt(totals.agency_commission)}</td>
           </tr>
+          ${extraFeesHtml}
           ${directRowHtml}
           <tr>
-            <td style="padding: 15px 0 0 0; font-weight: 800; font-size: 18px; color: #1a202c;">NETO LIQUIDADO:</td>
-            <td style="padding: 15px 0 0 0; text-align: right; font-weight: 900; font-size: 22px; color: #2b6cb0;">${fmt(totals.net_amount)}</td>
+            <td style="padding: 15px 0 0 0; font-weight: 800; font-size: 18px; color: #1a202c;">${(parseFloat(totals.net_amount) || 0) < 0 ? 'NETO COBRADO:' : 'NETO LIQUIDADO:'}</td>
+            <td style="padding: 15px 0 0 0; text-align: right; font-weight: 900; font-size: 22px; color: ${(parseFloat(totals.net_amount) || 0) < 0 ? '#E53E3E' : '#2b6cb0'};">${fmt(totals.net_amount)}</td>
           </tr>
         </table>
       </div>

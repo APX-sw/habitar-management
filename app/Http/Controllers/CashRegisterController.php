@@ -43,6 +43,8 @@ class CashRegisterController extends Controller
             return $account->current_balance;
         });
 
+        $employees = \App\Models\Employee::all();
+
         $deletedMovements = \App\Models\DeletedMovement::with(['account', 'user'])->latest()->get();
         $deletedMovementsFormatted = $deletedMovements->map(function($del) {
             return [
@@ -62,7 +64,7 @@ class CashRegisterController extends Controller
             return view('cash_register._movements_table', compact('movements'))->render();
         }
 
-        return view('cash_register.index', compact('accounts', 'movements', 'totalBalance', 'categories', 'deletedMovements', 'deletedMovementsFormatted'));
+        return view('cash_register.index', compact('accounts', 'movements', 'totalBalance', 'categories', 'deletedMovements', 'deletedMovementsFormatted', 'employees'));
     }
 
     public function transfer(Request $request)

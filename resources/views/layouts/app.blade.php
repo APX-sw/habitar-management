@@ -386,6 +386,10 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     Legajos
                 </a>
+                <a href="{{ route('salaries.index') }}" class="sidebar-link {{ request()->routeIs('salaries.*') ? 'active' : '' }}" style="margin-left: 0.5rem; margin-top: 0.25rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    Sueldos
+                </a>
                 @endcan
                 @can('rrhh_office.read')
                 <a href="{{ route('attendances.office') }}" class="sidebar-link {{ request()->routeIs('attendances.office') ? 'active' : '' }}" style="margin-left: 0.5rem; margin-top: 0.25rem;">
@@ -469,21 +473,21 @@
 
         <main class="main-content">
             @if(session('success'))
-                <div style="background: #f0fff4; color: #276749; padding: 1rem 1.5rem; border-radius: var(--border-radius); margin-bottom: 2rem; border-left: 5px solid #48bb78; display: flex; align-items: center; gap: 0.8rem; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <div class="no-print" style="background: #f0fff4; color: #276749; padding: 1rem 1.5rem; border-radius: var(--border-radius); margin-bottom: 2rem; border-left: 5px solid #48bb78; display: flex; align-items: center; gap: 0.8rem; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     <span style="font-weight: 600;">{{ session('success') }}</span>
                 </div>
             @endif
 
             @if(session('error'))
-                <div style="background: #fff5f5; color: #c53030; padding: 1rem 1.5rem; border-radius: var(--border-radius); margin-bottom: 2rem; border-left: 5px solid #f56565; display: flex; align-items: center; gap: 0.8rem; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <div class="no-print" style="background: #fff5f5; color: #c53030; padding: 1rem 1.5rem; border-radius: var(--border-radius); margin-bottom: 2rem; border-left: 5px solid #f56565; display: flex; align-items: center; gap: 0.8rem; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     <span style="font-weight: 600;">{{ session('error') }}</span>
                 </div>
             @endif
 
             @if($errors->any())
-                <div style="background: #fff5f5; color: #c53030; padding: 1.2rem 1.5rem; border-radius: var(--border-radius); margin-bottom: 2rem; border-left: 5px solid #f56565; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <div class="no-print" style="background: #fff5f5; color: #c53030; padding: 1.2rem 1.5rem; border-radius: var(--border-radius); margin-bottom: 2rem; border-left: 5px solid #f56565; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
                     <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.6rem;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                         <span style="font-weight: 800;">Por favor corrige los siguientes errores:</span>

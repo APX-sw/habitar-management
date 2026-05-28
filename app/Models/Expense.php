@@ -20,7 +20,8 @@ class Expense extends Model
         'description', 
         'attachment_path',
         'is_paid', 
-        'transaction_category_id'
+        'transaction_category_id',
+        'employee_id'
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -31,6 +32,11 @@ class Expense extends Model
     public function property()
     {
         return $this->belongsTo(Property::class);
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
     }
 
     public function account()

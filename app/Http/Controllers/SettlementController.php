@@ -62,6 +62,8 @@ class SettlementController extends Controller
         $expenses = collect();
         $commissionPercentage = 10; // Default a 10%
 
+        $previousDebt = 0;
+
         if ($ownerId) {
             $propertyIds = Property::where('owner_id', $ownerId)->pluck('id');
 
@@ -85,9 +87,23 @@ class SettlementController extends Controller
                 ->get();
             
             $expense = $expenses->sum('amount');
+
+            // Buscar deuda del mes anterior
+            $lastSettlement = Settlement::where('owner_id', $ownerId)
+                ->where('status', '!=', 'paid')
+                ->where('net_amount', '<', 0)
+                ->orderBy('year', 'desc')
+                ->orderBy('month', 'desc')
+                ->first();
+
+            if ($lastSettlement) {
+                $paidDebt = $lastSettlement->payments()->sum('amount');
+                $previousDebt = abs($lastSettlement->net_amount) - $paidDebt;
+                if ($previousDebt < 0) $previousDebt = 0;
+            }
         }
 
-        return view('settlements.create', compact('owners', 'ownerId', 'month', 'year', 'income', 'expense', 'collections', 'expenses', 'rentTotal', 'commissionPercentage', 'directPayments'));
+        return view('settlements.create', compact('owners', 'ownerId', 'month', 'year', 'income', 'expense', 'collections', 'expenses', 'rentTotal', 'commissionPercentage', 'directPayments', 'previousDebt'));
     }
 
     public function bulkPreview($month, $year)
@@ -125,16 +141,32 @@ class SettlementController extends Controller
 
             // La comisión se cobra SOLO sobre los alquileres (sin incluir extras)
             $agencyCommission = $rentBaseForCommission * (($owner->commission_percentage ?? 10) / 100);
-            $net = $income - $expensesSum - $agencyCommission - $directPayments;
 
-            // Solo agregamos si hay movimientos o si el neto no es cero
-            if ($income > 0 || $expensesSum > 0 || $directPayments > 0) {
+            $previousDebt = 0;
+            $lastSettlement = Settlement::where('owner_id', $owner->id)
+                ->where('status', '!=', 'paid')
+                ->where('net_amount', '<', 0)
+                ->orderBy('year', 'desc')
+                ->orderBy('month', 'desc')
+                ->first();
+
+            if ($lastSettlement) {
+                $paidDebt = $lastSettlement->payments()->sum('amount');
+                $previousDebt = abs($lastSettlement->net_amount) - $paidDebt;
+                if ($previousDebt < 0) $previousDebt = 0;
+            }
+
+            $net = $income - $expensesSum - $agencyCommission - $directPayments - $previousDebt;
+
+            // Solo agregamos si hay movimientos o si el neto no es cero (o si hay deuda previa)
+            if ($income > 0 || $expensesSum > 0 || $directPayments > 0 || $previousDebt > 0) {
                 $previews[] = [
                     'owner' => $owner,
                     'income' => $income,
                     'expenses' => $expensesSum,
                     'agency_commission' => $agencyCommission,
                     'direct_payments' => $directPayments,
+                    'previous_debt' => $previousDebt,
                     'net' => $net,
                     'rent_total' => $rentBaseForCommission // Base para recalcular en JS
                 ];
@@ -157,17 +189,46 @@ class SettlementController extends Controller
         foreach ($request->owners as $data) {
             if (!isset($data['selected'])) continue;
 
-            Settlement::updateOrCreate(
+            $previousDebt = 0;
+            $lastSettlement = Settlement::where('owner_id', $data['owner_id'])
+                ->where('status', '!=', 'paid')
+                ->where('net_amount', '<', 0)
+                ->orderBy('year', 'desc')
+                ->orderBy('month', 'desc')
+                ->first();
+
+            if ($lastSettlement) {
+                $paidDebt = $lastSettlement->payments()->sum('amount');
+                $previousDebt = abs($lastSettlement->net_amount) - $paidDebt;
+                if ($previousDebt < 0) $previousDebt = 0;
+            }
+
+            $netAmount = $data['total_income'] - $data['total_expense'] - $data['agency_commission'] - $previousDebt;
+
+            $settlement = Settlement::updateOrCreate(
                 ['owner_id' => $data['owner_id'], 'month' => $request->month, 'year' => $request->year],
                 [
                     'rent_total' => $data['rent_total'],
                     'total_income' => $data['total_income'],
                     'total_expense' => $data['total_expense'],
                     'agency_commission' => $data['agency_commission'],
-                    'net_amount' => $data['net_amount'],
+                    'net_amount' => $netAmount,
                     'status' => 'ready'
                 ]
             );
+
+            if ($previousDebt > 0) {
+                \App\Models\SettlementExtraFee::updateOrCreate(
+                    [
+                        'settlement_id' => $settlement->id,
+                        'description' => 'Deuda arrastrada del mes anterior'
+                    ],
+                    [
+                        'amount' => $previousDebt
+                    ]
+                );
+            }
+
             $count++;
         }
 
@@ -187,6 +248,22 @@ class SettlementController extends Controller
             'net_amount' => 'required|numeric',
         ]);
 
+        $previousDebt = 0;
+        $lastSettlement = Settlement::where('owner_id', $request->owner_id)
+            ->where('status', '!=', 'paid')
+            ->where('net_amount', '<', 0)
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->first();
+
+        if ($lastSettlement) {
+            $paidDebt = $lastSettlement->payments()->sum('amount');
+            $previousDebt = abs($lastSettlement->net_amount) - $paidDebt;
+            if ($previousDebt < 0) $previousDebt = 0;
+        }
+
+        $netAmount = $request->total_income - $request->total_expense - $request->agency_commission - $previousDebt;
+
         $settlement = Settlement::updateOrCreate(
             ['owner_id' => $request->owner_id, 'month' => $request->month, 'year' => $request->year],
             [
@@ -194,10 +271,22 @@ class SettlementController extends Controller
                 'total_income' => $request->total_income,
                 'total_expense' => $request->total_expense,
                 'agency_commission' => $request->agency_commission,
-                'net_amount' => $request->net_amount,
+                'net_amount' => $netAmount,
                 'status' => 'ready'
             ]
         );
+
+        if ($previousDebt > 0) {
+            \App\Models\SettlementExtraFee::updateOrCreate(
+                [
+                    'settlement_id' => $settlement->id,
+                    'description' => 'Deuda arrastrada del mes anterior'
+                ],
+                [
+                    'amount' => $previousDebt
+                ]
+            );
+        }
 
         return redirect()->route('settlements.show', $settlement)->with('success', 'Rendición generada correctamente.');
     }
@@ -226,6 +315,34 @@ class SettlementController extends Controller
             ->get();
 
         return view('settlements.show', compact('settlement', 'accounts', 'collections', 'expenses'));
+    }
+
+    public function addExtraFee(Request $request, Settlement $settlement)
+    {
+        $request->validate([
+            'description' => 'required|string',
+            'amount' => 'required|numeric|min:0.01'
+        ]);
+
+        \App\Models\SettlementExtraFee::create([
+            'settlement_id' => $settlement->id,
+            'description' => $request->description,
+            'amount' => $request->amount
+        ]);
+
+        $settlement->recalculateNet();
+
+        return back()->with('success', 'Honorario extra agregado.');
+    }
+
+    public function removeExtraFee(Settlement $settlement, \App\Models\SettlementExtraFee $extraFee)
+    {
+        if ($extraFee->settlement_id == $settlement->id) {
+            $extraFee->delete();
+            $settlement->recalculateNet();
+        }
+
+        return back()->with('success', 'Honorario extra eliminado.');
     }
 
     public function sendToOwner(Request $request, Settlement $settlement)
@@ -261,6 +378,7 @@ class SettlementController extends Controller
                 'total_income' => $settlement->total_income,
                 'total_expenses' => $settlement->total_expense,
                 'agency_commission' => $settlement->agency_commission,
+                'extra_fees_total' => $settlement->extraFees->sum('amount'),
                 'net_amount' => $settlement->net_amount
             ],
             'details' => [
@@ -282,6 +400,12 @@ class SettlementController extends Controller
                         'property' => $e->property->location,
                         'description' => $e->description ?? ($e->transactionCategory->name ?? 'Gasto Extraordinario'),
                         'amount' => $e->amount
+                    ];
+                }),
+                'extra_fees' => $settlement->extraFees->map(function($ef) {
+                    return [
+                        'description' => $ef->description,
+                        'amount' => $ef->amount
                     ];
                 })
             ]
@@ -324,57 +448,78 @@ class SettlementController extends Controller
 
     public function pay(Request $request, Settlement $settlement)
     {
+        $isNegative = $settlement->net_amount < 0;
+
         $request->validate([
             'payments' => 'required|array|min:1',
             'payments.*.amount' => 'required|numeric|min:0.01',
             'payments.*.account_id' => 'required|exists:accounts,id',
-            'payments.*.owner_bank_account_id' => 'required|exists:owner_bank_accounts,id',
+            'payments.*.owner_bank_account_id' => $isNegative ? 'nullable|exists:owner_bank_accounts,id' : 'required|exists:owner_bank_accounts,id',
             'payments.*.date' => 'required|date',
         ]);
 
-        // 1. Validar que cada cuenta tenga saldo suficiente antes de procesar cualquier movimiento
-        $requestedDebits = [];
-        foreach ($request->payments as $pData) {
-            $accountId = $pData['account_id'];
-            $amount = (float)$pData['amount'];
-            if (!isset($requestedDebits[$accountId])) {
-                $requestedDebits[$accountId] = 0.0;
+        // 1. Validar que cada cuenta tenga saldo suficiente antes de procesar cualquier movimiento (solo si es egreso)
+        if (!$isNegative) {
+            $requestedDebits = [];
+            foreach ($request->payments as $pData) {
+                $accountId = $pData['account_id'];
+                $amount = (float)$pData['amount'];
+                if (!isset($requestedDebits[$accountId])) {
+                    $requestedDebits[$accountId] = 0.0;
+                }
+                $requestedDebits[$accountId] += $amount;
             }
-            $requestedDebits[$accountId] += $amount;
-        }
 
-        foreach ($requestedDebits as $accountId => $totalDebit) {
-            $account = Account::findOrFail($accountId);
-            if ($account->current_balance < $totalDebit) {
-                return back()->withErrors([
-                    'payments' => "Saldo insuficiente en la cuenta \"{$account->name}\". Saldo disponible: \$" . number_format($account->current_balance, 2, ',', '.') . " e intentaste pagar \$" . number_format($totalDebit, 2, ',', '.') . "."
-                ])->withInput();
+            foreach ($requestedDebits as $accountId => $totalDebit) {
+                $account = Account::findOrFail($accountId);
+                if ($account->current_balance < $totalDebit) {
+                    return back()->withErrors([
+                        'payments' => "Saldo insuficiente en la cuenta \"{$account->name}\". Saldo disponible: \$" . number_format($account->current_balance, 2, ',', '.') . " e intentaste pagar \$" . number_format($totalDebit, 2, ',', '.') . "."
+                    ])->withInput();
+                }
             }
         }
 
         // 2. Transacción de base de datos para guardar todo de forma atómica
-        \DB::transaction(function () use ($request, $settlement) {
+        \DB::transaction(function () use ($request, $settlement, $isNegative) {
             foreach ($request->payments as $pData) {
                 $payment = $settlement->payments()->create($pData);
 
-                // Generar movimiento de caja (Egreso)
+                // Generar movimiento de caja (Egreso o Ingreso según el neto de la rendición)
                 $payment->movement()->create([
                     'account_id' => $pData['account_id'],
-                    'type' => 'expense',
+                    'type' => $isNegative ? 'income' : 'expense',
                     'amount' => $pData['amount'],
-                    'description' => 'Pago Rendición a: ' . $settlement->owner->name . ' (' . $settlement->month . '/' . $settlement->year . ')',
+                    'description' => ($isNegative ? 'Cobro Rendición de: ' : 'Pago Rendición a: ') . $settlement->owner->name . ' (' . $settlement->month . '/' . $settlement->year . ')',
                     'movement_date' => Carbon::parse($pData['date'])->setTimeFrom(now()),
-                    'transaction_category_id' => 5 // Pago Rendición a Propietario
+                    'transaction_category_id' => $isNegative ? 18 : 5 // 18: Cobro Rendición, 5: Pago Rendición
                 ]);
             }
         });
 
         $totalPaid = $settlement->payments()->sum('amount');
-        // Toleramos hasta $1.00 ARS de diferencia por el redondeo de centavos habitual en Argentina
-        if (($settlement->net_amount - $totalPaid) <= 1.00) {
-            $settlement->update(['status' => 'paid']);
+        // Toleramos hasta $1.00 ARS de diferencia por el redondeo
+        if ($isNegative) {
+            if ((abs($settlement->net_amount) - $totalPaid) <= 1.00) {
+                $settlement->update(['status' => 'paid']);
+            }
+        } else {
+            if (($settlement->net_amount - $totalPaid) <= 1.00) {
+                $settlement->update(['status' => 'paid']);
+            }
         }
 
         return back()->with('success', 'Pago(s) registrado(s) correctamente.');
+    }
+
+    public function carryOver(Settlement $settlement)
+    {
+        if ($settlement->net_amount >= 0) {
+            return back()->with('error', 'Solo se pueden arrastrar rendiciones con saldo negativo.');
+        }
+
+        $settlement->update(['status' => 'carried_over']);
+
+        return back()->with('success', 'El saldo deudor se ha arrastrado exitosamente y se descontará en la próxima liquidación de este propietario.');
     }
 }

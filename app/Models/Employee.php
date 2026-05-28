@@ -24,6 +24,19 @@ class Employee extends Model
         'emergency_contact_phone',
         'bank_name',
         'cbu_alias',
+        'base_salary',
+        'update_type',
+        'update_frequency_months',
+        'increase_index_id',
+        'increase_fixed_percentage',
+        'last_increase_date',
+    ];
+
+    protected $casts = [
+        'hire_date' => 'date',
+        'last_increase_date' => 'date',
+        'base_salary' => 'decimal:2',
+        'increase_fixed_percentage' => 'decimal:2',
     ];
 
     public function user()
@@ -39,6 +52,21 @@ class Employee extends Model
     public function attendances()
     {
         return $this->hasMany(Attendance::class);
+    }
+
+    public function increaseIndex()
+    {
+        return $this->belongsTo(IndexType::class, 'increase_index_id');
+    }
+
+    public function salarySettlements()
+    {
+        return $this->hasMany(EmployeeSalarySettlement::class);
+    }
+
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
     }
 
     public function getActivitylogOptions(): LogOptions

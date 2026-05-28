@@ -16,6 +16,10 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20v-6M9 17l3 3 3-3M12 4v6m3-3l-3-3-3 3"></path></svg>
             Ajustar Saldo
         </button>
+        <button onclick="document.getElementById('advanceModal').style.display='flex'" class="btn" style="background: #F0FFF4; color: #38A169; border: 1px solid #C6F6D5; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; outline: none; border-radius: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            Adelanto de Sueldo
+        </button>
         <button onclick="document.getElementById('auditModal').style.display='flex'" class="btn" style="background: #FFF5F5; color: #E53E3E; border: 1px solid #FED7D7; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; outline: none; border-radius: 8px; margin-left: auto;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
             Ver Auditoría de Eliminaciones
@@ -247,6 +251,63 @@
             </div>
             
             <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-weight: 700;">Aplicar Ajuste</button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Nuevo Adelanto -->
+<div id="advanceModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
+    <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0; color: var(--primary-color);">Registrar Adelanto de Sueldo</h3>
+            <button onclick="document.getElementById('advanceModal').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">&times;</button>
+        </div>
+
+        <form action="{{ route('salaries.advance') }}" method="POST">
+            @csrf
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #718096; text-transform: uppercase; margin-bottom: 0.5rem;">Empleado *</label>
+                <select name="employee_id" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;">
+                    <option value="">Seleccionar empleado...</option>
+                    @if(isset($employees))
+                        @foreach($employees as $employee)
+                            <option value="{{ $employee->id }}">{{ $employee->full_name }}</option>
+                        @endforeach
+                    @endif
+                </select>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #718096; text-transform: uppercase; margin-bottom: 0.5rem;">Monto del Adelanto ($) *</label>
+                <input type="number" step="0.01" name="amount" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;" placeholder="Ej: 50000">
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #718096; text-transform: uppercase; margin-bottom: 0.5rem;">Fecha del Adelanto *</label>
+                <input type="date" name="date" value="{{ date('Y-m-d') }}" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;">
+                <small style="color: var(--text-light); display: block; margin-top: 0.25rem;">Este adelanto se descontará automáticamente en la liquidación de este mes y año.</small>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #718096; text-transform: uppercase; margin-bottom: 0.5rem;">Cuenta Origen (Caja/Banco) *</label>
+                <select name="account_id" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;">
+                    <option value="">Seleccionar cuenta de la que sale el dinero...</option>
+                    @foreach($accounts as $account)
+                        <option value="{{ $account->id }}">{{ $account->name }} (Saldo: ${{ number_format($account->current_balance ?? $account->balance, 2, ',', '.') }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #718096; text-transform: uppercase; margin-bottom: 0.5rem;">Notas / Descripción (Opcional)</label>
+                <input type="text" name="description" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;" placeholder="Ej: Adelanto por vacaciones">
+            </div>
+
+            <div style="text-align: right;">
+                <button type="button" onclick="document.getElementById('advanceModal').style.display='none'" class="btn" style="background: #edf2f7; color: var(--text-main); font-weight: 700; padding: 1rem;">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="font-weight: 700; padding: 1rem;">Registrar Adelanto</button>
+            </div>
         </form>
     </div>
 </div>

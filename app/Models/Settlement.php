@@ -28,4 +28,16 @@ class Settlement extends Model
     {
         return $this->hasMany(SettlementPayment::class);
     }
+
+    public function extraFees()
+    {
+        return $this->hasMany(SettlementExtraFee::class);
+    }
+
+    public function recalculateNet()
+    {
+        $extraFeesAmount = $this->extraFees()->sum('amount');
+        $this->net_amount = $this->total_income - $this->total_expense - $this->agency_commission - $extraFeesAmount;
+        $this->save();
+    }
 }

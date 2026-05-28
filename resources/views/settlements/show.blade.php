@@ -35,9 +35,23 @@
                     Enviar Confirmación Pago
                 </button>
             </form>
+        @elseif($settlement->status === 'carried_over')
+            <span class="btn" style="background: #edf2f7; color: #718096; display: flex; align-items: center; gap: 0.6rem; font-weight: 700; border: 1px dashed #cbd5e0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+                ARRASTRADA AL PRÓXIMO MES
+            </span>
         @else
-            <button onclick="document.getElementById('paymentModal').style.display='flex'" class="btn" style="background: #e53e3e; color: white; display: flex; align-items: center; gap: 0.6rem; font-weight: 700; box-shadow: 0 4px 6px rgba(229, 62, 62, 0.2);">
-                PAGAR AHORA
+            @if($settlement->net_amount < 0)
+                <form action="{{ route('settlements.carry_over', $settlement) }}" method="POST" style="display: inline;" onsubmit="return confirm('¿Estás seguro de arrastrar este saldo deudor a la liquidación del próximo mes?');">
+                    @csrf
+                    <button type="submit" class="btn" style="background: white; border: 1px solid #cbd5e0; color: #4a5568; display: flex; align-items: center; gap: 0.6rem; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+                        Arrastrar a Próximo Mes
+                    </button>
+                </form>
+            @endif
+            <button onclick="document.getElementById('paymentModal').style.display='flex'" class="btn" style="background: {{ $settlement->net_amount < 0 ? '#3182ce' : '#e53e3e' }}; color: white; display: flex; align-items: center; gap: 0.6rem; font-weight: 700; box-shadow: 0 4px 6px rgba({{ $settlement->net_amount < 0 ? '49, 130, 206' : '229, 62, 62' }}, 0.2);">
+                {{ $settlement->net_amount < 0 ? 'COBRAR AHORA' : 'PAGAR AHORA' }}
             </button>
         @endif
     </div>
@@ -52,8 +66,7 @@
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3.5rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 2.5rem;">
             <div>
                 <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-                    <div style="background: var(--primary-color); width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 1.5rem;">H</div>
-                    <span style="font-size: 1.8rem; font-weight: 800; color: var(--primary-color); letter-spacing: -0.02em;">Habitar</span>
+                    <img src="{{ asset('img/logo.png') }}" alt="Habitar Logo" style="height: 45px; object-fit: contain;">
                 </div>
                 <p style="color: var(--text-light); font-size: 0.95rem; line-height: 1.4; margin: 0;">
                     Gestión Integral de Propiedades<br>
@@ -87,6 +100,11 @@
                         <div style="background: #C6F6D5; color: #22543D; padding: 0.75rem 1.5rem; border-radius: 50px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1rem; border: 2px solid #9AE6B4;">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             PAGADA
+                        </div>
+                    @elseif($settlement->status === 'carried_over')
+                        <div style="background: #E2E8F0; color: #4A5568; padding: 0.75rem 1.5rem; border-radius: 50px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1rem; border: 2px dashed #CBD5E0;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+                            ARRASTRADA
                         </div>
                     @else
                         <div style="background: #FEFCBF; color: #744210; padding: 0.75rem 1.5rem; border-radius: 50px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1rem; border: 2px solid #F6E05E;">
@@ -240,9 +258,30 @@
                         <span style="font-weight: 700; color: #e53e3e;">- ${{ number_format($settlement->agency_commission, 2) }}</span>
                     </div>
 
+                    @if($settlement->extraFees->count() > 0)
+                        <div style="margin-bottom: 1.5rem; border-bottom: 1px solid #edf2f7; padding-bottom: 1.5rem;">
+                            <h4 style="font-size: 0.9rem; color: var(--text-main); margin: 0 0 0.5rem 0; font-weight: 700;">Honorarios Extra / Descuentos Adicionales</h4>
+                            @foreach($settlement->extraFees as $ef)
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <span style="font-size: 0.9rem; color: var(--text-light);">{{ $ef->description }}</span>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="font-weight: 700; color: #e53e3e;">- ${{ number_format($ef->amount, 2) }}</span>
+                                        @if(!in_array($settlement->status, ['paid', 'carried_over']))
+                                            <form action="{{ route('settlements.extra-fees.remove', [$settlement, $ef]) }}" method="POST" style="margin:0;">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" style="background: none; border: none; color: #e53e3e; cursor: pointer; padding: 0; font-size: 1.2rem; line-height: 1;">&times;</button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
                     @php
                         // Calcular si hay diferencia por pagos directos transferidos
-                        $directDiff = $settlement->total_income - $settlement->total_expense - $settlement->agency_commission - $settlement->net_amount;
+                        $extraFeesTotal = $settlement->extraFees ? $settlement->extraFees->sum('amount') : 0;
+                        $directDiff = $settlement->total_income - $settlement->total_expense - $settlement->agency_commission - $extraFeesTotal - $settlement->net_amount;
                     @endphp
                     @if($directDiff > 0.01)
                     <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; font-size: 1.1rem; padding-bottom: 1.5rem; border-bottom: 1px dashed #edf2f7;">
@@ -305,12 +344,12 @@
         @endif
 
         <!-- Footer / Legal -->
-        <div style="margin-top: 5rem; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 2rem;">
+        <div style="margin-top: 5rem; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 2rem; break-inside: avoid; page-break-inside: avoid;">
             <p style="color: var(--text-light); font-size: 0.8rem; margin: 0 0 1rem 0;">
                 Documento generado automáticamente por el sistema Habitar Management.<br>
-                Este comprobante tiene carácter de declaración informativa de cuenta.
+                Las liquidaciones de fondos están sujetas a la validación de la administración.
             </p>
-            <div style="display: flex; justify-content: center; gap: 3rem; margin-top: 2rem;">
+            <div style="display: flex; justify-content: center; margin-top: 4rem; gap: 4rem;">
                 <div style="border-top: 1px solid #cbd5e0; width: 200px; padding-top: 0.5rem; font-size: 0.75rem; color: #a0aec0; font-weight: 700; text-transform: uppercase;">Firma Habitar S.A.</div>
                 <div style="border-top: 1px solid #cbd5e0; width: 200px; padding-top: 0.5rem; font-size: 0.75rem; color: #a0aec0; font-weight: 700; text-transform: uppercase;">Firma Propietario</div>
             </div>
@@ -318,20 +357,23 @@
     </div>
 </div>
 
-<!-- Modal para Registrar Pago (Solo si no está pagado) -->
-@if($settlement->status !== 'paid')
+<!-- Modal para Registrar Pago (Solo si no está pagado o arrastrado) -->
+@if(!in_array($settlement->status, ['paid', 'carried_over']))
 <div id="paymentModal" class="no-print" style="display: none; position: fixed; inset: 0; background: rgba(26, 32, 44, 0.7); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
     <div class="card" style="width: 100%; max-width: 1000px; padding: 2.5rem; position: relative; max-height: 90vh; overflow-y: auto;">
         <button onclick="document.getElementById('paymentModal').style.display='none'" style="position: absolute; top: 1.5rem; right: 1.5rem; background: #edf2f7; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; color: var(--primary-color); display: flex; align-items: center; justify-content: center;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
 
-        <h3 style="margin-bottom: 0.5rem; color: var(--primary-color); font-size: 1.6rem; font-weight: 800;">Liquidar Rendición</h3>
-        <p style="font-size: 1rem; color: var(--text-light); margin-bottom: 2rem;">Asigna el pago a las cuentas bancarias del propietario. Puedes dividir el total en múltiples transferencias.</p>
-
         @php
-            $remaining = $settlement->net_amount - $settlement->payments->sum('amount');
+            $isNegative = $settlement->net_amount < 0;
+            $remaining = abs($settlement->net_amount) - $settlement->payments->sum('amount');
         @endphp
+
+        <h3 style="margin-bottom: 0.5rem; color: var(--primary-color); font-size: 1.6rem; font-weight: 800;">{{ $isNegative ? 'Registrar Cobro de Rendición' : 'Liquidar Rendición' }}</h3>
+        <p style="font-size: 1rem; color: var(--text-light); margin-bottom: 2rem;">
+            {{ $isNegative ? 'Registra el ingreso del dinero a nuestras cuentas bancarias/cajas.' : 'Asigna el pago a las cuentas bancarias del propietario. Puedes dividir el total en múltiples transferencias.' }}
+        </p>
 
         <form action="{{ route('settlements.pay', $settlement) }}" method="POST">
             @csrf
@@ -350,19 +392,20 @@
 
             <div id="paymentRowsContainer">
                 <!-- Fila inicial -->
-                <div class="payment-row-premium" style="display: grid; grid-template-columns: 1fr 1.8fr 1.8fr 1.1fr 45px; gap: 0.75rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1.5rem; border-bottom: 1px dashed #e2e8f0;">
+                <div class="payment-row-premium" style="display: grid; grid-template-columns: {{ $isNegative ? '1fr 2.5fr 1.1fr 45px' : '1fr 1.8fr 1.8fr 1.1fr 45px' }}; gap: 0.75rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1.5rem; border-bottom: 1px dashed #e2e8f0;">
                     <div>
                         <label class="label-tiny">Importe</label>
                         <input type="number" step="0.01" name="payments[0][amount]" class="payment-amount-field" value="{{ $remaining }}" oninput="recalcPaymentTotal()" required>
                     </div>
                     <div>
-                        <label class="label-tiny">Sale de (Inmobiliaria)</label>
+                        <label class="label-tiny">{{ $isNegative ? 'Ingresa a (Inmobiliaria)' : 'Sale de (Inmobiliaria)' }}</label>
                         <select name="payments[0][account_id]" required class="select-premium">
                             @foreach($accounts as $acc)
                                 <option value="{{ $acc->id }}">{{ $acc->name }} (${{ number_format($acc->current_balance, 2) }})</option>
                             @endforeach
                         </select>
                     </div>
+                    @if(!$isNegative)
                     <div>
                         <label class="label-tiny">Hacia (Propietario)</label>
                         <select name="payments[0][owner_bank_account_id]" required class="select-premium">
@@ -371,6 +414,7 @@
                             @endforeach
                         </select>
                     </div>
+                    @endif
                     <div>
                         <label class="label-tiny">Fecha Pago</label>
                         <input type="date" name="payments[0][date]" value="{{ date('Y-m-d') }}" required class="input-premium">
@@ -413,21 +457,52 @@
     .btn-save-premium { background: var(--accent-gradient); border: none; color: white; font-weight: 800; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3); }
 
     @media print {
+        @page { margin: 0; }
+        body { background: white !important; margin: 0 !important; padding: 10mm !important; font-size: 11px !important; color: black !important; }
         .no-print { display: none !important; }
-        body { background: white !important; margin: 0; padding: 0; }
-        .card { box-shadow: none !important; border: none !important; padding: 1.5rem !important; }
-        #printable-area { width: 100% !important; max-width: 100% !important; padding: 0 !important; }
+        .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; }
+        #printable-area { width: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
         .main-content { padding: 0 !important; margin: 0 !important; }
         .sidebar { display: none !important; }
+        .app-container { margin-left: 0 !important; width: 100% !important; max-width: 100% !important; }
+        .top-bar { display: none !important; }
         nav { display: none !important; }
 
-        /* Compactar espacios en impresion */
-        div[style*="margin-bottom: 4rem"] { margin-bottom: 1.5rem !important; }
-        div[style*="margin-bottom: 3.5rem"] { margin-bottom: 1.5rem !important; }
+        /* Estilos de tabla y texto */
+        table th, table td { padding: 0.3rem 0.5rem !important; font-size: 11px !important; }
+        h2 { font-size: 18px !important; margin-bottom: 0 !important; }
+        h3 { font-size: 14px !important; margin-bottom: 0.5rem !important; padding-bottom: 0.2rem !important; }
+        p { margin-bottom: 0.2rem !important; font-size: 11px !important; }
+        
+        /* Compactar espacios y quitar fondos pesados en impresion */
+        div[style*="margin-bottom: 4rem"] { margin-bottom: 1.5rem !important; gap: 1rem !important; }
+        div[style*="margin-bottom: 3.5rem"] { margin-bottom: 1rem !important; padding-bottom: 0.5rem !important; }
         div[style*="margin-bottom: 3rem"] { margin-bottom: 1rem !important; }
-        div[style*="padding: 3rem"] { padding: 1.5rem !important; }
-        div[style*="gap: 4rem"] { gap: 1.5rem !important; }
-        div[style*="padding-bottom: 2.5rem"] { padding-bottom: 1rem !important; }
+        div[style*="margin-bottom: 2rem"] { margin-bottom: 0.5rem !important; }
+        div[style*="margin-bottom: 1.5rem"] { margin-bottom: 0.5rem !important; }
+        div[style*="padding: 3rem"] { padding: 0 !important; }
+        div[style*="gap: 4rem"] { gap: 1rem !important; }
+        div[style*="padding-bottom: 2.5rem"] { padding-bottom: 0.5rem !important; }
+        div[style*="margin-top: 5rem"] { margin-top: 1.5rem !important; }
+        div[style*="margin-top: 4rem"] { margin-top: 1rem !important; }
+        
+        /* Reducir paddings masivos */
+        div[style*="padding: 1.5rem"] { padding: 0.5rem !important; }
+        div[style*="padding: 1rem 1.5rem"] { padding: 0.5rem !important; }
+        div[style*="padding-top: 1.5rem"] { padding-top: 0.5rem !important; }
+        div[style*="padding-top: 2rem"] { padding-top: 0.5rem !important; }
+        
+        /* Ajustar la caja final (Neto Final) para que no sea un bloque oscuro gigante */
+        div[style*="background: var(--primary-color)"] { background: white !important; color: black !important; box-shadow: none !important; border: 2px solid black !important; padding: 0.5rem 1rem !important; }
+        div[style*="color: white"] { color: black !important; }
+        span[style*="color: white"] { color: black !important; }
+        
+        /* Badges limpios */
+        .badge { border: 1px solid #cbd5e0 !important; color: black !important; background: white !important; }
+        div[style*="background: #f8fafc"] { background: white !important; border: 1px solid #cbd5e0 !important; padding: 0.5rem !important; }
+        div[style*="background: #C6F6D5"] { background: white !important; border: 1px solid #cbd5e0 !important; color: black !important; padding: 0.2rem 0.5rem !important; }
+        div[style*="background: #E2E8F0"] { background: white !important; border: 1px solid #cbd5e0 !important; color: black !important; padding: 0.2rem 0.5rem !important; }
+        div[style*="background: #FEFCBF"] { background: white !important; border: 1px solid #cbd5e0 !important; color: black !important; padding: 0.2rem 0.5rem !important; }
     }
 </style>
 
@@ -440,7 +515,7 @@
         const container = document.getElementById('paymentRowsContainer');
         const row = document.createElement('div');
         row.className = 'payment-row-premium';
-        row.style = 'display: grid; grid-template-columns: 1fr 1.8fr 1.8fr 1.1fr 45px; gap: 0.75rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1.5rem; border-bottom: 1px dashed #e2e8f0; animation: fadeIn 0.3s ease-out;';
+        row.style = 'display: grid; grid-template-columns: {{ $settlement->net_amount < 0 ? "1fr 2.5fr 1.1fr 45px" : "1fr 1.8fr 1.8fr 1.1fr 45px" }}; gap: 0.75rem; margin-bottom: 1rem; align-items: flex-end; padding-bottom: 1.5rem; border-bottom: 1px dashed #e2e8f0; animation: fadeIn 0.3s ease-out;';
         
         row.innerHTML = `
             <div>
@@ -451,11 +526,13 @@
                     ${accOpts}
                 </select>
             </div>
+            @if(!($settlement->net_amount < 0))
             <div>
                 <select name="payments[${pCount}][owner_bank_account_id]" required class="select-premium">
                     ${ownAccOpts}
                 </select>
             </div>
+            @endif
             <div>
                 <input type="date" name="payments[${pCount}][date]" value="{{ date('Y-m-d') }}" required class="input-premium">
             </div>

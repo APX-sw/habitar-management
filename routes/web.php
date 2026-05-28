@@ -22,6 +22,7 @@ use App\Http\Controllers\ExpenseDocumentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\EmployeeSalarySettlementController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AbsenceReasonController;
 use App\Http\Controllers\AttendanceController;
@@ -45,11 +46,21 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('users', UserController::class)->middleware('can:users.read');
     Route::resource('roles', RoleController::class)->middleware('can:roles.read');
 
-    // Gestión de Recursos Humanos: Legajos
+    // Gestión de Recursos Humanos: Legajos y Sueldos
     Route::middleware('can:rrhh_employees.read')->group(function () {
         Route::resource('employees', EmployeeController::class);
         Route::post('employees/{employee}/documents', [EmployeeController::class, 'storeDocument'])->name('employees.documents.store');
         Route::delete('employee-documents/{document}', [EmployeeController::class, 'destroyDocument'])->name('employees.documents.destroy');
+        
+        // Sueldos
+        Route::get('salaries', [EmployeeSalarySettlementController::class, 'index'])->name('salaries.index');
+        Route::get('salaries/create', [EmployeeSalarySettlementController::class, 'create'])->name('salaries.create');
+        Route::post('salaries/store-period', [EmployeeSalarySettlementController::class, 'storePeriod'])->name('salaries.store_period');
+        Route::get('salaries/period/{month}/{year}', [EmployeeSalarySettlementController::class, 'showPeriod'])->name('salaries.show_period');
+        Route::post('salaries/advance', [EmployeeSalarySettlementController::class, 'storeAdvance'])->name('salaries.advance');
+        Route::post('salaries/{employee}', [EmployeeSalarySettlementController::class, 'store'])->name('salaries.store');
+        Route::post('salaries/pay/{settlement}', [EmployeeSalarySettlementController::class, 'pay'])->name('salaries.pay');
+        Route::get('salaries/receipt/{payment}', [EmployeeSalarySettlementController::class, 'receipt'])->name('salaries.receipt');
     });
 
     // Motivos de ausencia (Configuración)
@@ -158,6 +169,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('settlements/bulk', [SettlementController::class, 'bulkStore'])->name('settlements.bulk_store');
         Route::post('settlements/{settlement}/send', [SettlementController::class, 'sendToOwner'])->name('settlements.send_to_owner');
         Route::post('settlements/{settlement}/pay', [SettlementController::class, 'pay'])->name('settlements.pay');
+        Route::post('settlements/{settlement}/carry-over', [SettlementController::class, 'carryOver'])->name('settlements.carry_over');
+        Route::post('settlements/{settlement}/extra-fees', [SettlementController::class, 'addExtraFee'])->name('settlements.extra-fees.add');
+        Route::delete('settlements/{settlement}/extra-fees/{extraFee}', [SettlementController::class, 'removeExtraFee'])->name('settlements.extra-fees.remove');
     });
 
     // Configuración (requiere al menos un permiso de configuración)

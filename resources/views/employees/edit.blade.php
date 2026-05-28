@@ -42,7 +42,7 @@
 
                 <div>
                     <label>Fecha de Ingreso *</label>
-                    <input type="date" name="hire_date" value="{{ old('hire_date', $employee->hire_date) }}" required>
+                    <input type="date" name="hire_date" value="{{ old('hire_date', $employee->hire_date ? $employee->hire_date->format('Y-m-d') : '') }}" required>
                 </div>
 
                 <div>
@@ -100,6 +100,57 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tarjeta 4: Sueldo y Aumentos -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1.5rem; color: var(--primary-color); border-bottom: 1px solid #edf2f7; padding-bottom: 0.8rem; font-weight: 600;">Sueldo y Aumentos</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div>
+                    <label>Sueldo Básico Actual ($)</label>
+                    <input type="number" step="0.01" name="base_salary" value="{{ old('base_salary', $employee->base_salary) }}" placeholder="Ej: 500000">
+                </div>
+
+                <div>
+                    <label>Frecuencia de Aumento (Meses)</label>
+                    <input type="number" name="update_frequency_months" value="{{ old('update_frequency_months', $employee->update_frequency_months) }}" placeholder="Ej: 6">
+                </div>
+
+                <div>
+                    <label>Tipo de Aumento</label>
+                    <select name="update_type" id="update_type" onchange="toggleUpdateFields()">
+                        <option value="fixed" {{ old('update_type', $employee->update_type) == 'fixed' ? 'selected' : '' }}>Porcentaje Fijo</option>
+                        <option value="indexed" {{ old('update_type', $employee->update_type) == 'indexed' ? 'selected' : '' }}>Indexado (Índice)</option>
+                    </select>
+                </div>
+
+                <div id="index_field" style="display: {{ old('update_type', $employee->update_type) == 'indexed' ? 'block' : 'none' }};">
+                    <label>Índice de Aumento</label>
+                    <select name="increase_index_id">
+                        <option value="">-- Seleccionar Índice --</option>
+                        @if(isset($indexTypes))
+                            @foreach($indexTypes as $index)
+                                <option value="{{ $index->id }}" {{ old('increase_index_id', $employee->increase_index_id) == $index->id ? 'selected' : '' }}>
+                                    {{ $index->name }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+
+                <div id="fixed_field" style="display: {{ old('update_type', $employee->update_type ?? 'fixed') == 'fixed' ? 'block' : 'none' }};">
+                    <label>Porcentaje Fijo %</label>
+                    <input type="number" step="0.01" name="increase_fixed_percentage" value="{{ old('increase_fixed_percentage', $employee->increase_fixed_percentage) }}" placeholder="Ej: 15.5">
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function toggleUpdateFields() {
+                const type = document.getElementById('update_type').value;
+                document.getElementById('fixed_field').style.display = type === 'fixed' ? 'block' : 'none';
+                document.getElementById('index_field').style.display = type === 'indexed' ? 'block' : 'none';
+            }
+        </script>
 
         <div style="text-align: center; margin-top: 2rem;">
             <button type="submit" class="btn btn-primary" style="padding: 1rem 4rem;">Guardar Cambios</button>

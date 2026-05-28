@@ -61,7 +61,51 @@
             modal.style.display = 'none';
         }, 200);
     }
+
+    function openExtraFeeModal(settlementId) {
+        document.getElementById('extraFeeForm').action = '/settlements/' + settlementId + '/extra-fees';
+        const modal = document.getElementById('extraFeeModal');
+        modal.style.display = 'flex';
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.transition = 'opacity 0.2s ease-in-out';
+            modal.style.opacity = '1';
+        }, 10);
+    }
+
+    function closeExtraFeeModal() {
+        const modal = document.getElementById('extraFeeModal');
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 200);
+    }
 </script>
+
+<!-- Modal Honorario Extra -->
+<div id="extraFeeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="color: var(--primary-color); margin-top: 0; margin-bottom: 0.5rem; font-size: 1.25rem;">Agregar Honorario Extra</h3>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.5rem;">Añade un descuento adicional o cobro extra a esta liquidación.</p>
+        
+        <form id="extraFeeForm" method="POST">
+            @csrf
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #4a5568; margin-bottom: 0.5rem; text-transform: uppercase;">Concepto</label>
+                <input type="text" name="description" placeholder="Ej. Reparación bomba de agua, Gestión extra" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 0.95rem;">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #4a5568; margin-bottom: 0.5rem; text-transform: uppercase;">Monto ($)</label>
+                <input type="number" step="0.01" name="amount" placeholder="0.00" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 1rem;">
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="closeExtraFeeModal()" class="btn" style="background: #edf2f7; color: #4a5568;">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="background: #e53e3e; border: none; cursor: pointer;">Guardar Cargo</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <!-- FILTROS -->
 <div class="card" style="padding: 1.5rem; margin-bottom: 2rem; background: #f8fafc;">
@@ -81,6 +125,7 @@
                 <option value="">Todos</option>
                 <option value="ready" {{ request('status') == 'ready' ? 'selected' : '' }}>Pendiente de Pago</option>
                 <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Pagada</option>
+                <option value="carried_over" {{ request('status') == 'carried_over' ? 'selected' : '' }}>Arrastrada</option>
             </select>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
