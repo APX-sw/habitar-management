@@ -55,6 +55,7 @@ return new class extends Migration
             $table->date('date');
             $table->enum('status', ['present', 'absent']);
             $table->foreignId('absence_reason_id')->nullable()->constrained('absence_reasons')->onDelete('set null');
+            $table->time('check_out')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
 
