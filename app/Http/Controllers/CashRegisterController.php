@@ -39,7 +39,7 @@ class CashRegisterController extends Controller
         $movements = $query->paginate(15);
         $categories = \App\Models\TransactionCategory::orderBy('name')->get();
 
-        $totalBalance = $accounts->sum(function($account) {
+        $totalBalance = $accounts->where('type', '!=', 'habitar_fund')->sum(function($account) {
             return $account->current_balance;
         });
 

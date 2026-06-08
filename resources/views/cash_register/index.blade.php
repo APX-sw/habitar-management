@@ -38,8 +38,13 @@
     </div>
 
     @foreach($accounts as $account)
-        <div class="card account-card" data-account-id="{{ $account->id }}" style="padding: 1.5rem; border-left: 5px solid {{ $account->type === 'cash' ? '#48BB78' : '#4299E1' }}; cursor: pointer; min-height: 130px; display: flex; flex-direction: column; justify-content: center;">
-            <h3 style="margin: 0 0 0.5rem; color: var(--text-light); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.025em;">{{ $account->name }}</h3>
+        <div class="card account-card" data-account-id="{{ $account->id }}" style="padding: 1.5rem; border-left: 5px solid {{ $account->type === 'cash' ? '#48BB78' : ($account->type === 'habitar_fund' ? '#00B5D8' : '#4299E1') }}; cursor: pointer; min-height: 130px; display: flex; flex-direction: column; justify-content: center; position: relative;">
+            <h3 style="margin: 0 0 0.5rem; color: var(--text-light); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.025em;">
+                {{ $account->name }}
+                @if($account->type === 'habitar_fund')
+                    <span style="font-size: 0.7rem; background: #EBF8FF; color: #3182CE; padding: 0.2rem 0.5rem; border-radius: 4px; margin-left: 0.5rem; font-weight: 700;">Informativa</span>
+                @endif
+            </h3>
             <div style="font-size: clamp(1.2rem, 3.5vw, 1.7rem); font-weight: 800; color: var(--primary-color); line-height: 1.2; word-break: break-all;">
                 ${{ number_format($account->current_balance, 2) }}
             </div>
@@ -177,7 +182,9 @@
                 <select name="source_account_id" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc; background: white;">
                     <option value="">Seleccionar cuenta origen</option>
                     @foreach($accounts as $acc)
-                        <option value="{{ $acc->id }}">{{ $acc->name }} (Balance: ${{ number_format($acc->current_balance, 2) }})</option>
+                        @if($acc->type !== 'habitar_fund')
+                            <option value="{{ $acc->id }}">{{ $acc->name }} (Balance: ${{ number_format($acc->current_balance, 2) }})</option>
+                        @endif
                     @endforeach
                 </select>
             </div>
@@ -186,7 +193,9 @@
                 <select name="destination_account_id" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc; background: white;">
                     <option value="">Seleccionar cuenta destino</option>
                     @foreach($accounts as $acc)
-                        <option value="{{ $acc->id }}">{{ $acc->name }} (Balance: ${{ number_format($acc->current_balance, 2) }})</option>
+                        @if($acc->type !== 'habitar_fund')
+                            <option value="{{ $acc->id }}">{{ $acc->name }} (Balance: ${{ number_format($acc->current_balance, 2) }})</option>
+                        @endif
                     @endforeach
                 </select>
             </div>
@@ -217,7 +226,9 @@
                 <select name="account_id" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc; background: white;">
                     <option value="">Seleccionar cuenta</option>
                     @foreach($accounts as $acc)
-                        <option value="{{ $acc->id }}">{{ $acc->name }} (Balance Actual: ${{ number_format($acc->current_balance, 2) }})</option>
+                        @if($acc->type !== 'habitar_fund')
+                            <option value="{{ $acc->id }}">{{ $acc->name }} (Balance Actual: ${{ number_format($acc->current_balance, 2) }})</option>
+                        @endif
                     @endforeach
                 </select>
             </div>
@@ -294,7 +305,9 @@
                 <select name="account_id" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;">
                     <option value="">Seleccionar cuenta de la que sale el dinero...</option>
                     @foreach($accounts as $account)
-                        <option value="{{ $account->id }}">{{ $account->name }} (Saldo: ${{ number_format($account->current_balance ?? $account->balance, 2, ',', '.') }})</option>
+                        @if($account->type !== 'habitar_fund')
+                            <option value="{{ $account->id }}">{{ $account->name }} (Saldo: ${{ number_format($account->current_balance ?? $account->balance, 2, ',', '.') }})</option>
+                        @endif
                     @endforeach
                 </select>
             </div>
