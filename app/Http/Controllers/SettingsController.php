@@ -33,6 +33,30 @@ class SettingsController extends Controller
         return view('settings.indices', compact('indexTypes'));
     }
 
+    public function recurrentConcepts()
+    {
+        $recurrentConcepts = \App\Models\RecurrentConcept::with('transactionCategory')->get();
+        $categories = \App\Models\TransactionCategory::all();
+        return view('settings.recurrent_concepts', compact('recurrentConcepts', 'categories'));
+    }
+
+    public function storeRecurrentConcept(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|unique:recurrent_concepts',
+            'transaction_category_id' => 'nullable|exists:transaction_categories,id'
+        ]);
+        
+        \App\Models\RecurrentConcept::create($request->all());
+        return back()->with('success', 'Concepto recurrente creado.');
+    }
+
+    public function destroyRecurrentConcept(\App\Models\RecurrentConcept $recurrentConcept)
+    {
+        $recurrentConcept->delete();
+        return back()->with('success', 'Concepto recurrente eliminado.');
+    }
+
     public function storeProvince(Request $request)
     {
         $request->validate(['name' => 'required|unique:provinces']);

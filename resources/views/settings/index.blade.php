@@ -65,6 +65,17 @@
         </div>
     </a>
 
+    <!-- CONCEPTOS RECURRENTES -->
+    <a href="{{ route('settings.recurrent_concepts') }}" class="config-card" style="text-decoration: none; color: inherit;">
+        <div class="card" style="height: 100%; transition: all 0.3s ease; border-top: 4px solid #ED64A6; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem;">
+            <div style="background: #FFF5F7; color: #D53F8C; width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </div>
+            <h3 style="margin: 0 0 0.5rem; color: var(--primary-color);">Conceptos Recurrentes</h3>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin: 0;">Catálogo de conceptos de cobro mensual.</p>
+        </div>
+    </a>
+
     <!-- CUENTAS COBRO -->
     <a href="{{ route('settings.agency_bank_accounts') }}" class="config-card" style="text-decoration: none; color: inherit;">
         <div class="card" style="height: 100%; transition: all 0.3s ease; border-top: 4px solid #E53E3E; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem;">

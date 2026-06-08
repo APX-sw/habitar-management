@@ -111,6 +111,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('property-documents', [PropertyDocumentController::class, 'store'])->name('property-documents.store');
         Route::delete('property-documents/{propertyDocument}', [PropertyDocumentController::class, 'destroy'])->name('property-documents.destroy');
         Route::get('properties/{property}/documents', [PropertyDocumentController::class, 'index'])->name('properties.documents');
+        Route::post('properties/{property}/add-concept', [PropertyController::class, 'addConcept'])->name('properties.add-concept');
+        Route::delete('properties/{property}/remove-concept/{concept}', [PropertyController::class, 'removeConcept'])->name('properties.remove-concept');
     });
 
     // Inquilinos
@@ -214,6 +216,10 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('settings/contact', [SettingsController::class, 'contact'])->name('settings.contact');
         Route::post('settings/contact', [SettingsController::class, 'storeContact'])->name('settings.contact.store');
+
+        Route::get('settings/recurrent-concepts', [SettingsController::class, 'recurrentConcepts'])->name('settings.recurrent_concepts');
+        Route::post('settings/recurrent-concepts', [SettingsController::class, 'storeRecurrentConcept'])->name('settings.recurrent_concepts.store');
+        Route::delete('settings/recurrent-concepts/{recurrentConcept}', [SettingsController::class, 'destroyRecurrentConcept'])->name('settings.recurrent_concepts.destroy');
     });
 });
 

@@ -65,7 +65,8 @@ class LeaseController extends Controller
         $properties = Property::with(['type', 'city'])->whereDoesntHave('activeLease')->get();
         $tenants = Tenant::all();
         $indexTypes = \App\Models\IndexType::all();
-        return view('leases.create', compact('properties', 'tenants', 'indexTypes'));
+        $recurrentConcepts = \App\Models\RecurrentConcept::all();
+        return view('leases.create', compact('properties', 'tenants', 'indexTypes', 'recurrentConcepts'));
     }
 
     public function store(Request $request)
@@ -98,12 +99,13 @@ class LeaseController extends Controller
             'agency_fee_amount' => $validated['agency_fee_amount'] ?? 0,
         ]));
 
-        // Generar Cargos Fijos (Conceptos) - Solo si tienen nombre
+        // Generar Cargos Fijos (Conceptos)
         if ($request->has('fixed_charges')) {
             foreach ($request->fixed_charges as $charge) {
-                if (!empty($charge['name'])) {
+                if (!empty($charge['recurrent_concept_id']) || !empty($charge['name'])) {
                     $lease->fixedCharges()->create([
-                        'name' => $charge['name'],
+                        'recurrent_concept_id' => $charge['recurrent_concept_id'] ?? null,
+                        'name' => $charge['name'] ?? null,
                         'amount' => $charge['amount'] ?? 0,
                         'is_paid_by_agency' => isset($charge['is_paid_by_agency']) ? (bool)$charge['is_paid_by_agency'] : false,
                     ]);
@@ -147,12 +149,10 @@ class LeaseController extends Controller
 
     public function showRenewalForm(Lease $lease)
     {
-        $lease->load(['property', 'tenant', 'fixedCharges']);
+        $lease->load(['property', 'tenant', 'fixedCharges.recurrentConcept']);
         $indexTypes = \App\Models\IndexType::all();
-        
-        // El nuevo depósito sugerido es el nuevo precio base (que se editará en el form)
-        // Pero ya calculamos la base para la vista
-        return view('leases.renew', compact('lease', 'indexTypes'));
+        $recurrentConcepts = \App\Models\RecurrentConcept::all();
+        return view('leases.renew', compact('lease', 'indexTypes', 'recurrentConcepts'));
     }
 
     public function storeRenewal(Request $request, Lease $lease)
@@ -196,6 +196,7 @@ class LeaseController extends Controller
         // 3. Heredar cargos fijos
         foreach ($lease->fixedCharges as $charge) {
             $newLease->fixedCharges()->create([
+                'recurrent_concept_id' => $charge->recurrent_concept_id,
                 'name' => $charge->name,
                 'amount' => $charge->amount,
                 'is_paid_by_agency' => $charge->is_paid_by_agency,
@@ -244,9 +245,10 @@ class LeaseController extends Controller
 
     public function showRenegotiationForm(Lease $lease)
     {
-        $lease->load(['property', 'tenant', 'fixedCharges']);
+        $lease->load(['property', 'tenant', 'fixedCharges.recurrentConcept']);
         $indexTypes = \App\Models\IndexType::all();
-        return view('leases.renegotiate', compact('lease', 'indexTypes'));
+        $recurrentConcepts = \App\Models\RecurrentConcept::all();
+        return view('leases.renegotiate', compact('lease', 'indexTypes', 'recurrentConcepts'));
     }
 
     public function storeRenegotiation(Request $request, Lease $lease)
@@ -287,6 +289,7 @@ class LeaseController extends Controller
         // Heredar cargos fijos
         foreach ($lease->fixedCharges as $charge) {
             $newLease->fixedCharges()->create([
+                'recurrent_concept_id' => $charge->recurrent_concept_id,
                 'name' => $charge->name,
                 'amount' => $charge->amount,
                 'is_paid_by_agency' => $charge->is_paid_by_agency,
@@ -370,14 +373,15 @@ class LeaseController extends Controller
         $lease->load([
             'property', 
             'tenant', 
-            'fixedCharges', 
+            'fixedCharges.recurrentConcept', 
             'extraCharges', 
             'collections' => function($q) {
                 $q->orderBy('year', 'desc')->orderBy('month', 'desc')->take(4);
             }
         ]);
         $categories = \App\Models\TransactionCategory::all();
-        return view('leases.show', compact('lease', 'categories'));
+        $recurrentConcepts = \App\Models\RecurrentConcept::all();
+        return view('leases.show', compact('lease', 'categories', 'recurrentConcepts'));
     }
 
     public function monthlySummary(Lease $lease, Request $request)

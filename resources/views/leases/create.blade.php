@@ -197,8 +197,17 @@
             </div>
             
             <div id="fixed-charges-container">
-                <div style="display: grid; grid-template-columns: 1fr 200px 40px; gap: 1rem; margin-bottom: 1rem; align-items: center;" class="charge-row">
-                    <input type="text" name="fixed_charges[0][name]" placeholder="Concepto (Ej: Expensas, TGI, Agua)" class="form-control" style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color);">
+                <div style="display: grid; grid-template-columns: 1fr 200px 40px; gap: 1rem; margin-bottom: 1rem; align-items: start;" class="charge-row">
+                    <div>
+                        <select name="fixed_charges[0][recurrent_concept_id]" onchange="toggleCustomName(this, 0)" style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color); background: white;">
+                            <option value="">-- Seleccionar Concepto --</option>
+                            @foreach($recurrentConcepts as $rc)
+                                <option value="{{ $rc->id }}">{{ $rc->name }}</option>
+                            @endforeach
+                            <option value="custom">Otro (Personalizado)</option>
+                        </select>
+                        <input type="text" name="fixed_charges[0][name]" id="custom-name-0" placeholder="Escribe el concepto..." style="display: none; width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color); margin-top: 0.5rem;">
+                    </div>
                     <select name="fixed_charges[0][is_paid_by_agency]" style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color); background: white; font-weight: 600; font-size: 0.85rem; color: #4A5568;">
                         <option value="1">Lo paga Habitar</option>
                         <option value="0">Lo paga Propietario</option>
@@ -250,6 +259,21 @@
     }
 
     let chargeCount = 1;
+
+    function toggleCustomName(selectElement, index) {
+        const input = document.getElementById('custom-name-' + index);
+        if (selectElement.value === 'custom') {
+            input.style.display = 'block';
+            input.required = true;
+            selectElement.removeAttribute('name');
+        } else {
+            input.style.display = 'none';
+            input.required = false;
+            selectElement.setAttribute('name', `fixed_charges[${index}][recurrent_concept_id]`);
+            input.value = '';
+        }
+    }
+
     function addFixedCharge() {
         const container = document.getElementById('fixed-charges-container');
         const row = document.createElement('div');
@@ -257,9 +281,21 @@
         row.style.gridTemplateColumns = '1fr 200px 40px';
         row.style.gap = '1rem';
         row.style.marginBottom = '1rem';
-        row.style.alignItems = 'center';
+        row.style.alignItems = 'start';
+        
+        let optionsHtml = '<option value="">-- Seleccionar Concepto --</option>';
+        @foreach($recurrentConcepts as $rc)
+            optionsHtml += '<option value="{{ $rc->id }}">{{ addslashes($rc->name) }}</option>';
+        @endforeach
+        optionsHtml += '<option value="custom">Otro (Personalizado)</option>';
+
         row.innerHTML = `
-            <input type="text" name="fixed_charges[${chargeCount}][name]" placeholder="Concepto Mensual" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+            <div>
+                <select name="fixed_charges[${chargeCount}][recurrent_concept_id]" onchange="toggleCustomName(this, ${chargeCount})" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--secondary-color); background: white;">
+                    ${optionsHtml}
+                </select>
+                <input type="text" name="fixed_charges[${chargeCount}][name]" id="custom-name-${chargeCount}" placeholder="Escribe el concepto..." style="display: none; width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--secondary-color); margin-top: 0.5rem;">
+            </div>
             <select name="fixed_charges[${chargeCount}][is_paid_by_agency]" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--secondary-color); background: white; font-weight: 600; font-size: 0.85rem; color: #4A5568;">
                 <option value="1">Lo paga Habitar</option>
                 <option value="0">Lo paga Propietario</option>

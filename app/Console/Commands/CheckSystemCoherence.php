@@ -108,7 +108,7 @@ class CheckSystemCoherence extends Command
 
             foreach ($lease->fixedCharges as $charge) {
                 $collection->details()->create([
-                    'type' => 'fixed_charge', 'related_id' => $charge->id, 'name' => $charge->name, 'amount' => $charge->amount, 'transaction_category_id' => $charge->transaction_category_id
+                    'type' => 'fixed_charge', 'related_id' => $charge->id, 'name' => $charge->recurrentConcept ? $charge->recurrentConcept->name : $charge->name, 'amount' => $charge->amount, 'transaction_category_id' => $charge->transaction_category_id
                 ]);
             }
 

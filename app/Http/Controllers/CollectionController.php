@@ -137,7 +137,8 @@ class CollectionController extends Controller
                     foreach ($lease->fixedCharges as $fc) {
                         $dest = $fc->is_paid_by_agency ? 'agency' : 'owner';
                         $catId = $fc->transaction_category_id;
-                        $lowerName = strtolower($fc->name);
+                        $displayName = $fc->recurrentConcept ? $fc->recurrentConcept->name : $fc->name;
+                        $lowerName = strtolower($displayName);
                         
                         if (!$catId) {
                             if (str_contains($lowerName, 'honorario') || str_contains($lowerName, 'comision') || str_contains($lowerName, 'comisión')) {
@@ -154,7 +155,7 @@ class CollectionController extends Controller
                         
                         $collection->details()->firstOrCreate(
                             ['type' => 'fixed_charge', 'related_id' => $fc->id],
-                            ['name' => $fc->name, 'amount' => 0, 'original_amount' => 0, 'destination' => $dest, 'transaction_category_id' => $catId]
+                            ['name' => $displayName, 'amount' => 0, 'original_amount' => 0, 'destination' => $dest, 'transaction_category_id' => $catId]
                         );
                     }
                     
@@ -347,6 +348,25 @@ class CollectionController extends Controller
                     'movement_date' => Carbon::parse($pData['payment_date'])->setTimeFrom(now()),
                     'transaction_category_id' => 1 // Categoría: Alquileres
                 ]);
+
+                // SHADOW MOVEMENT a CAJA HABITAR (si corresponde)
+                $proportion = $totalDebt > 0 ? ($paymentAmount / $totalDebt) : 1;
+                $agencyAmount = $collection->details()->where('destination', 'agency')->sum('amount') * $proportion;
+                
+                $habitarAccount = \App\Models\Account::where('type', 'habitar_fund')->first();
+                if ($habitarAccount && $agencyAmount > 0) {
+                    \App\Models\CashRegisterMovement::create([
+                        'account_id' => $habitarAccount->id,
+                        'type' => 'income',
+                        'amount' => $agencyAmount,
+                        'description' => "Ingreso Caja Habitar (Cobro #{$collection->id}) - Proporcional a favor de la Agencia",
+                        'movement_date' => Carbon::parse($pData['payment_date'])->setTimeFrom(now()),
+                        'transaction_category_id' => 1,
+                        'user_id' => auth()->id(),
+                        'related_id' => $payment->id,
+                        'related_type' => \App\Models\CollectionPayment::class,
+                    ]);
+                }
             }
         }
 

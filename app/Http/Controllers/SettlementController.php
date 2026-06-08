@@ -84,6 +84,7 @@ class SettlementController extends Controller
             $expenses = Expense::whereIn('property_id', $propertyIds)
                 ->whereMonth('date', $month)
                 ->whereYear('date', $year)
+                ->where('applies_to_settlement', true)
                 ->get();
             
             $expense = $expenses->sum('amount');
@@ -364,6 +365,7 @@ class SettlementController extends Controller
             ->whereIn('property_id', $propertyIds)
             ->whereMonth('date', $settlement->month)
             ->whereYear('date', $settlement->year)
+            ->where('applies_to_settlement', true)
             ->get();
 
         $payload = [
@@ -494,6 +496,25 @@ class SettlementController extends Controller
                     'movement_date' => Carbon::parse($pData['date'])->setTimeFrom(now()),
                     'transaction_category_id' => $isNegative ? 18 : 5 // 18: Cobro Rendición, 5: Pago Rendición
                 ]);
+
+                // SHADOW MOVEMENT a CAJA HABITAR para la comisión (Proporcional)
+                $proportion = abs($settlement->net_amount) > 0 ? ($pData['amount'] / abs($settlement->net_amount)) : 1;
+                $commissionAmount = $settlement->agency_commission * $proportion;
+
+                $habitarAccount = \App\Models\Account::where('type', 'habitar_fund')->first();
+                if ($habitarAccount && $commissionAmount > 0) {
+                    \App\Models\CashRegisterMovement::create([
+                        'account_id' => $habitarAccount->id,
+                        'type' => 'income',
+                        'amount' => $commissionAmount,
+                        'description' => "Ingreso Caja Habitar (Comisión Rendición) - " . $settlement->owner->name . " (" . $settlement->month . "/" . $settlement->year . ")",
+                        'movement_date' => Carbon::parse($pData['date'])->setTimeFrom(now()),
+                        'transaction_category_id' => 2, // Honorarios Inmobiliarios
+                        'user_id' => auth()->id(),
+                        'related_id' => $payment->id,
+                        'related_type' => \App\Models\SettlementPayment::class,
+                    ]);
+                }
             }
         });
 

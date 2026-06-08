@@ -57,6 +57,13 @@ class Property extends Model
         return $this->hasMany(PropertyDocument::class);
     }
 
+    public function recurrentConcepts()
+    {
+        return $this->belongsToMany(RecurrentConcept::class, 'property_recurrent_concepts')
+                    ->withPivot('id', 'payment_code', 'notes')
+                    ->withTimestamps();
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()->logFillable();

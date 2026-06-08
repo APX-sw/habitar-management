@@ -99,6 +99,40 @@
                 @endforelse
             </div>
 
+            <!-- Conceptos Adheridos (Impuestos / Servicios) -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--secondary-color); padding-bottom: 0.5rem;">
+                    <h3 style="color: var(--primary-color); margin: 0;">Impuestos y Servicios Adheridos</h3>
+                    <button onclick="document.getElementById('addConceptModal').style.display='flex'" class="btn" style="background: var(--secondary-color); color: var(--primary-color); font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; height: 34px; padding: 0 1rem; border: 1px solid #cbd5e0;">+ Adherir Concepto</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                    @forelse($property->recurrentConcepts as $concept)
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #f7fafc; border-radius: 8px; border: 1px solid #edf2f7;">
+                            <div>
+                                <p style="font-size: 0.95rem; font-weight: 700; color: var(--primary-color); margin: 0 0 0.3rem 0;">{{ $concept->name }}</p>
+                                @if($concept->pivot->payment_code)
+                                    <p style="font-size: 0.8rem; color: #4a5568; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+                                        <span style="background: #e2e8f0; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 700; font-family: monospace; letter-spacing: 0.05em;">{{ $concept->pivot->payment_code }}</span>
+                                    </p>
+                                @endif
+                                @if($concept->pivot->notes)
+                                    <p style="font-size: 0.75rem; color: #718096; margin: 0.3rem 0 0 0; font-style: italic;">{{ $concept->pivot->notes }}</p>
+                                @endif
+                            </div>
+                            <div>
+                                <form action="{{ route('properties.remove-concept', [$property, $concept]) }}" method="POST" onsubmit="return confirm('¿Desvincular este concepto?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn" style="background: #FFF5F5; color: #C53030; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 1rem; border: 1px solid #feb2b2;">Desvincular</button>
+                                </form>
+                            </div>
+                        </div>
+                    @empty
+                        <p style="text-align: center; color: var(--text-light); padding: 1rem; font-size: 0.9rem;">No hay impuestos o servicios adheridos.</p>
+                    @endforelse
+                </div>
+            </div>
+
             <!-- Documentación -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--secondary-color); padding-bottom: 0.5rem;">
@@ -165,4 +199,38 @@
 
 <!-- Modal Premium de Carga de Documentos -->
 @include('properties.partials.docs_modal')
+
+<!-- Modal para Adherir Concepto Recurrente -->
+<div id="addConceptModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: white; padding: 2rem; border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="color: var(--primary-color); margin: 0; font-size: 1.25rem;">Adherir Impuesto/Servicio</h3>
+            <button type="button" onclick="document.getElementById('addConceptModal').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0; line-height: 1;">&times;</button>
+        </div>
+        <form action="{{ route('properties.add-concept', $property) }}" method="POST">
+            @csrf
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light);">Concepto</label>
+                <select name="recurrent_concept_id" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;">
+                    <option value="">-- Seleccionar Concepto --</option>
+                    @foreach($allRecurrentConcepts as $rc)
+                        <option value="{{ $rc->id }}">{{ $rc->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light);">Código de Pago (Opcional)</label>
+                <input type="text" name="payment_code" placeholder="Ej: 00012345678" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light);">Notas Adicionales (Opcional)</label>
+                <input type="text" name="notes" placeholder="Ej: Vence los días 10" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                <button type="button" onclick="document.getElementById('addConceptModal').style.display='none'" class="btn" style="background: #edf2f7; color: #4a5568; font-weight: 700; padding: 0.6rem 1.2rem;">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.2rem;">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection

@@ -21,7 +21,16 @@ class Expense extends Model
         'attachment_path',
         'is_paid', 
         'transaction_category_id',
-        'employee_id'
+        'employee_id',
+        'applies_to_settlement',
+        'paid_with_habitar_funds'
+    ];
+
+    protected $casts = [
+        'date' => 'date',
+        'is_paid' => 'boolean',
+        'applies_to_settlement' => 'boolean',
+        'paid_with_habitar_funds' => 'boolean'
     ];
 
     public function getActivitylogOptions(): LogOptions

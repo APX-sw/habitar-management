@@ -108,8 +108,9 @@ class PropertyController extends Controller
 
     public function show(Property $property)
     {
-        $property->load(['owner', 'city', 'type', 'leases.tenant']);
-        return view('properties.show', compact('property'));
+        $property->load(['owner', 'city', 'type', 'leases.tenant', 'recurrentConcepts']);
+        $allRecurrentConcepts = \App\Models\RecurrentConcept::orderBy('name')->get();
+        return view('properties.show', compact('property', 'allRecurrentConcepts'));
     }
 
     public function showApi(Property $property)
@@ -164,5 +165,27 @@ class PropertyController extends Controller
         $property->delete();
 
         return redirect()->route('properties.index')->with('success', 'Propiedad eliminada correctamente.');
+    }
+
+    public function addConcept(Request $request, Property $property)
+    {
+        $request->validate([
+            'recurrent_concept_id' => 'required|exists:recurrent_concepts,id',
+            'payment_code' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:255',
+        ]);
+
+        $property->recurrentConcepts()->attach($request->recurrent_concept_id, [
+            'payment_code' => $request->payment_code,
+            'notes' => $request->notes,
+        ]);
+
+        return back()->with('success', 'Concepto adherido correctamente.');
+    }
+
+    public function removeConcept(Property $property, \App\Models\RecurrentConcept $concept)
+    {
+        $property->recurrentConcepts()->detach($concept->id);
+        return back()->with('success', 'Concepto desvinculado correctamente.');
     }
 }

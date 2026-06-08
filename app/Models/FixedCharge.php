@@ -12,7 +12,14 @@ class FixedCharge extends Model
 {
     use HasFactory, LogsActivity;
 
-    protected $fillable = ['lease_id', 'name', 'amount', 'transaction_category_id', 'is_paid_by_agency'];
+    protected $fillable = [
+        'lease_id',
+        'recurrent_concept_id',
+        'name',
+        'amount',
+        'transaction_category_id',
+        'is_paid_by_agency'
+    ];
 
     protected $casts = [
         'is_paid_by_agency' => 'boolean',
@@ -21,6 +28,11 @@ class FixedCharge extends Model
     public function lease()
     {
         return $this->belongsTo(Lease::class);
+    }
+
+    public function recurrentConcept()
+    {
+        return $this->belongsTo(RecurrentConcept::class);
     }
 
     public function transactionCategory()

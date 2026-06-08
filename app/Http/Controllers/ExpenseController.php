@@ -68,6 +68,8 @@ class ExpenseController extends Controller
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:255',
             'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'applies_to_settlement' => 'nullable|boolean',
+            'paid_with_habitar_funds' => 'nullable|boolean',
         ]);
 
         $expense = Expense::create([
@@ -78,6 +80,8 @@ class ExpenseController extends Controller
             'description' => $request->description,
             'transaction_category_id' => $request->transaction_category_id,
             'is_paid' => true,
+            'applies_to_settlement' => $request->boolean('applies_to_settlement'),
+            'paid_with_habitar_funds' => $request->boolean('paid_with_habitar_funds'),
         ]);
 
         if ($request->hasFile('attachments')) {
@@ -101,6 +105,23 @@ class ExpenseController extends Controller
             'movement_date' => \Carbon\Carbon::parse($request->date)->setTimeFrom(now()),
             'transaction_category_id' => $request->transaction_category_id
         ]);
+
+        if ($request->boolean('paid_with_habitar_funds')) {
+            $habitarAccount = \App\Models\Account::where('type', 'habitar_fund')->first();
+            if ($habitarAccount) {
+                \App\Models\CashRegisterMovement::create([
+                    'account_id' => $habitarAccount->id,
+                    'type' => 'expense',
+                    'amount' => $request->amount,
+                    'description' => 'Egreso Caja Habitar (Gasto Propio Inmobiliaria) - ' . ($request->description ?? $expense->transactionCategory->name),
+                    'movement_date' => \Carbon\Carbon::parse($request->date)->setTimeFrom(now()),
+                    'transaction_category_id' => $request->transaction_category_id,
+                    'user_id' => auth()->id(),
+                    'related_id' => $expense->id,
+                    'related_type' => \App\Models\Expense::class,
+                ]);
+            }
+        }
 
         return redirect()->route('expenses.index')->with('success', 'Gasto registrado correctamente.');
     }

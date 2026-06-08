@@ -61,6 +61,25 @@
             <input type="text" name="description" placeholder="Ej: Arreglo termotanque, Resma papel..." style="width: 100%; padding: 0.8rem; border: 1px solid #d2d6dc; border-radius: 8px;">
         </div>
 
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #edf2f7;">
+            <div>
+                <label style="display: flex; align-items: center; gap: 0.7rem; cursor: pointer;">
+                    <input type="hidden" name="applies_to_settlement" value="0">
+                    <input type="checkbox" name="applies_to_settlement" value="1" checked style="width: 20px; height: 20px; accent-color: var(--primary-color);">
+                    <span style="font-weight: 700; color: var(--primary-color);">Aplica a Rendición</span>
+                </label>
+                <p style="margin: 0.3rem 0 0 2rem; font-size: 0.75rem; color: var(--text-light);">Si está marcado, se descontará al propietario en la próxima rendición.</p>
+            </div>
+            <div>
+                <label style="display: flex; align-items: center; gap: 0.7rem; cursor: pointer;">
+                    <input type="hidden" name="paid_with_habitar_funds" value="0">
+                    <input type="checkbox" name="paid_with_habitar_funds" value="1" style="width: 20px; height: 20px; accent-color: var(--primary-color);">
+                    <span style="font-weight: 700; color: var(--primary-color);">Pagado con Caja Habitar</span>
+                </label>
+                <p style="margin: 0.3rem 0 0 2rem; font-size: 0.75rem; color: var(--text-light);">Marca si el dinero salió de fondos propios de la inmobiliaria y no del saldo de la cuenta destino.</p>
+            </div>
+        </div>
+
         <div style="margin-bottom: 2.5rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light); text-transform: uppercase;">Adjuntar Comprobantes (Imagen o PDF)</label>
             <div id="attachment-container" style="position: relative; border: 2px dashed #d2d6dc; border-radius: 12px; padding: 1.5rem; text-align: center; transition: all 0.3s ease; background: #f9fafb;">
