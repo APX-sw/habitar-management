@@ -80,15 +80,25 @@
                                 </div>
                             </div>
                             <div>
-                                @if($detail->type === 'fixed_charge' && $collection->status !== 'paid')
+                                @if($collection->status !== 'paid')
                                     <div style="display: flex; align-items: center; gap: 0.5rem; background: white; padding: 0.3rem 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc;">
                                         <span style="font-weight: 800; color: #a0aec0;">$</span>
                                         <input type="number" step="0.01" name="details[{{ $detail->id }}]" value="{{ $detail->amount }}" style="width: 100%; border: none; outline: none; font-weight: 800; color: var(--accent-color); font-size: 1.1rem;">
                                     </div>
+                                    @if($detail->original_amount !== null && $detail->original_amount != $detail->amount)
+                                        <div style="font-size: 0.65rem; color: #a0aec0; text-align: right; margin-top: 0.2rem; font-style: italic;">
+                                            Original: ${{ number_format($detail->original_amount, 2) }}
+                                        </div>
+                                    @endif
                                 @else
                                     <div style="text-align: right; font-weight: 800; font-size: 1.2rem; color: var(--primary-color);">
                                         ${{ number_format($detail->amount, 2) }}
                                     </div>
+                                    @if($detail->original_amount !== null && $detail->original_amount != $detail->amount)
+                                        <div style="font-size: 0.65rem; color: #a0aec0; text-align: right; margin-top: 0.2rem; font-style: italic;">
+                                            Original: ${{ number_format($detail->original_amount, 2) }}
+                                        </div>
+                                    @endif
                                 @endif
                             </div>
                         </div>

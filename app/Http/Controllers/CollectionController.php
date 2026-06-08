@@ -96,7 +96,7 @@ class CollectionController extends Controller
                     // 1. Asegurar Alquiler
                     $collection->details()->updateOrCreate(
                         ['type' => 'rent'],
-                        ['name' => 'Alquiler Mensual', 'amount' => $rentAmount, 'destination' => 'owner', 'transaction_category_id' => 1] // 1: Alquileres
+                        ['name' => 'Alquiler Mensual', 'amount' => $rentAmount, 'original_amount' => $rentAmount, 'destination' => 'owner', 'transaction_category_id' => 1] // 1: Alquileres
                     );
                     $collection->update(['rent_amount' => $rentAmount]);
 
@@ -129,7 +129,7 @@ class CollectionController extends Controller
                         
                         $collection->details()->updateOrCreate(
                             ['type' => 'extra_charge', 'related_id' => $extra->id],
-                            ['name' => $extra->description, 'amount' => $extra->amount, 'destination' => $dest, 'transaction_category_id' => $catId]
+                            ['name' => $extra->description, 'amount' => $extra->amount, 'original_amount' => $extra->amount, 'destination' => $dest, 'transaction_category_id' => $catId]
                         );
                     }
 
@@ -154,7 +154,7 @@ class CollectionController extends Controller
                         
                         $collection->details()->firstOrCreate(
                             ['type' => 'fixed_charge', 'related_id' => $fc->id],
-                            ['name' => $fc->name, 'amount' => 0, 'destination' => $dest, 'transaction_category_id' => $catId]
+                            ['name' => $fc->name, 'amount' => 0, 'original_amount' => 0, 'destination' => $dest, 'transaction_category_id' => $catId]
                         );
                     }
                     
@@ -211,7 +211,13 @@ class CollectionController extends Controller
         // Actualizar montos manuales de cargos fijos
         if ($request->has('details')) {
             foreach ($request->details as $detailId => $amount) {
-                CollectionDetail::where('id', $detailId)->update(['amount' => $amount]);
+                $detail = CollectionDetail::find($detailId);
+                if ($detail) {
+                    $detail->update(['amount' => $amount]);
+                    if ($detail->type === 'rent') {
+                        $collection->update(['rent_amount' => $amount]);
+                    }
+                }
             }
         }
 
