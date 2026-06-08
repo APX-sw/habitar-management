@@ -24,6 +24,10 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
             Ver Auditoría de Eliminaciones
         </button>
+        <a href="{{ route('cash-register-closures.index') }}" class="btn" style="background: #FAF5FF; color: #6B46C1; border: 1px solid #E9D8FD; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; outline: none; border-radius: 8px; text-decoration: none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+            Arqueo de Caja
+        </a>
     </div>
 </div>
 

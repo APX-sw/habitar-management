@@ -12,6 +12,7 @@ use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\PropertyDocumentController;
 use App\Http\Controllers\CashRegisterController;
+use App\Http\Controllers\CashRegisterClosureController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\SettlementController;
 use App\Http\Controllers\AccountController;
@@ -152,6 +153,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('cash-register', [CashRegisterController::class, 'index'])->name('cash_register.index');
         Route::post('cash-register/transfer', [CashRegisterController::class, 'transfer'])->name('cash_register.transfer');
         Route::post('cash-register/adjust', [CashRegisterController::class, 'adjust'])->name('cash_register.adjust');
+
+        Route::get('cash-register-closures', [CashRegisterClosureController::class, 'index'])->name('cash-register-closures.index');
+        Route::get('cash-register-closures/create', [CashRegisterClosureController::class, 'create'])->name('cash-register-closures.create');
+        Route::post('cash-register-closures', [CashRegisterClosureController::class, 'store'])->name('cash-register-closures.store');
     });
 
     // Gastos
