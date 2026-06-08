@@ -188,6 +188,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('settings/property-types/{propertyType}', [SettingsController::class, 'destroyPropertyType'])->name('settings.property-types.destroy');
 
         Route::get('settings/indices', [SettingsController::class, 'indices'])->name('settings.indices');
+        Route::post('settings/indices/fetch-icl', [SettingsController::class, 'fetchIcl'])->name('settings.indices.fetch_icl');
         Route::post('settings/index-types', [SettingsController::class, 'storeIndexType'])->name('settings.index-types.store');
         Route::delete('settings/index-types/{indexType}', [SettingsController::class, 'destroyIndexType'])->name('settings.index-types.destroy');
         Route::post('settings/index-values', [SettingsController::class, 'storeIndexValue'])->name('settings.index-values.store');

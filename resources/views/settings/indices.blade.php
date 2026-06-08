@@ -12,8 +12,15 @@
         <h1 style="color: var(--primary-color); font-size: 2.2rem; margin: 0;">Índices de Actualización</h1>
         <p style="color: var(--text-light); margin-top: 0.5rem;">Carga los porcentajes de indexación mensual para los contratos.</p>
     </div>
-    
-    <button onclick="document.getElementById('index-form-new').style.display='block'" class="btn btn-primary" style="padding: 0.8rem 1.5rem; font-weight: 700;">➕ Nuevo Índice</button>
+    <div style="display: flex; gap: 1rem;">
+        <form action="{{ route('settings.indices.fetch_icl') }}" method="POST" style="margin: 0;">
+            @csrf
+            <button type="submit" class="btn" style="padding: 0.8rem 1.5rem; font-weight: 700; background: #EBF8FF; color: #3182CE; border: 1px solid #BEE3F8; border-radius: 8px;">
+                🔄 Actualizar ICL desde BCRA
+            </button>
+        </form>
+        <button onclick="document.getElementById('index-form-new').style.display='block'" class="btn btn-primary" style="padding: 0.8rem 1.5rem; font-weight: 700;">➕ Nuevo Índice</button>
+    </div>
 </div>
 
 <div class="card" style="padding: 2.5rem;">

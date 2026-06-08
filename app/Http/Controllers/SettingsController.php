@@ -263,4 +263,10 @@ class SettingsController extends Controller
 
         return back()->with('success', 'Información de contacto de la inmobiliaria actualizada.');
     }
+
+    public function fetchIcl()
+    {
+        \Illuminate\Support\Facades\Artisan::call('icl:fetch');
+        return back()->with('success', 'ICL actualizado desde BCRA.');
+    }
 }
