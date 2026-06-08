@@ -65,7 +65,7 @@
             <div>
                 <label style="display: flex; align-items: center; gap: 0.7rem; cursor: pointer;">
                     <input type="hidden" name="applies_to_settlement" value="0">
-                    <input type="checkbox" name="applies_to_settlement" value="1" checked style="width: 20px; height: 20px; accent-color: var(--primary-color);">
+                    <input type="checkbox" id="chk_applies_to_settlement" name="applies_to_settlement" value="1" checked style="width: 20px; height: 20px; accent-color: var(--primary-color);">
                     <span style="font-weight: 700; color: var(--primary-color);">Aplica a Rendición</span>
                 </label>
                 <p style="margin: 0.3rem 0 0 2rem; font-size: 0.75rem; color: var(--text-light);">Si está marcado, se descontará al propietario en la próxima rendición.</p>
@@ -73,10 +73,10 @@
             <div>
                 <label style="display: flex; align-items: center; gap: 0.7rem; cursor: pointer;">
                     <input type="hidden" name="paid_with_habitar_funds" value="0">
-                    <input type="checkbox" name="paid_with_habitar_funds" value="1" style="width: 20px; height: 20px; accent-color: var(--primary-color);">
-                    <span style="font-weight: 700; color: var(--primary-color);">Pagado con Caja Habitar</span>
+                    <input type="checkbox" id="chk_paid_with_habitar_funds" name="paid_with_habitar_funds" value="1" style="width: 20px; height: 20px; accent-color: var(--primary-color);">
+                    <span style="font-weight: 700; color: var(--primary-color);">Pagado con Caja Habitar (Gastos de Inmobiliaria)</span>
                 </label>
-                <p style="margin: 0.3rem 0 0 2rem; font-size: 0.75rem; color: var(--text-light);">Marca si el dinero salió de fondos propios de la inmobiliaria y no del saldo de la cuenta destino.</p>
+                <p style="margin: 0.3rem 0 0 2rem; font-size: 0.75rem; color: var(--text-light);">Gasto propio de la agencia que no se cobra a dueños (se debitará internamente de Caja Habitar).</p>
             </div>
         </div>
 
@@ -93,7 +93,11 @@
         </div>
 
         <div style="text-align: right;">
-            <button type="submit" class="btn btn-primary" style="padding: 1rem 2.5rem;">Guardar Gasto</button>
+            @if(isset($isCashRegisterOpen) && !$isCashRegisterOpen)
+                <button type="submit" class="btn btn-primary" style="padding: 1rem 2.5rem; opacity: 0.6; cursor: not-allowed;" title="Debes abrir una sesión de caja primero" disabled>Guardar Gasto</button>
+            @else
+                <button type="submit" class="btn btn-primary" style="padding: 1rem 2.5rem;">Guardar Gasto</button>
+            @endif
         </div>
     </form>
 </div>
@@ -150,5 +154,21 @@
             <p style="margin: 0.2rem 0 0; font-size: 0.75rem; color: #a0aec0;">Puedes seleccionar varios archivos PDF, JPG, PNG (Máx 5MB c/u)</p>
         `;
     }
+
+    // Lógica de exclusión mutua de checkboxes
+    const chkApplies = document.getElementById('chk_applies_to_settlement');
+    const chkHabitar = document.getElementById('chk_paid_with_habitar_funds');
+
+    chkApplies.addEventListener('change', function() {
+        if (this.checked) {
+            chkHabitar.checked = false;
+        }
+    });
+
+    chkHabitar.addEventListener('change', function() {
+        if (this.checked) {
+            chkApplies.checked = false;
+        }
+    });
 </script>
 @endsection

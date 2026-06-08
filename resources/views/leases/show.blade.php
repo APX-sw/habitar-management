@@ -215,14 +215,12 @@
                     <form action="{{ route('fixed-charges.store') }}" method="POST" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         @csrf
                         <input type="hidden" name="lease_id" value="{{ $lease->id }}">
-                        <select name="recurrent_concept_id" style="flex: 1; min-width: 150px; padding: 0.5rem; border-radius: 6px; border: 1px solid #d2d6dc;" onchange="this.nextElementSibling.style.display = this.value === 'custom' ? 'block' : 'none'; this.nextElementSibling.required = this.value === 'custom'; if(this.value === 'custom') { this.removeAttribute('name'); this.nextElementSibling.setAttribute('name', 'name'); } else { this.setAttribute('name', 'recurrent_concept_id'); this.nextElementSibling.removeAttribute('name'); }">
+                        <select name="recurrent_concept_id" required style="flex: 1; min-width: 150px; padding: 0.5rem; border-radius: 6px; border: 1px solid #d2d6dc;">
                             <option value="">-- Seleccionar --</option>
                             @foreach($recurrentConcepts as $rc)
                                 <option value="{{ $rc->id }}">{{ $rc->name }}</option>
                             @endforeach
-                            <option value="custom">Otro (Personalizado)</option>
                         </select>
-                        <input type="text" name="name" placeholder="Nombre (ej: Tasa Municipal)" style="display: none; flex: 1; min-width: 150px; padding: 0.5rem; border-radius: 6px; border: 1px solid #d2d6dc;">
                         <select name="transaction_category_id" required style="padding: 0.5rem; border: 1px solid #d2d6dc; border-radius: 6px;">
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}" {{ $cat->id == 4 ? 'selected' : '' }}>{{ $cat->name }}</option>

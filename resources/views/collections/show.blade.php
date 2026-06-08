@@ -19,7 +19,11 @@
             <button onclick="document.getElementById('extraChargeModal').style.display='flex'" class="btn" style="background: var(--secondary-color); color: var(--primary-color); font-weight: 700; display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 1.5rem; border: 1px solid #d2d6dc; gap: 0.5rem;">➕ Añadir Cargo Extra</button>
         @endif
         @if($collection->status === 'ready' || $collection->status === 'sent' || $collection->status === 'partial')
-            <button onclick="document.getElementById('paymentModal').style.display='flex'" class="btn" style="background: #48BB78; color: white; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 1.5rem; border: 1px solid #38a169;">Registrar Pago</button>
+            @if(isset($isCashRegisterOpen) && !$isCashRegisterOpen)
+                <button class="btn" style="background: #48BB78; color: white; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 1.5rem; border: 1px solid #38a169; opacity: 0.6; cursor: not-allowed;" title="Debes abrir una sesión de caja primero" disabled>Registrar Pago</button>
+            @else
+                <button onclick="document.getElementById('paymentModal').style.display='flex'" class="btn" style="background: #48BB78; color: white; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 1.5rem; border: 1px solid #38a169;">Registrar Pago</button>
+            @endif
         @endif
         @if($collection->status !== 'paid')
             @if($collection->status === 'draft' || $collection->status === 'incompleto')

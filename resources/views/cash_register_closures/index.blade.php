@@ -25,7 +25,7 @@
         </thead>
         <tbody>
             @forelse($closures as $closure)
-                <tr style="border-bottom: 1px solid #edf2f7;">
+                <tr style="border-bottom: 1px solid #edf2f7; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'" onclick="window.location='{{ route('cash-register-closures.show', $closure) }}'">
                     <td style="padding: 1rem 1.5rem; font-weight: 600;">
                         {{ \Carbon\Carbon::parse($closure->closure_date)->format('d/m/Y') }}
                     </td>

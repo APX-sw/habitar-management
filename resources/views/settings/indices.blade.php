@@ -19,6 +19,12 @@
                 🔄 Actualizar ICL desde BCRA
             </button>
         </form>
+        <form action="{{ route('settings.indices.fetch_ipc') }}" method="POST" style="margin: 0;">
+            @csrf
+            <button type="submit" class="btn" style="padding: 0.8rem 1.5rem; font-weight: 700; background: #FAF5FF; color: #805AD5; border: 1px solid #E9D8FD; border-radius: 8px;">
+                🔄 Actualizar IPC desde BCRA
+            </button>
+        </form>
         <button onclick="document.getElementById('index-form-new').style.display='block'" class="btn btn-primary" style="padding: 0.8rem 1.5rem; font-weight: 700;">➕ Nuevo Índice</button>
     </div>
 </div>

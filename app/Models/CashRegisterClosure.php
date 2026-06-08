@@ -15,7 +15,10 @@ class CashRegisterClosure extends Model
         'physical_balance',
         'difference',
         'notes',
-        'user_id'
+        'user_id',
+        'initial_balance',
+        'opened_at',
+        'status'
     ];
 
     public function bills()

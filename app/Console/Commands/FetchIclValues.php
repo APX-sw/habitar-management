@@ -34,19 +34,19 @@ class FetchIclValues extends Command
         $indexType = IndexType::firstOrCreate(['name' => 'ICL']);
         
         // BCRA ID Variable for ICL
-        $iclId = 7988; 
+        $iclId = 40; 
         
         $hasta = Carbon::now()->format('Y-m-d');
-        // Traer desde el mes anterior para poder calcular la variación entre el valor del día de hoy (o el último disponible del mes) y el del mes anterior.
-        $desde = Carbon::now()->subMonths(2)->startOfMonth()->format('Y-m-d');
+        // Traer desde los últimos 24 meses para sobreescribir cualquier dato falso de prueba y tener un historial real.
+        $desde = Carbon::now()->subMonths(24)->startOfMonth()->format('Y-m-d');
         
-        $url = "https://api.bcra.gob.ar/estadisticas/v4.0/monetarias/{$iclId}/datos?desde={$desde}&hasta={$hasta}";
+        $url = "https://api.bcra.gob.ar/estadisticas/v4.0/monetarias/{$iclId}?desde={$desde}&hasta={$hasta}";
         
         try {
             $response = Http::withoutVerifying()->get($url);
             
             if ($response->successful()) {
-                $data = $response->json('results');
+                $data = $response->json('results.0.detalle');
                 
                 if (empty($data)) {
                     $this->warn('No data returned from BCRA for ICL.');
@@ -81,15 +81,16 @@ class FetchIclValues extends Command
                         // Variación = ((ICL actual / ICL mes anterior) - 1) * 100
                         $variation = (($currentValue / $previousValue) - 1) * 100;
                         
-                        $dateForDB = Carbon::createFromFormat('Y-m', $monthKey)->startOfMonth()->format('Y-m-d');
+                        $parts = explode('-', $monthKey);
                         
                         IndexValue::updateOrCreate(
                             [
                                 'index_type_id' => $indexType->id,
-                                'date' => $dateForDB,
+                                'year' => $parts[0],
+                                'month' => $parts[1],
                             ],
                             [
-                                'value' => round($variation, 2)
+                                'percentage' => round($variation, 4)
                             ]
                         );
                         

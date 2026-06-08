@@ -7,12 +7,40 @@
     <h1 style="color: var(--primary-color); font-size: 2.2rem; margin: 0;">Caja General</h1>
     <p style="color: var(--text-light); margin-top: 0.5rem;">Visualiza los saldos y el historial de todas las cuentas de la inmobiliaria.</p>
     
+    <div class="card" style="margin-bottom: 2rem; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; background: {{ $currentSession ? '#f0fff4' : '#fff5f5' }}; border: 1px solid {{ $currentSession ? '#c6f6d5' : '#fed7d7' }};">
+        <div>
+            @if($currentSession)
+                <h3 style="color: #2f855a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    🟢 Sesión Abierta
+                </h3>
+                <p style="color: #38a169; margin-top: 0.2rem; font-size: 0.9rem;">
+                    Iniciada a las {{ \Carbon\Carbon::parse($currentSession->opened_at)->format('H:i') }} con saldo de <strong>${{ number_format($currentSession->initial_balance, 2) }}</strong>.
+                </p>
+            @else
+                <h3 style="color: #c53030; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    🔴 Caja Cerrada
+                </h3>
+                <p style="color: #e53e3e; margin-top: 0.2rem; font-size: 0.9rem;">
+                    Abre una sesión de caja para poder registrar cobros, gastos o movimientos manuales.
+                </p>
+            @endif
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{{ route('cash-register-closures.index') }}" class="btn" style="background: white; border: 1px solid #cbd5e0; color: #4a5568; text-decoration: none;">Historial de Sesiones</a>
+            @if($currentSession)
+                <a href="{{ route('cash-register-closures.create') }}" class="btn btn-primary" style="background: #38a169; text-decoration: none;">Cerrar Caja / Arquear</a>
+            @else
+                <a href="{{ route('cash-register-closures.create') }}" class="btn btn-primary" style="text-decoration: none;">Abrir Caja</a>
+            @endif
+        </div>
+    </div>
+
     <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
-        <button onclick="document.getElementById('transferModal').style.display='flex'" class="btn" style="background: #EBF8FF; color: #3182CE; border: 1px solid #BEE3F8; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; outline: none; border-radius: 8px;">
+        <button onclick="document.getElementById('transferModal').style.display='flex'" class="btn" style="background: #EBF8FF; color: #3182CE; border: 1px solid #BEE3F8; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; outline: none; border-radius: 8px;" {{ !$currentSession ? 'disabled title="Debes abrir la caja primero"' : '' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
             Transferir entre cuentas
         </button>
-        <button onclick="document.getElementById('adjustModal').style.display='flex'" class="btn" style="background: #F7FAFC; color: #4A5568; border: 1px solid #E2E8F0; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; outline: none; border-radius: 8px;">
+        <button onclick="document.getElementById('adjustModal').style.display='flex'" class="btn" style="background: #F7FAFC; color: #4A5568; border: 1px solid #E2E8F0; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; outline: none; border-radius: 8px;" {{ !$currentSession ? 'disabled title="Debes abrir la caja primero"' : '' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20v-6M9 17l3 3 3-3M12 4v6m3-3l-3-3-3 3"></path></svg>
             Ajustar Saldo
         </button>
@@ -24,10 +52,6 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
             Ver Auditoría de Eliminaciones
         </button>
-        <a href="{{ route('cash-register-closures.index') }}" class="btn" style="background: #FAF5FF; color: #6B46C1; border: 1px solid #E9D8FD; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; outline: none; border-radius: 8px; text-decoration: none;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-            Arqueo de Caja
-        </a>
     </div>
 </div>
 

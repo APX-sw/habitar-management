@@ -43,11 +43,13 @@ class ExpenseController extends Controller
         $accounts = Account::orderBy('name')->get();
         $categories = \App\Models\TransactionCategory::where('type', 'expense')->orWhere('type', 'both')->orderBy('name')->get();
 
+        $isCashRegisterOpen = \App\Models\CashRegisterClosure::where('status', 'open')->exists();
+
         if ($request->ajax()) {
             return view('expenses.partials.table', compact('expenses'))->render();
         }
 
-        return view('expenses.index', compact('expenses', 'properties', 'accounts', 'categories'));
+        return view('expenses.index', compact('expenses', 'properties', 'accounts', 'categories', 'isCashRegisterOpen'));
     }
 
     public function create()
@@ -55,7 +57,10 @@ class ExpenseController extends Controller
         $properties = Property::all();
         $accounts = Account::where('is_active', true)->get();
         $categories = \App\Models\TransactionCategory::where('type', 'expense')->orWhere('type', 'both')->get();
-        return view('expenses.create', compact('properties', 'accounts', 'categories'));
+        
+        $isCashRegisterOpen = \App\Models\CashRegisterClosure::where('status', 'open')->exists();
+        
+        return view('expenses.create', compact('properties', 'accounts', 'categories', 'isCashRegisterOpen'));
     }
 
     public function store(Request $request)
@@ -72,16 +77,20 @@ class ExpenseController extends Controller
             'paid_with_habitar_funds' => 'nullable|boolean',
         ]);
 
+        $appliesToSettlement = $request->boolean('applies_to_settlement');
+        $paidWithHabitar = $appliesToSettlement ? false : $request->boolean('paid_with_habitar_funds');
+
         $expense = Expense::create([
-            'property_id' => $request->property_id,
-            'account_id' => $request->account_id,
             'date' => $request->date,
             'amount' => $request->amount,
             'description' => $request->description,
+            'property_id' => $request->property_id,
+            'account_id' => $request->account_id,
             'transaction_category_id' => $request->transaction_category_id,
             'is_paid' => true,
-            'applies_to_settlement' => $request->boolean('applies_to_settlement'),
-            'paid_with_habitar_funds' => $request->boolean('paid_with_habitar_funds'),
+            'user_id' => auth()->id(),
+            'applies_to_settlement' => $appliesToSettlement,
+            'paid_with_habitar_funds' => $paidWithHabitar,
         ]);
 
         if ($request->hasFile('attachments')) {
@@ -106,7 +115,7 @@ class ExpenseController extends Controller
             'transaction_category_id' => $request->transaction_category_id
         ]);
 
-        if ($request->boolean('paid_with_habitar_funds')) {
+        if ($paidWithHabitar) {
             $habitarAccount = \App\Models\Account::where('type', 'habitar_fund')->first();
             if ($habitarAccount) {
                 \App\Models\CashRegisterMovement::create([

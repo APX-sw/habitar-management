@@ -293,4 +293,10 @@ class SettingsController extends Controller
         \Illuminate\Support\Facades\Artisan::call('icl:fetch');
         return back()->with('success', 'ICL actualizado desde BCRA.');
     }
+
+    public function fetchIpc()
+    {
+        \Illuminate\Support\Facades\Artisan::call('ipc:fetch');
+        return back()->with('success', 'IPC actualizado desde BCRA.');
+    }
 }

@@ -64,7 +64,9 @@ class CashRegisterController extends Controller
             return view('cash_register._movements_table', compact('movements'))->render();
         }
 
-        return view('cash_register.index', compact('accounts', 'movements', 'totalBalance', 'categories', 'deletedMovements', 'deletedMovementsFormatted', 'employees'));
+        $currentSession = \App\Models\CashRegisterClosure::where('status', 'open')->first();
+
+        return view('cash_register.index', compact('accounts', 'movements', 'totalBalance', 'categories', 'deletedMovements', 'deletedMovementsFormatted', 'employees', 'currentSession'));
     }
 
     public function transfer(Request $request)

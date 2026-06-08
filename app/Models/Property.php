@@ -14,7 +14,8 @@ class Property extends Model
 
     protected $fillable = [
         'owner_id', 'location', 'province_id', 'city_id', 'property_type_id', 'description',
-        'rooms', 'bathrooms', 'has_garage', 'has_patio', 'has_balcony', 'pets_allowed', 'square_meters'
+        'rooms', 'bathrooms', 'has_garage', 'has_patio', 'has_balcony', 'pets_allowed', 'square_meters',
+        'has_expenses', 'expenses_payment_address', 'expenses_payment_number'
     ];
 
     public function owner()

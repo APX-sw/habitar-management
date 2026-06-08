@@ -46,9 +46,11 @@
                     <td style="padding: 1rem;">{{ $owner->phone ?? '-' }}</td>
                     <td style="padding: 1rem; color: var(--text-light); font-size: 0.9rem;">{{ $owner->email ?? '-' }}</td>
                     <td style="padding: 1rem;">
-                        <span style="background: var(--secondary-color); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                            {{ $owner->properties_count }}
-                        </span>
+                        <a href="{{ route('properties.index', ['owner_id' => $owner->id]) }}" style="text-decoration: none;">
+                            <span style="background: var(--secondary-color); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: var(--primary-color); transition: all 0.2s;" onmouseover="this.style.background='var(--primary-color)'; this.style.color='white';" onmouseout="this.style.background='var(--secondary-color)'; this.style.color='var(--primary-color)';">
+                                {{ $owner->properties_count }}
+                            </span>
+                        </a>
                     </td>
                     <td style="padding: 1rem; text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
                         <a href="{{ route('owners.show', $owner) }}" class="btn" style="color: var(--accent-color); font-size: 0.9rem; padding: 0.4rem 0.8rem;">Ver</a>

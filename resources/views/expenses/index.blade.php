@@ -8,7 +8,11 @@
         <h1 style="color: var(--primary-color); font-size: 2.2rem; margin: 0;">Gastos</h1>
         <p style="color: var(--text-light); margin-top: 0.5rem;">Registro de egresos generales o de propiedades.</p>
     </div>
-    <a href="{{ route('expenses.create') }}" class="btn btn-primary" style="padding: 0.8rem 1.5rem; font-weight: 700;">➕ Registrar Gasto</a>
+    @if(isset($isCashRegisterOpen) && !$isCashRegisterOpen)
+        <button class="btn btn-primary" style="padding: 0.8rem 1.5rem; font-weight: 700; opacity: 0.6; cursor: not-allowed;" title="Debes abrir una sesión de caja primero" disabled>➕ Registrar Gasto</button>
+    @else
+        <a href="{{ route('expenses.create') }}" class="btn btn-primary" style="padding: 0.8rem 1.5rem; font-weight: 700;">➕ Registrar Gasto</a>
+    @endif
 </div>
 
 <!-- FILTROS -->

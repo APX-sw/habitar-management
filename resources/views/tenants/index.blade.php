@@ -109,42 +109,6 @@
     </div>
 </div>
 
-<!-- MODAL DE PAGO (SIMPLIFICADO) -->
-<div id="payment-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1100; display:none; align-items:center; justify-content:center;">
-    <div class="card" style="width:100%; max-width:600px; padding: 2.5rem;">
-        <h3 id="payment-title" style="margin-bottom: 1.5rem; color: var(--primary-color);">Registrar Pago</h3>
-        <form id="payment-form" onsubmit="submitPayment(event)">
-            @csrf
-            <input type="hidden" name="collection_id" id="pay-collection-id">
-            
-            <div id="payments-container">
-                <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 0.8rem; margin-bottom: 1rem;">
-                    <div>
-                        <label style="display:block; font-size:0.7rem; font-weight:700; color:var(--text-light); text-transform:uppercase; margin-bottom:0.4rem;">Cuenta de Ingreso</label>
-                        <select name="payments[0][account_id]" required style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--secondary-color);">
-                            @foreach($accounts as $acc)
-                                <option value="{{ $acc->id }}">{{ $acc->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label style="display:block; font-size:0.7rem; font-weight:700; color:var(--text-light); text-transform:uppercase; margin-bottom:0.4rem;">Monto</label>
-                        <input type="number" step="0.01" name="payments[0][amount]" id="pay-amount" required style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--secondary-color);">
-                    </div>
-                    <div>
-                        <label style="display:block; font-size:0.7rem; font-weight:700; color:var(--text-light); text-transform:uppercase; margin-bottom:0.4rem;">Fecha de Pago</label>
-                        <input type="date" name="payments[0][payment_date]" value="{{ date('Y-m-d') }}" required style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--secondary-color);">
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
-                <button type="button" onclick="closePaymentModal()" class="btn" style="background: var(--secondary-color);">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Confirmar Pago</button>
-            </div>
-        </form>
-    </div>
-</div>
 
 <script>
     function openDebtModal(tenantId) {
@@ -181,7 +145,7 @@
                             <td style="padding: 1rem; color: #38A169;">$${parseFloat(c.paid_amount).toLocaleString()}</td>
                             <td style="padding: 1rem; color: #C53030; font-weight: 800;">$${parseFloat(c.pending_amount).toLocaleString()}</td>
                             <td style="padding: 1rem; text-align: right;">
-                                <button onclick="openPaymentModal(${c.id}, ${c.pending_amount}, '${c.month}/${c.year}')" class="btn btn-primary" style="font-size: 0.8rem; padding: 0.5rem 1rem;">Cobrar</button>
+                                <a href="/collections/${c.id}" class="btn btn-primary" style="font-size: 0.8rem; padding: 0.5rem 1rem; text-decoration: none;">Ir a Cobrar</a>
                             </td>
                         </tr>`;
                 });
@@ -194,16 +158,7 @@
         document.getElementById('debt-modal').style.display = 'none';
     }
 
-    function openPaymentModal(collectionId, amount, period) {
-        document.getElementById('pay-collection-id').value = collectionId;
-        document.getElementById('pay-amount').value = amount;
-        document.getElementById('payment-title').innerText = `Cobrar Periodo ${period}`;
-        document.getElementById('payment-modal').style.display = 'flex';
-    }
 
-    function closePaymentModal() {
-        document.getElementById('payment-modal').style.display = 'none';
-    }
 
     // --- Lógica de Filtrado AJAX (Fluido) ---
     const filterForm = document.getElementById('filter-form');
@@ -282,25 +237,7 @@
         }
     });
 
-    function submitPayment(e) {
-        e.preventDefault();
-        const form = e.target;
-        const collectionId = document.getElementById('pay-collection-id').value;
-        const formData = new FormData(form);
 
-        fetch(`/collections/${collectionId}/pay`, {
-            method: 'POST',
-            body: formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        }).then(r => r.json()).then(data => {
-            if (data.success) {
-                alert('Pago registrado correctamente');
-                location.reload();
-            } else {
-                alert('Error al registrar pago');
-            }
-        });
-    }
 </script>
 
 <style>

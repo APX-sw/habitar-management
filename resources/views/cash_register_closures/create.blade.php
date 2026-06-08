@@ -20,13 +20,16 @@
         <div class="card" style="padding: 2.5rem;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
                 <div>
-                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 0.5rem;">Fecha del Arqueo</label>
-                    <input type="date" name="closure_date" value="{{ date('Y-m-d') }}" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc; font-weight: 600;">
+                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 0.5rem;">Fecha de Cierre</label>
+                    <input type="datetime-local" name="closure_date" value="{{ date('Y-m-d\TH:i') }}" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #d2d6dc; font-weight: 600;">
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 0.5rem;">Saldo Esperado (Sistema)</label>
-                    <div style="background: #f8fafc; padding: 0.8rem; border-radius: 8px; border: 1px solid #edf2f7; font-weight: 800; color: var(--primary-color); font-size: 1.1rem;">
-                        ${{ number_format($systemBalance, 2) }}
+                    <div style="background: #f8fafc; padding: 0.8rem; border-radius: 8px; border: 1px solid #edf2f7; font-weight: 800; color: var(--primary-color); font-size: 1.1rem; text-align: right;">
+                        ${{ number_format($systemBalance, 2, ',', '.') }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #a0aec0; margin-top: 0.4rem; text-align: right;">
+                        Inicial: ${{ number_format($currentSession->initial_balance, 2, ',', '.') }} + Movimientos de hoy.
                     </div>
                     <input type="hidden" name="system_balance" id="systemBalance" value="{{ $systemBalance }}">
                 </div>

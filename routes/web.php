@@ -138,11 +138,11 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('can:collections.read')->group(function () {
         Route::get('collections', [CollectionController::class, 'index'])->name('collections.index');
         Route::get('collections/create', [CollectionController::class, 'create'])->name('collections.create');
-        Route::post('collections', [CollectionController::class, 'store'])->name('collections.store');
+        Route::post('collections', [CollectionController::class, 'store'])->name('collections.store')->middleware('check.cash.register');
         Route::get('collections/period/{month}/{year}', [CollectionController::class, 'showPeriod'])->name('collections.show_period');
         Route::get('collections/{collection}', [CollectionController::class, 'show'])->name('collections.show');
-        Route::put('collections/{collection}', [CollectionController::class, 'update'])->name('collections.update');
-        Route::post('collections/{collection}/pay', [CollectionController::class, 'pay'])->name('collections.pay');
+        Route::put('collections/{collection}', [CollectionController::class, 'update'])->name('collections.update')->middleware('check.cash.register');
+        Route::post('collections/{collection}/pay', [CollectionController::class, 'pay'])->name('collections.pay')->middleware('check.cash.register');
         Route::post('collections/{collection}/send', [CollectionController::class, 'sendToTenant'])->name('collections.send');
         Route::get('collections/{collection}/receipt/{payment}', [CollectionController::class, 'paymentReceipt'])->name('collections.payment_receipt');
         Route::post('collections/{collection}/receipt/{payment}/send', [CollectionController::class, 'sendReceiptToTenant'])->name('collections.send_receipt');
@@ -153,18 +153,19 @@ Route::middleware(['auth'])->group(function () {
     // Caja
     Route::middleware('can:cash_register.read')->group(function () {
         Route::get('cash-register', [CashRegisterController::class, 'index'])->name('cash_register.index');
-        Route::post('cash-register/transfer', [CashRegisterController::class, 'transfer'])->name('cash_register.transfer');
-        Route::post('cash-register/adjust', [CashRegisterController::class, 'adjust'])->name('cash_register.adjust');
+        Route::post('cash-register/transfer', [CashRegisterController::class, 'transfer'])->name('cash_register.transfer')->middleware('check.cash.register');
+        Route::post('cash-register/adjust', [CashRegisterController::class, 'adjust'])->name('cash_register.adjust')->middleware('check.cash.register');
 
         Route::get('cash-register-closures', [CashRegisterClosureController::class, 'index'])->name('cash-register-closures.index');
         Route::get('cash-register-closures/create', [CashRegisterClosureController::class, 'create'])->name('cash-register-closures.create');
         Route::post('cash-register-closures', [CashRegisterClosureController::class, 'store'])->name('cash-register-closures.store');
+        Route::get('cash-register-closures/{closure}', [CashRegisterClosureController::class, 'show'])->name('cash-register-closures.show');
     });
 
     // Gastos
     Route::middleware('can:expenses.read')->group(function () {
         Route::resource('expenses', ExpenseController::class)->except(['show', 'edit']);
-        Route::put('expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
+        Route::put('expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update')->middleware('check.cash.register');
         Route::get('expenses/{expense}/documents', [ExpenseDocumentController::class, 'index'])->name('expenses.documents');
         Route::post('expense-documents', [ExpenseDocumentController::class, 'store'])->name('expense-documents.store');
         Route::delete('expense-documents/{expenseDocument}', [ExpenseDocumentController::class, 'destroy'])->name('expense-documents.destroy');
@@ -196,6 +197,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('settings/indices', [SettingsController::class, 'indices'])->name('settings.indices');
         Route::post('settings/indices/fetch-icl', [SettingsController::class, 'fetchIcl'])->name('settings.indices.fetch_icl');
+        Route::post('settings/indices/fetch-ipc', [SettingsController::class, 'fetchIpc'])->name('settings.indices.fetch_ipc');
         Route::post('settings/index-types', [SettingsController::class, 'storeIndexType'])->name('settings.index-types.store');
         Route::delete('settings/index-types/{indexType}', [SettingsController::class, 'destroyIndexType'])->name('settings.index-types.destroy');
         Route::post('settings/index-values', [SettingsController::class, 'storeIndexValue'])->name('settings.index-values.store');
@@ -221,6 +223,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('settings/recurrent-concepts', [SettingsController::class, 'storeRecurrentConcept'])->name('settings.recurrent_concepts.store');
         Route::delete('settings/recurrent-concepts/{recurrentConcept}', [SettingsController::class, 'destroyRecurrentConcept'])->name('settings.recurrent_concepts.destroy');
     });
+    
+    // Cash Register Closures
+    Route::post('cash-register-closures/open', [CashRegisterClosureController::class, 'openSession'])->name('cash-register-closures.open');
 });
 
 // API

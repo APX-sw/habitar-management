@@ -196,7 +196,45 @@ class CollectionController extends Controller
 
         $collections = $query->latest()->get();
 
-        return view('collections.period', compact('collections', 'month', 'year'));
+        // Generar Reporte de Servicios (Expensas, Tasas, etc.) a Pagar por Habitar
+        $servicesReport = [];
+        foreach ($collections as $col) {
+            foreach ($col->details as $detail) {
+                if ($detail->type === 'fixed_charge' && $detail->destination === 'agency' && $detail->amount > 0) {
+                    $conceptName = $detail->name;
+                    $property = $col->lease->property;
+                    $location = $property->location;
+                    
+                    // Buscar el payment_code en los recurrent_concepts de la propiedad
+                    $paymentCode = 'N/A';
+                    $fc = \App\Models\FixedCharge::find($detail->related_id);
+                    if ($fc && $fc->recurrent_concept_id) {
+                        $propConcept = $property->recurrentConcepts()->where('recurrent_concept_id', $fc->recurrent_concept_id)->first();
+                        if ($propConcept && $propConcept->pivot->payment_code) {
+                            $paymentCode = $propConcept->pivot->payment_code;
+                        }
+                    }
+
+                    if (!isset($servicesReport[$conceptName])) {
+                        $servicesReport[$conceptName] = [
+                            'total' => 0,
+                            'items' => []
+                        ];
+                    }
+
+                    $servicesReport[$conceptName]['total'] += $detail->amount;
+                    $servicesReport[$conceptName]['items'][] = [
+                        'location' => $location,
+                        'amount' => $detail->amount,
+                        'payment_code' => $paymentCode
+                    ];
+                }
+            }
+        }
+
+        $isCashRegisterOpen = \App\Models\CashRegisterClosure::where('status', 'open')->exists();
+
+        return view('collections.period', compact('collections', 'month', 'year', 'servicesReport', 'isCashRegisterOpen'));
     }
 
     public function show(Collection $collection)
@@ -204,7 +242,10 @@ class CollectionController extends Controller
         $collection->load(['lease.property.owner', 'lease.tenant', 'details', 'lease.fixedCharges', 'lease.extraCharges', 'payments.account']);
         $accounts = \App\Models\Account::where('is_active', true)->get();
         $categories = \App\Models\TransactionCategory::all();
-        return view('collections.show', compact('collection', 'accounts', 'categories'));
+        
+        $isCashRegisterOpen = \App\Models\CashRegisterClosure::where('status', 'open')->exists();
+        
+        return view('collections.show', compact('collection', 'accounts', 'categories', 'isCashRegisterOpen'));
     }
 
     public function update(Request $request, Collection $collection)
