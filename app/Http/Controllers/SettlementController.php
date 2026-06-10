@@ -432,8 +432,8 @@ class SettlementController extends Controller
         try {
             // Webhooks diferenciados por tipo
             $webhookUrl = ($type === 'settlement') 
-                ? 'https://n8n.dev.jfsdevs.com.ar/webhook/826bdd12-5d40-4574-bf7a-72d90c4d3ee7' 
-                : 'https://n8n.dev.jfsdevs.com.ar/webhook/72e5f4f5-f7b8-4b00-beb1-6ea4281bad8d';
+                ? 'https://n8n.apxsoftware.com.ar/webhook/826bdd12-5d40-4574-bf7a-72d90c4d3ee7' 
+                : 'https://n8n.apxsoftware.com.ar/webhook/72e5f4f5-f7b8-4b00-beb1-6ea4281bad8d';
 
             $response = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(15)->post($webhookUrl, $payload);
             

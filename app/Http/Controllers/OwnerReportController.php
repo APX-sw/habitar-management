@@ -168,7 +168,7 @@ class OwnerReportController extends Controller
         ];
 
         try {
-            $webhookUrl = 'https://n8n.dev.jfsdevs.com.ar/webhook/7d4e873d-0c30-47d2-a21e-be8fd3758b58';
+            $webhookUrl = 'https://n8n.apxsoftware.com.ar/webhook/7d4e873d-0c30-47d2-a21e-be8fd3758b58';
 
             $response = \Illuminate\Support\Facades\Http::withoutVerifying()
                 ->timeout(20)

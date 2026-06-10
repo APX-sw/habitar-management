@@ -288,7 +288,7 @@ class CollectionController extends Controller
         $payload = $this->prepareWebhookPayload($collection);
 
         try {
-            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(15)->post('https://n8n.dev.jfsdevs.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(15)->post('https://n8n.apxsoftware.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
             
             if (!$response->successful()) {
                 throw new \Exception("Error " . $response->status());
@@ -318,7 +318,7 @@ class CollectionController extends Controller
             if ($collection && $collection->status === 'ready') {
                 $payload = $this->prepareWebhookPayload($collection);
                 try {
-                        \Illuminate\Support\Facades\Http::withoutVerifying()->post('https://n8n.dev.jfsdevs.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
+                        \Illuminate\Support\Facades\Http::withoutVerifying()->post('https://n8n.apxsoftware.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
                     $collection->update(['status' => 'sent']);
                     $count++;
                 } catch (\Exception $e) {
@@ -489,7 +489,7 @@ class CollectionController extends Controller
         try {
             $response = \Illuminate\Support\Facades\Http::withoutVerifying()
                 ->timeout(15)
-                ->post('https://n8n.dev.jfsdevs.com.ar/webhook/5619b6ed-baa5-4ee8-83b0-d72c57deadd6', $payload);
+                ->post('https://n8n.apxsoftware.com.ar/webhook/5619b6ed-baa5-4ee8-83b0-d72c57deadd6', $payload);
             
             if (!$response->successful()) {
                 throw new \Exception("Error " . $response->status());
