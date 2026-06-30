@@ -301,6 +301,43 @@
             </div>
         </div>
 
+        <!-- INVOICING INFO -->
+        @if(isset($invoicingData))
+            <div style="margin-bottom: 2rem; background: #EBF8FF; border: 1px solid #BEE3F8; border-radius: 12px; padding: 1.5rem; break-inside: avoid;">
+                <h3 style="color: #2B6CB0; font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; text-transform: uppercase;">Detalle para Facturación Oficial (Responsabilidad Propietario)</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="text-align: left; color: #2C5282; border-bottom: 2px solid #BEE3F8;">
+                            <th style="padding: 0.5rem;">Propiedad</th>
+                            <th style="padding: 0.5rem; text-align: right;">Alquiler Vigente</th>
+                            <th style="padding: 0.5rem; text-align: right;">% a Facturar</th>
+                            <th style="padding: 0.5rem; text-align: right;">Monto a Facturar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($invoicingData['items'] as $item)
+                            <tr style="border-bottom: 1px solid #BEE3F8;">
+                                <td style="padding: 0.5rem; font-weight: 600; color: #2D3748;">{{ $item['property'] }}</td>
+                                <td style="padding: 0.5rem; text-align: right; color: #4A5568;">${{ number_format($item['rent'], 2) }}</td>
+                                <td style="padding: 0.5rem; text-align: right; color: #4A5568;">{{ $item['percentage'] }}%</td>
+                                <td style="padding: 0.5rem; text-align: right; font-weight: 700; color: #2B6CB0;">${{ number_format($item['amount'], 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="padding: 1rem 0.5rem 0.5rem; text-align: right; font-weight: 800; color: #2B6CB0;">TOTAL A FACTURAR:</td>
+                            <td style="padding: 1rem 0.5rem 0.5rem; text-align: right; font-weight: 900; font-size: 1.2rem; color: #2B6CB0;">${{ number_format($invoicingData['total'], 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" style="padding: 0 0.5rem 0.5rem; text-align: right; font-weight: 600; color: #4A5568;">IVA Estimado (21%):</td>
+                            <td style="padding: 0 0.5rem 0.5rem; text-align: right; font-weight: 700; color: #4A5568;">${{ number_format($invoicingData['iva_21'], 2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        @endif
+
         <!-- PAYMENT DETAILS (Only if paid) -->
         @if($settlement->status === 'paid')
             <div style="break-inside: avoid; margin-top: 1.5rem; border-top: 3px dashed #e2e8f0; padding-top: 2rem;">
