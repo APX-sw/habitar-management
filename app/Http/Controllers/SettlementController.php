@@ -315,7 +315,32 @@ class SettlementController extends Controller
             ->whereYear('date', $settlement->year)
             ->get();
 
-        return view('settlements.show', compact('settlement', 'accounts', 'collections', 'expenses'));
+        $invoicingData = null;
+        $invoicingItems = [];
+
+        foreach ($collections as $col) {
+            $lease = $col->lease;
+            $invoiceAmount = $lease->getInvoiceAmountForDate($settlement->month, $settlement->year);
+            if ($invoiceAmount !== null) {
+                $invoicingItems[] = [
+                    'property'   => $lease->property->location,
+                    'rent'       => $lease->calculateRentForDate($settlement->month, $settlement->year),
+                    'percentage' => $lease->invoicing_percentage,
+                    'amount'     => $invoiceAmount,
+                ];
+            }
+        }
+
+        if (count($invoicingItems) > 0) {
+            $invoicingTotal = array_sum(array_column($invoicingItems, 'amount'));
+            $invoicingData = [
+                'items' => $invoicingItems,
+                'total' => $invoicingTotal,
+                'iva_21' => round($invoicingTotal * 0.21, 2),
+            ];
+        }
+
+        return view('settlements.show', compact('settlement', 'accounts', 'collections', 'expenses', 'invoicingData'));
     }
 
     public function addExtraFee(Request $request, Settlement $settlement)
