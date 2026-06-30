@@ -368,6 +368,94 @@
         @endif
     </div>
 </div>
+
+<!-- Aumentos del Próximo Mes -->
+<div class="card" style="padding: 1.5rem; margin-top: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="color: var(--primary-color); font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.6rem;">
+            <div style="background: #fffbeb; color: #d97706; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            </div>
+            Aumentos en {{ ucfirst($nextMonthLabel) }}
+        </h3>
+        <span style="background: #fffbeb; color: #b45309; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; border: 1px solid #fde68a;">
+            {{ $upcomingIncreases->count() }} {{ $upcomingIncreases->count() === 1 ? 'contrato' : 'contratos' }}
+        </span>
+    </div>
+
+    @if($upcomingIncreases->isEmpty())
+        <div style="text-align: center; padding: 2rem 0; color: var(--text-light);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e0" stroke-width="1.5" style="margin-bottom: 1rem;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            <p style="margin: 0;">Ningún contrato activo tiene un aumento programado para {{ $nextMonthLabel }}.</p>
+        </div>
+    @else
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e2e8f0; text-align: left;">
+                        <th style="padding: 0.6rem 0.75rem; color: var(--text-light); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Propiedad</th>
+                        <th style="padding: 0.6rem 0.75rem; color: var(--text-light); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Inquilino</th>
+                        <th style="padding: 0.6rem 0.75rem; color: var(--text-light); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; text-align: right;">Alquiler Actual</th>
+                        <th style="padding: 0.6rem 0.75rem; color: var(--text-light); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; text-align: right;">Nuevo Alquiler</th>
+                        <th style="padding: 0.6rem 0.75rem; color: var(--text-light); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; text-align: center;">Tipo</th>
+                        <th style="padding: 0.6rem 0.75rem; color: var(--text-light); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; text-align: right;">Aumento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($upcomingIncreases as $item)
+                        @php
+                            $lease     = $item['lease'];
+                            $diff      = $item['diff'];
+                            $pct       = ($item['current_rent'] > 0 && $diff !== null)
+                                ? round(($diff / $item['current_rent']) * 100, 1)
+                                : null;
+                        @endphp
+                        <tr style="border-bottom: 1px solid #edf2f7; transition: background 0.15s;" onmouseover="this.style.background='#fefce8'" onmouseout="this.style.background='transparent'">
+                            <td style="padding: 0.85rem 0.75rem; vertical-align: middle;">
+                                <a href="{{ route('leases.show', $lease->id) }}" style="font-weight: 600; color: var(--primary-color); text-decoration: none; display: flex; align-items: center; gap: 0.4rem;">
+                                    {{ $lease->property->location ?? 'N/D' }}
+                                </a>
+                                <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.2rem;">
+                                    Cada {{ $lease->update_frequency_months }} mes(es) desde {{ \Carbon\Carbon::parse($lease->start_date)->format('d/m/Y') }}
+                                </div>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; color: var(--text-color); vertical-align: middle;">
+                                {{ $lease->tenant->name ?? 'N/D' }}
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; text-align: right; font-weight: 600; color: #4a5568; vertical-align: middle; font-variant-numeric: tabular-nums;">
+                                ${{ number_format($item['current_rent'], 2, ',', '.') }}
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; text-align: right; font-weight: 700; color: #d97706; vertical-align: middle; font-variant-numeric: tabular-nums;">
+                                @if($item['new_rent'] !== null)
+                                    ${{ number_format($item['new_rent'], 2, ',', '.') }}
+                                @else
+                                    <span style="color: #e53e3e; font-size: 0.8rem;">Falta índice</span>
+                                @endif
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; text-align: center; vertical-align: middle;">
+                                <span style="background: {{ $lease->update_type === 'fixed' ? '#ebf8ff' : '#faf5ff' }}; color: {{ $lease->update_type === 'fixed' ? '#2b6cb0' : '#6b46c1' }}; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700;">
+                                    {{ $lease->update_type === 'fixed' ? 'FIJO ' . $lease->update_value . '%' : 'ÍNDICE' }}
+                                </span>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; text-align: right; vertical-align: middle;">
+                                @if($diff !== null)
+                                    <span style="background: #fffbeb; color: #92400e; padding: 0.25rem 0.65rem; border-radius: 8px; font-size: 0.85rem; font-weight: 800; display: inline-block; border: 1px solid #fde68a;">
+                                        +${{ number_format($diff, 0, ',', '.') }}
+                                        @if($pct !== null)
+                                            <span style="font-size: 0.75rem; opacity: 0.8;">({{ $pct }}%)</span>
+                                        @endif
+                                    </span>
+                                @else
+                                    <span style="color: #718096;">—</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+</div>
 @else
 <div class="card" style="padding: 3rem; text-align: center; background: white; border-radius: 12px; margin-top: 1rem; border-left: 4px solid var(--accent-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
     <h2 style="color: var(--primary-color); font-weight: 700; margin-bottom: 1rem;">Bienvenido/a a Habitar, {{ Auth::user()->name }}</h2>

@@ -75,6 +75,31 @@ class DashboardController extends Controller
         // Actividad Reciente
         $recentActivity = Activity::latest()->take(5)->get();
 
+        // Contratos con aumento en el próximo mes
+        $nextMonth = \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, 1)->addMonth();
+        $upcomingIncreases = Lease::with(['property', 'tenant'])
+            ->where('is_active', true)
+            ->get()
+            ->filter(fn($lease) => $lease->isUpdateMonthForDate($nextMonth->month, $nextMonth->year))
+            ->map(function ($lease) use ($nextMonth) {
+                $currentRent = $lease->calculateRentForDate(
+                    \Carbon\Carbon::now()->month,
+                    \Carbon\Carbon::now()->year
+                );
+                try {
+                    $newRent = $lease->calculateRentForDate($nextMonth->month, $nextMonth->year);
+                } catch (\Exception $e) {
+                    $newRent = null;
+                }
+                return [
+                    'lease'       => $lease,
+                    'current_rent' => $currentRent,
+                    'new_rent'    => $newRent,
+                    'diff'        => $newRent !== null ? $newRent - $currentRent : null,
+                ];
+            })->values();
+        $nextMonthLabel = $nextMonth->locale('es')->translatedFormat('F Y');
+
         return view('welcome', compact(
             'propertiesCount',
             'activeLeasesCount',
@@ -91,7 +116,9 @@ class DashboardController extends Controller
             'selectedYear',
             'employee',
             'todayAttendance',
-            'activeAbsenceReasons'
+            'activeAbsenceReasons',
+            'upcomingIncreases',
+            'nextMonthLabel'
         ));
     }
 }
