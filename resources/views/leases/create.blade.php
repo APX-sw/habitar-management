@@ -151,6 +151,23 @@
                         <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.4rem;">Puedes dar de alta más índices en Configuración.</p>
                     </div>
                 </div>
+
+                <!-- Facturación Parcial -->
+                <div style="margin-bottom: 1.5rem; border: 1px solid #BEE3F8; padding: 1rem; border-radius: 12px; background: #EBF8FF;">
+                    <label style="display: block; margin-bottom: 1rem; font-weight: 700; color: #2B6CB0; text-transform: uppercase; font-size: 0.75rem;">Facturación Oficial (IVA/IB)</label>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="invoicing_enabled" name="invoicing_enabled" value="1" onchange="toggleInvoicing()" {{ old('invoicing_enabled') ? 'checked' : '' }} style="margin-right: 0.5rem; width: 1.2rem; height: 1.2rem; accent-color: #3182CE;">
+                            <span style="font-weight: 600; color: #2D3748;">¿Requiere Facturación Parcial?</span>
+                        </label>
+                    </div>
+                    <div id="invoicing_percentage_container" style="display: {{ old('invoicing_enabled') ? 'block' : 'none' }}; margin-top: 1rem;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem;">Porcentaje a Facturar (%)</label>
+                        <input type="number" name="invoicing_percentage" id="invoicing_percentage" value="{{ old('invoicing_percentage') }}" min="1" max="99" step="1" placeholder="Ej: 50" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid #BEE3F8;">
+                        <small style="display: block; color: #4A5568; margin-top: 0.4rem; font-size: 0.75rem;">Indique qué porcentaje del alquiler mensual vigente se debe facturar (solo números del 1 al 99).</small>
+                        @error('invoicing_percentage') <span style="color: #E53E3E; font-size: 0.75rem; font-weight: 600;">{{ $message }}</span> @enderror
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -257,6 +274,19 @@
     }
 
     let chargeCount = 1;
+
+    function toggleInvoicing() {
+        const isEnabled = document.getElementById('invoicing_enabled').checked;
+        const container = document.getElementById('invoicing_percentage_container');
+        const input = document.getElementById('invoicing_percentage');
+        
+        if (isEnabled) {
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+            input.value = '';
+        }
+    }
 
     function addFixedCharge() {
         const container = document.getElementById('fixed-charges-container');
