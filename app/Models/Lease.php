@@ -34,7 +34,9 @@ class Lease extends Model
         'property_review_status',
         'property_review_notes',
         'renewal_status',
-        'termination_reason'
+        'termination_reason',
+        'invoicing_enabled',
+        'invoicing_percentage'
     ];
 
     public function parentLease()
@@ -156,4 +158,18 @@ class Lease extends Model
         $monthsDiff = $startDate->diffInMonths($targetDate);
         return ($monthsDiff > 0 && ($monthsDiff % $this->update_frequency_months === 0));
     }
+
+    /**
+     * Calcula el monto a facturar para un mes/año dado.
+     * Retorna null si el contrato no tiene facturación habilitada.
+     */
+    public function getInvoiceAmountForDate($month, $year)
+    {
+        if (!$this->invoicing_enabled || !$this->invoicing_percentage) {
+            return null;
+        }
+        $rent = $this->calculateRentForDate($month, $year);
+        return round($rent * ($this->invoicing_percentage / 100), 2);
+    }
 }
+
