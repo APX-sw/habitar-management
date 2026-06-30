@@ -92,11 +92,15 @@ class LeaseController extends Controller
             'fixed_charges.*.name' => 'nullable|string',
             'fixed_charges.*.amount' => 'nullable|numeric|min:0',
             'initial_fee_installments' => 'nullable|integer|min:1',
+            'invoicing_enabled' => 'nullable|boolean',
+            'invoicing_percentage' => 'nullable|integer|min:1|max:99|required_if:invoicing_enabled,1',
         ]);
 
         $lease = Lease::create(array_merge($validated, [
             'security_deposit_amount' => $validated['security_deposit_amount'] ?? 0,
             'agency_fee_amount' => $validated['agency_fee_amount'] ?? 0,
+            'invoicing_enabled' => $request->has('invoicing_enabled'),
+            'invoicing_percentage' => $request->has('invoicing_enabled') ? $validated['invoicing_percentage'] : null,
         ]));
 
         // Generar Cargos Fijos (Conceptos)
@@ -170,6 +174,8 @@ class LeaseController extends Controller
             'agency_fee_amount' => 'nullable|numeric|min:0',
             'initial_fee_installments' => 'nullable|integer|min:1',
             'security_deposit_diff' => 'nullable|numeric|min:0',
+            'invoicing_enabled' => 'nullable|boolean',
+            'invoicing_percentage' => 'nullable|integer|min:1|max:99|required_if:invoicing_enabled,1',
         ]);
 
         // 1. Calcular nuevo depósito total guardado
@@ -190,7 +196,9 @@ class LeaseController extends Controller
             'agency_fee_amount' => $validated['agency_fee_amount'] ?? 0,
             'parent_lease_id' => $lease->id,
             'renewal_status' => 'renewed',
-            'is_active' => true
+            'is_active' => true,
+            'invoicing_enabled' => $request->has('invoicing_enabled'),
+            'invoicing_percentage' => $request->has('invoicing_enabled') ? $validated['invoicing_percentage'] : null,
         ]));
 
         // 3. Heredar cargos fijos
@@ -264,6 +272,8 @@ class LeaseController extends Controller
             'security_deposit_diff' => 'nullable|numeric|min:0',
             'start_date' => 'required|date', // Fecha desde que rige el nuevo precio
             'end_date' => 'required|date|after:start_date',
+            'invoicing_enabled' => 'nullable|boolean',
+            'invoicing_percentage' => 'nullable|integer|min:1|max:99|required_if:invoicing_enabled,1',
         ]);
 
         $oldDeposit = $lease->security_deposit_amount ?? 0;
@@ -283,7 +293,9 @@ class LeaseController extends Controller
             'agency_fee_amount' => $validated['agency_fee_amount'] ?? 0,
             'parent_lease_id' => $lease->id,
             'renewal_status' => 'renegotiated',
-            'is_active' => true
+            'is_active' => true,
+            'invoicing_enabled' => $request->has('invoicing_enabled'),
+            'invoicing_percentage' => $request->has('invoicing_enabled') ? $validated['invoicing_percentage'] : null,
         ]));
 
         // Heredar cargos fijos

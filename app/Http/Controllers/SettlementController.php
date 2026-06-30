@@ -450,6 +450,35 @@ class SettlementController extends Controller
             });
         }
 
+        $invoicingData = null;
+        $invoicingItems = [];
+
+        foreach ($collections as $col) {
+            $lease = $col->lease;
+            $invoiceAmount = $lease->getInvoiceAmountForDate($settlement->month, $settlement->year);
+            if ($invoiceAmount !== null) {
+                $invoicingItems[] = [
+                    'property'   => $lease->property->location,
+                    'rent'       => $lease->calculateRentForDate($settlement->month, $settlement->year),
+                    'percentage' => $lease->invoicing_percentage,
+                    'amount'     => $invoiceAmount,
+                ];
+            }
+        }
+
+        if (count($invoicingItems) > 0) {
+            $invoicingTotal = array_sum(array_column($invoicingItems, 'amount'));
+            $invoicingData = [
+                'items' => $invoicingItems,
+                'total' => $invoicingTotal,
+                'iva_21' => round($invoicingTotal * 0.21, 2),
+            ];
+        }
+
+        if ($type === 'settlement' && $invoicingData) {
+            $payload['invoicing'] = $invoicingData;
+        }
+
         $payload['n8n_code'] = ($type === 'settlement')
             ? \App\Services\N8nCodeService::getSettlementMailCode()
             : \App\Services\N8nCodeService::getSettlementPaymentConfirmCode();
