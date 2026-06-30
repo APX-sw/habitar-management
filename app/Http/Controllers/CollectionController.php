@@ -544,6 +544,32 @@ class CollectionController extends Controller
         $defaultAccount = \App\Models\AgencyBankAccount::where('is_active', true)->first();
         $whatsapp = \App\Models\AgencySetting::get('whatsapp_number');
 
+        $lease = $collection->lease;
+        $hasIncrease = $lease->isUpdateMonthForDate($collection->month, $collection->year);
+        $rentIncreaseInfo = null;
+
+        if ($hasIncrease) {
+            $prevDate = \Carbon\Carbon::createFromDate($collection->year, $collection->month, 1)->subMonth();
+            try {
+                $prevRent = $lease->calculateRentForDate($prevDate->month, $prevDate->year);
+                $currentRent = $lease->calculateRentForDate($collection->month, $collection->year);
+                $diff = $currentRent - $prevRent;
+                
+                if ($diff > 0) {
+                    $methodStr = $lease->update_type === 'fixed' 
+                        ? "fijo pactado del {$lease->update_value}%"
+                        : "índice " . ($lease->indexType->name ?? 'pactado');
+                        
+                    $rentIncreaseInfo = [
+                        'amount' => round($diff, 2),
+                        'method' => $methodStr
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Ignore if indices are missing for calculation
+            }
+        }
+
         return [
             'collection_id' => $collection->id,
             'period' => \Carbon\Carbon::createFromDate($collection->year, $collection->month, 1)->translatedFormat('F Y'),
@@ -570,6 +596,7 @@ class CollectionController extends Controller
                 'whatsapp' => $whatsapp,
                 'whatsapp_url' => $whatsapp ? "https://wa.me/" . preg_replace('/[^0-9]/', '', $whatsapp) : null
             ],
+            'rent_increase' => $rentIncreaseInfo,
             'n8n_code' => \App\Services\N8nCodeService::getTenantCollectionNotificationCode(),
         ];
     }

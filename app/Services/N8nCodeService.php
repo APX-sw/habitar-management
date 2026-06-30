@@ -987,6 +987,18 @@ for (const item of $input.all()) {
           <p style="margin: 0 0 15px 0; font-size: 16px; color: #4a5568;">Hola <strong style="color: #2d3748;">${data.tenant ? data.tenant.name : 'Inquilino'}</strong>,</p>
           <p style="margin: 0 0 25px 0; color: #718096; line-height: 1.6;">El detalle de los conceptos a abonar correspondientes a la propiedad <strong style="color: #2d3748;">${data.property}</strong> ya se encuentra disponible para su cancelación.</p>
           
+          ${data.rent_increase ? `
+            <div style="background-color: #fffaf0; border-left: 4px solid #dd6b20; padding: 15px 20px; margin-bottom: 25px; border-radius: 0 8px 8px 0; border: 1px solid #feebc8; border-left-width: 4px;">
+              <h4 style="margin: 0 0 6px 0; color: #c05621; font-size: 15px; display: flex; align-items: center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 8px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                Actualización de Alquiler Programada
+              </h4>
+              <p style="margin: 0; color: #9c4221; font-size: 14px; line-height: 1.5;">
+                Te informamos que este mes el valor de tu alquiler incluye un aumento por un monto de <strong style="font-size: 15px;">${fmt(data.rent_increase.amount)}</strong>. Este cálculo se realizó utilizando el método de <strong>${data.rent_increase.method}</strong> establecido previamente en tu contrato.
+              </p>
+            </div>
+          ` : ''}
+
           <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
             <table style="width: 100%; border-collapse: collapse; background: #ffffff;">
               ${itemsHtml}
