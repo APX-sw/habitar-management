@@ -480,6 +480,53 @@ if (directDiff > 0.01) {
   `;
 }
 
+// 5.b Cálculo Dinámico de Facturación Oficial
+let invoicingHtml = "";
+const invoicing = body.invoicing;
+if (invoicing && invoicing.items && invoicing.items.length > 0) {
+  invoicingHtml += `
+    <!-- INVOICING INFO -->
+    <div style="margin-top: 30px; background: #EBF8FF; border: 1px solid #BEE3F8; border-radius: 12px; padding: 20px;">
+      <h3 style="color: #2B6CB0; font-size: 15px; font-weight: 800; margin: 0 0 15px 0; text-transform: uppercase;">Detalle para Facturación Oficial</h3>
+      <p style="font-size: 12px; color: #4A5568; margin: 0 0 15px 0;">Sugerencia de montos a facturar según condiciones de su contrato.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #4A5568;">
+        <thead>
+          <tr style="text-align: left; color: #2C5282; border-bottom: 2px solid #BEE3F8;">
+            <th style="padding: 8px;">Propiedad</th>
+            <th style="padding: 8px; text-align: right;">Alquiler</th>
+            <th style="padding: 8px; text-align: right;">% Fact.</th>
+            <th style="padding: 8px; text-align: right;">Monto</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  invoicing.items.forEach(item => {
+    invoicingHtml += `
+          <tr style="border-bottom: 1px solid #BEE3F8;">
+            <td style="padding: 8px; font-weight: 600;">${item.property}</td>
+            <td style="padding: 8px; text-align: right;">${fmt(item.rent)}</td>
+            <td style="padding: 8px; text-align: right;">${item.percentage}%</td>
+            <td style="padding: 8px; text-align: right; font-weight: 700; color: #2B6CB0;">${fmt(item.amount)}</td>
+          </tr>
+    `;
+  });
+  invoicingHtml += `
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="padding: 15px 8px 8px; text-align: right; font-weight: 800; color: #2B6CB0;">TOTAL A FACTURAR:</td>
+            <td style="padding: 15px 8px 8px; text-align: right; font-weight: 900; font-size: 15px; color: #2B6CB0;">${fmt(invoicing.total)}</td>
+          </tr>
+          <tr>
+            <td colspan="3" style="padding: 0 8px 8px; text-align: right; font-weight: 600;">IVA Estimado (21%):</td>
+            <td style="padding: 0 8px 8px; text-align: right; font-weight: 700;">${fmt(invoicing.iva_21)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  `;
+}
+
 // 6. Estructura Global del Correo Electrónico (Maquetación Prémium)
 const htmlContent = `
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 650px; margin: 0 auto; background-color: #ffffff; color: #2d3748;">
@@ -502,6 +549,9 @@ const htmlContent = `
     
     <!-- Inserción Dinámica de Tablas -->
     ${mainDetailsHtml}
+
+    <!-- Bloque de Facturación Oficial -->
+    ${invoicingHtml}
 
     <!-- Resumen Final -->
     <div style="margin-top: 40px; border-top: 2px solid #edf2f7; padding-top: 20px; display: flex; justify-content: flex-end;">
