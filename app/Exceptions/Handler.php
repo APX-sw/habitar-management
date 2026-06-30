@@ -23,6 +23,10 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
+        $this->renderable(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            return redirect()->route('login')->with('error', 'Tu sesión expiró por inactividad. Por favor, iniciá sesión nuevamente.');
+        });
+
         $this->reportable(function (Throwable $e) {
             //
         });

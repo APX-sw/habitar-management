@@ -36,9 +36,18 @@
                 </div>
             </div>
 
-            <div style="margin-bottom: 2rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Notas de Contacto / Comentarios</label>
-                <textarea name="contact" rows="2" style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color);"></textarea>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Notas de Contacto</label>
+                    <textarea name="contact" rows="2" style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color);"></textarea>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Comisión Inmobiliaria (%)</label>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="number" step="0.1" name="commission_percentage" value="10" style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color); font-weight: 700;">
+                        <span style="font-weight: 700;">%</span>
+                    </div>
+                </div>
             </div>
 
             <div style="border-top: 1px solid var(--secondary-color); padding-top: 1.5rem;">

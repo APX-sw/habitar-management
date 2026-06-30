@@ -96,7 +96,7 @@ class CollectionController extends Controller
                     // 1. Asegurar Alquiler
                     $collection->details()->updateOrCreate(
                         ['type' => 'rent'],
-                        ['name' => 'Alquiler Mensual', 'amount' => $rentAmount]
+                        ['name' => 'Alquiler Mensual', 'amount' => $rentAmount, 'original_amount' => $rentAmount, 'destination' => 'owner', 'transaction_category_id' => 1] // 1: Alquileres
                     );
                     $collection->update(['rent_amount' => $rentAmount]);
 
@@ -107,17 +107,55 @@ class CollectionController extends Controller
                         ->get();
 
                     foreach ($extras as $extra) {
+                        $dest = 'owner';
+                        $catId = $extra->transaction_category_id;
+                        $lowerName = strtolower($extra->description);
+                        
+                        if (!$catId) {
+                            if (str_contains($lowerName, 'honorario') || str_contains($lowerName, 'comision') || str_contains($lowerName, 'comisión')) {
+                                $dest = 'agency';
+                                $catId = 2; // Honorarios Inmobiliarios
+                            } elseif (str_contains($lowerName, 'deposito') || str_contains($lowerName, 'depósito')) {
+                                $dest = 'agency';
+                                $catId = 3; // Depósitos en Garantía
+                            } elseif (str_contains($lowerName, 'multa') || str_contains($lowerName, 'interes') || str_contains($lowerName, 'interés')) {
+                                $dest = 'agency';
+                                $catId = 4; // Intereses y Recargos
+                            } else {
+                                $recurrentCat = \App\Models\TransactionCategory::where('name', 'Gastos Recurrentes')->first();
+                                $catId = $recurrentCat ? $recurrentCat->id : 8; // Default to Gastos Recurrentes
+                            }
+                        }
+                        
                         $collection->details()->updateOrCreate(
                             ['type' => 'extra_charge', 'related_id' => $extra->id],
-                            ['name' => $extra->description, 'amount' => $extra->amount]
+                            ['name' => $extra->description, 'amount' => $extra->amount, 'original_amount' => $extra->amount, 'destination' => $dest, 'transaction_category_id' => $catId]
                         );
                     }
 
                     // 3. Conceptos Mensuales Recurrentes
                     foreach ($lease->fixedCharges as $fc) {
+                        $dest = $fc->is_paid_by_agency ? 'agency' : 'owner';
+                        $catId = $fc->transaction_category_id;
+                        $displayName = $fc->recurrentConcept ? $fc->recurrentConcept->name : $fc->name;
+                        $lowerName = strtolower($displayName);
+                        
+                        if (!$catId) {
+                            if (str_contains($lowerName, 'honorario') || str_contains($lowerName, 'comision') || str_contains($lowerName, 'comisión')) {
+                                $dest = 'agency';
+                                $catId = 2; // Honorarios Inmobiliarios
+                            } elseif (str_contains($lowerName, 'deposito') || str_contains($lowerName, 'depósito')) {
+                                $dest = 'agency';
+                                $catId = 3; // Depósitos en Garantía
+                            } else {
+                                $recurrentCat = \App\Models\TransactionCategory::where('name', 'Gastos Recurrentes')->first();
+                                $catId = $recurrentCat ? $recurrentCat->id : 8; // Default to Gastos Recurrentes
+                            }
+                        }
+                        
                         $collection->details()->firstOrCreate(
                             ['type' => 'fixed_charge', 'related_id' => $fc->id],
-                            ['name' => $fc->name, 'amount' => 0]
+                            ['name' => $displayName, 'amount' => 0, 'original_amount' => 0, 'destination' => $dest, 'transaction_category_id' => $catId]
                         );
                     }
                     
@@ -158,14 +196,56 @@ class CollectionController extends Controller
 
         $collections = $query->latest()->get();
 
-        return view('collections.period', compact('collections', 'month', 'year'));
+        // Generar Reporte de Servicios (Expensas, Tasas, etc.) a Pagar por Habitar
+        $servicesReport = [];
+        foreach ($collections as $col) {
+            foreach ($col->details as $detail) {
+                if ($detail->type === 'fixed_charge' && $detail->destination === 'agency' && $detail->amount > 0) {
+                    $conceptName = $detail->name;
+                    $property = $col->lease->property;
+                    $location = $property->location;
+                    
+                    // Buscar el payment_code en los recurrent_concepts de la propiedad
+                    $paymentCode = 'N/A';
+                    $fc = \App\Models\FixedCharge::find($detail->related_id);
+                    if ($fc && $fc->recurrent_concept_id) {
+                        $propConcept = $property->recurrentConcepts()->where('recurrent_concept_id', $fc->recurrent_concept_id)->first();
+                        if ($propConcept && $propConcept->pivot->payment_code) {
+                            $paymentCode = $propConcept->pivot->payment_code;
+                        }
+                    }
+
+                    if (!isset($servicesReport[$conceptName])) {
+                        $servicesReport[$conceptName] = [
+                            'total' => 0,
+                            'items' => []
+                        ];
+                    }
+
+                    $servicesReport[$conceptName]['total'] += $detail->amount;
+                    $servicesReport[$conceptName]['items'][] = [
+                        'location' => $location,
+                        'amount' => $detail->amount,
+                        'payment_code' => $paymentCode
+                    ];
+                }
+            }
+        }
+
+        $isCashRegisterOpen = \App\Models\CashRegisterClosure::where('status', 'open')->exists();
+
+        return view('collections.period', compact('collections', 'month', 'year', 'servicesReport', 'isCashRegisterOpen'));
     }
 
     public function show(Collection $collection)
     {
-        $collection->load(['lease.property', 'lease.tenant', 'details', 'lease.fixedCharges', 'lease.extraCharges', 'payments.method']);
-        $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->get();
-        return view('collections.show', compact('collection', 'paymentMethods'));
+        $collection->load(['lease.property.owner', 'lease.tenant', 'details', 'lease.fixedCharges', 'lease.extraCharges', 'payments.account']);
+        $accounts = \App\Models\Account::where('is_active', true)->get();
+        $categories = \App\Models\TransactionCategory::all();
+        
+        $isCashRegisterOpen = \App\Models\CashRegisterClosure::where('status', 'open')->exists();
+        
+        return view('collections.show', compact('collection', 'accounts', 'categories', 'isCashRegisterOpen'));
     }
 
     public function update(Request $request, Collection $collection)
@@ -173,7 +253,13 @@ class CollectionController extends Controller
         // Actualizar montos manuales de cargos fijos
         if ($request->has('details')) {
             foreach ($request->details as $detailId => $amount) {
-                CollectionDetail::where('id', $detailId)->update(['amount' => $amount]);
+                $detail = CollectionDetail::find($detailId);
+                if ($detail) {
+                    $detail->update(['amount' => $amount]);
+                    if ($detail->type === 'rent') {
+                        $collection->update(['rent_amount' => $amount]);
+                    }
+                }
             }
         }
 
@@ -189,6 +275,10 @@ class CollectionController extends Controller
 
     public function sendToTenant(Collection $collection)
     {
+        if ($collection->status === 'draft' || $collection->status === 'incompleto') {
+            return back()->with('error', 'No se puede enviar un cobro incompleto. Debes cargar y guardar los montos para marcarlo como listo para cobrar.');
+        }
+
         if ($collection->status === 'paid') {
             return back()->with('error', 'No se puede enviar un cobro que ya ha sido pagado.');
         }
@@ -198,16 +288,21 @@ class CollectionController extends Controller
         $payload = $this->prepareWebhookPayload($collection);
 
         try {
-            \Illuminate\Support\Facades\Http::post('https://n8n.dev.jfsdevs.com.ar/webhook-test/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(15)->post('https://n8n.apxsoftware.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
             
+            if (!$response->successful()) {
+                throw new \Exception("Error " . $response->status());
+            }
+
             // Actualizar estado a "sent" si estaba en "ready"
             if ($collection->status === 'ready') {
                 $collection->update(['status' => 'sent']);
             }
 
-            return back()->with('success', 'Detalles enviados correctamente al sistema de notificaciones.');
+            return back()->with('success', 'Información enviada correctamente al inquilino.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al conectar con el servidor de correos: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error("Error Webhook Collection: " . $e->getMessage());
+            return back()->with('error', 'Error al enviar al webhook: ' . $e->getMessage());
         }
     }
 
@@ -223,7 +318,7 @@ class CollectionController extends Controller
             if ($collection && $collection->status === 'ready') {
                 $payload = $this->prepareWebhookPayload($collection);
                 try {
-                    \Illuminate\Support\Facades\Http::post('https://n8n.dev.jfsdevs.com.ar/webhook-test/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
+                        \Illuminate\Support\Facades\Http::withoutVerifying()->post('https://n8n.apxsoftware.com.ar/webhook/8dc83dd3-b602-47b1-a425-3842a3357159', $payload);
                     $collection->update(['status' => 'sent']);
                     $count++;
                 } catch (\Exception $e) {
@@ -240,14 +335,80 @@ class CollectionController extends Controller
         $request->validate([
             'payments' => 'required|array|min:1',
             'payments.*.amount' => 'required|numeric|min:0.01',
-            'payments.*.payment_method_id' => 'required|exists:payment_methods,id',
-            'payments.*.destination' => 'required|string',
+            'payments.*.account_id' => 'required|exists:accounts,id',
             'payments.*.payment_date' => 'required|date',
-            'payments.*.notes' => 'nullable|string'
+            'payments.*.notes' => 'nullable|string',
+            'payments.*.transferred_to_owner' => 'nullable|boolean'
         ]);
 
         foreach ($request->payments as $pData) {
-            $collection->payments()->create($pData);
+            $pData['transferred_to_owner'] = !empty($pData['transferred_to_owner']);
+            $payment = $collection->payments()->create($pData);
+            
+            $paymentAmount = $pData['amount'];
+            $totalDebt = $collection->total_amount;
+            
+            // Unificamos el cobro de caja en un único movimiento (sea directo al propietario o normal)
+            if (isset($pData['transferred_to_owner']) && $pData['transferred_to_owner']) {
+                // Pago directo al propietario: Generar UN SOLO INGRESO TRANSITORIO y UN SOLO EGRESO
+                $transferCategory = \App\Models\TransactionCategory::where('name', 'Transferencia al Propietario (Directa)')->first();
+                if (!$transferCategory) {
+                    $transferCategory = \App\Models\TransactionCategory::create(['name' => 'Transferencia al Propietario (Directa)', 'type' => 'expense', 'description' => 'Transferencia directa al propietario desde el recibo de cobro']);
+                }
+                
+                // INGRESO TRANSITORIO
+                $payment->movement()->create([
+                    'account_id' => $pData['account_id'],
+                    'type' => 'income',
+                    'amount' => $paymentAmount,
+                    'description' => "Ingreso por Pago Directo a Propietario - {$collection->lease->property->location}",
+                    'movement_date' => Carbon::parse($pData['payment_date'])->setTimeFrom(now()),
+                    'transaction_category_id' => $transferCategory->id
+                ]);
+
+                // EGRESO AUTOMÁTICO
+                \App\Models\CashRegisterMovement::create([
+                    'type' => 'expense',
+                    'amount' => $paymentAmount,
+                    'movement_date' => Carbon::parse($pData['payment_date'])->setTimeFrom(now()),
+                    'description' => "Egreso por Pago Directo a Propietario - {$collection->lease->property->location}",
+                    'account_id' => $pData['account_id'],
+                    'transaction_category_id' => $transferCategory->id,
+                    'user_id' => auth()->id(),
+                    'related_id' => $payment->id,
+                    'related_type' => \App\Models\CollectionPayment::class,
+                ]);
+
+            } else {
+                // INGRESO ORDINARIO (Unificado)
+                $payment->movement()->create([
+                    'account_id' => $pData['account_id'],
+                    'type' => 'income',
+                    'amount' => $paymentAmount,
+                    'description' => "Cobro Alquiler e Impuestos - {$collection->lease->property->location} (Cobro #{$collection->id})",
+                    'movement_date' => Carbon::parse($pData['payment_date'])->setTimeFrom(now()),
+                    'transaction_category_id' => 1 // Categoría: Alquileres
+                ]);
+
+                // SHADOW MOVEMENT a CAJA HABITAR (si corresponde)
+                $proportion = $totalDebt > 0 ? ($paymentAmount / $totalDebt) : 1;
+                $agencyAmount = $collection->details()->where('destination', 'agency')->sum('amount') * $proportion;
+                
+                $habitarAccount = \App\Models\Account::where('type', 'habitar_fund')->first();
+                if ($habitarAccount && $agencyAmount > 0) {
+                    \App\Models\CashRegisterMovement::create([
+                        'account_id' => $habitarAccount->id,
+                        'type' => 'income',
+                        'amount' => $agencyAmount,
+                        'description' => "Ingreso Caja Habitar (Cobro #{$collection->id}) - Proporcional a favor de la Agencia",
+                        'movement_date' => Carbon::parse($pData['payment_date'])->setTimeFrom(now()),
+                        'transaction_category_id' => 1,
+                        'user_id' => auth()->id(),
+                        'related_id' => $payment->id,
+                        'related_type' => \App\Models\CollectionPayment::class,
+                    ]);
+                }
+            }
         }
 
         // Recalcular estado basado en el total pagado
@@ -264,8 +425,125 @@ class CollectionController extends Controller
         return back()->with('success', 'Pago(s) registrado(s) correctamente.');
     }
 
+    public function paymentReceipt(Collection $collection, \App\Models\CollectionPayment $payment)
+    {
+        // Verificar que el pago pertenezca a la colección
+        if ($payment->collection_id !== $collection->id) {
+            abort(404);
+        }
+
+        return view('collections.receipt', compact('collection', 'payment'));
+    }
+
+    public function sendReceiptToTenant(Collection $collection, \App\Models\CollectionPayment $payment)
+    {
+        if ($payment->collection_id !== $collection->id) {
+            abort(404);
+        }
+
+        $collection->load(['lease.property', 'lease.tenant', 'details']);
+
+        $whatsapp = \App\Models\AgencySetting::get('whatsapp_number');
+        $agencyEmail = \App\Models\AgencySetting::get('agency_email', 'contacto@habitar.com.ar');
+        $agencyAddress = \App\Models\AgencySetting::get('agency_address', 'Av. Belgrano (N) 450, Santiago del Estero');
+        $defaultAccount = \App\Models\AgencyBankAccount::where('is_active', true)->first();
+
+        $payload = [
+            'payment_id' => $payment->id,
+            'receipt_number' => 'REC-' . str_pad($payment->id, 6, '0', STR_PAD_LEFT),
+            'collection_id' => $collection->id,
+            'period' => \Carbon\Carbon::createFromDate($collection->year, $collection->month, 1)->translatedFormat('F Y'),
+            'payment_date' => \Carbon\Carbon::parse($payment->payment_date)->format('d/m/Y'),
+            'property' => $collection->lease->property->location,
+            'tenant' => [
+                'name' => $collection->lease->tenant->name,
+                'email' => $collection->lease->tenant->email,
+            ],
+            'amount_paid' => $payment->amount,
+            'payment_method' => ($payment->account->type ?? '') === 'cash' 
+                ? 'Efectivo' 
+                : (($payment->account->type ?? '') === 'bank' ? 'Transferencia Bancaria' : ($payment->account->name ?? 'N/A')),
+            'notes' => $payment->notes,
+            'details' => $collection->details->map(function($detail) {
+                return [
+                    'description' => $detail->name,
+                    'amount' => $detail->amount,
+                    'type' => $detail->type
+                ];
+            })->toArray(),
+            'agency_bank_account' => $defaultAccount ? [
+                'holder_name' => $defaultAccount->holder_name,
+                'bank_entity' => $defaultAccount->bank_entity,
+                'cbu' => $defaultAccount->cbu,
+                'alias' => $defaultAccount->alias,
+            ] : null,
+            'contact' => [
+                'whatsapp' => $whatsapp,
+                'whatsapp_url' => $whatsapp ? "https://wa.me/" . preg_replace('/[^0-9]/', '', $whatsapp) : null,
+                'agency_email' => $agencyEmail,
+                'agency_address' => $agencyAddress
+            ],
+            'n8n_code' => \App\Services\N8nCodeService::getTenantReceiptCode(),
+        ];
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+                ->timeout(15)
+                ->post('https://n8n.apxsoftware.com.ar/webhook/5619b6ed-baa5-4ee8-83b0-d72c57deadd6', $payload);
+            
+            if (!$response->successful()) {
+                throw new \Exception("Error " . $response->status());
+            }
+
+            return back()->with('success', 'Recibo de cobro enviado correctamente al inquilino por email.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error Webhook Payment Receipt: " . $e->getMessage());
+            return back()->with('error', 'Error al enviar el recibo al webhook: ' . $e->getMessage());
+        }
+    }
+
+    public function transferPaymentToOwner(Collection $collection, \App\Models\CollectionPayment $payment)
+    {
+        if ($payment->transferred_to_owner) {
+            return back()->with('error', 'Este pago ya fue transferido al propietario.');
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($payment, $collection) {
+                // 1. Marcar el pago como transferido
+                $payment->update(['transferred_to_owner' => true]);
+
+                // 2. Generar movimiento de salida (Egreso) en Caja
+                $transferCategory = \App\Models\TransactionCategory::where('name', 'Transferencia al Propietario (Directa)')->first();
+                if (!$transferCategory) {
+                    $transferCategory = \App\Models\TransactionCategory::create(['name' => 'Transferencia al Propietario (Directa)', 'type' => 'expense', 'description' => 'Transferencia directa al propietario desde el recibo de cobro']);
+                }
+
+                \App\Models\CashRegisterMovement::create([
+                    'type' => 'expense',
+                    'amount' => $payment->amount, // Sale todo el monto del pago
+                    'date' => now(),
+                    'description' => "Pago Directo a Propietario - {$collection->lease->property->location} (Cobro #{$collection->id})",
+                    'account_id' => $payment->account_id, // Sale de la misma cuenta donde entró
+                    'transaction_category_id' => $transferCategory->id,
+                    'user_id' => auth()->id(),
+                    'related_id' => $payment->id,
+                    'related_type' => \App\Models\CollectionPayment::class,
+                ]);
+            });
+
+            return back()->with('success', 'El pago ha sido marcado como transferido y se generó el movimiento de salida en caja automáticamente.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error transferring payment: " . $e->getMessage());
+            return back()->with('error', 'Ocurrió un error al procesar la transferencia: ' . $e->getMessage());
+        }
+    }
+
     private function prepareWebhookPayload(Collection $collection)
     {
+        $defaultAccount = \App\Models\AgencyBankAccount::where('is_active', true)->first();
+        $whatsapp = \App\Models\AgencySetting::get('whatsapp_number');
+
         return [
             'collection_id' => $collection->id,
             'period' => \Carbon\Carbon::createFromDate($collection->year, $collection->month, 1)->translatedFormat('F Y'),
@@ -281,7 +559,18 @@ class CollectionController extends Controller
                     'amount' => $detail->amount,
                     'type' => $detail->type
                 ];
-            })->toArray()
+            })->toArray(),
+            'agency_bank_account' => $defaultAccount ? [
+                'holder_name' => $defaultAccount->holder_name,
+                'bank_entity' => $defaultAccount->bank_entity,
+                'cbu' => $defaultAccount->cbu,
+                'alias' => $defaultAccount->alias,
+            ] : null,
+            'contact' => [
+                'whatsapp' => $whatsapp,
+                'whatsapp_url' => $whatsapp ? "https://wa.me/" . preg_replace('/[^0-9]/', '', $whatsapp) : null
+            ],
+            'n8n_code' => \App\Services\N8nCodeService::getTenantCollectionNotificationCode(),
         ];
     }
 }

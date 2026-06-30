@@ -45,11 +45,13 @@ class LeaseController extends Controller
             $nearThreshold = now()->addMonths(2);
 
             if ($request->status === 'expired') {
-                $query->where('end_date', '<', $today);
+                $query->where('end_date', '<', $today)->where('renewal_status', '!=', 'terminated');
             } elseif ($request->status === 'near') {
-                $query->whereBetween('end_date', [$today, $nearThreshold]);
+                $query->whereBetween('end_date', [$today, $nearThreshold])->where('renewal_status', '!=', 'terminated');
             } elseif ($request->status === 'active') {
-                $query->where('end_date', '>', $nearThreshold);
+                $query->where('end_date', '>', $nearThreshold)->where('renewal_status', '!=', 'terminated');
+            } elseif ($request->status === 'terminated') {
+                $query->where('renewal_status', 'terminated');
             }
         }
 
@@ -63,7 +65,8 @@ class LeaseController extends Controller
         $properties = Property::with(['type', 'city'])->whereDoesntHave('activeLease')->get();
         $tenants = Tenant::all();
         $indexTypes = \App\Models\IndexType::all();
-        return view('leases.create', compact('properties', 'tenants', 'indexTypes'));
+        $recurrentConcepts = \App\Models\RecurrentConcept::all();
+        return view('leases.create', compact('properties', 'tenants', 'indexTypes', 'recurrentConcepts'));
     }
 
     public function store(Request $request)
@@ -86,20 +89,25 @@ class LeaseController extends Controller
             'update_value' => 'nullable|numeric',
             'index_type_id' => 'nullable|exists:index_types,id',
             'fixed_charges' => 'nullable|array',
-            'fixed_charges.*.name' => 'required|string',
+            'fixed_charges.*.name' => 'nullable|string',
             'fixed_charges.*.amount' => 'nullable|numeric|min:0',
             'initial_fee_installments' => 'nullable|integer|min:1',
         ]);
 
-        $lease = Lease::create($validated);
+        $lease = Lease::create(array_merge($validated, [
+            'security_deposit_amount' => $validated['security_deposit_amount'] ?? 0,
+            'agency_fee_amount' => $validated['agency_fee_amount'] ?? 0,
+        ]));
 
         // Generar Cargos Fijos (Conceptos)
         if ($request->has('fixed_charges')) {
             foreach ($request->fixed_charges as $charge) {
-                if (!empty($charge['name'])) {
+                if (!empty($charge['recurrent_concept_id']) || !empty($charge['name'])) {
                     $lease->fixedCharges()->create([
-                        'name' => $charge['name'],
+                        'recurrent_concept_id' => $charge['recurrent_concept_id'] ?? null,
+                        'name' => $charge['name'] ?? null,
                         'amount' => $charge['amount'] ?? 0,
+                        'is_paid_by_agency' => isset($charge['is_paid_by_agency']) ? (bool)$charge['is_paid_by_agency'] : false,
                     ]);
                 }
             }
@@ -141,12 +149,10 @@ class LeaseController extends Controller
 
     public function showRenewalForm(Lease $lease)
     {
-        $lease->load(['property', 'tenant', 'fixedCharges']);
+        $lease->load(['property', 'tenant', 'fixedCharges.recurrentConcept']);
         $indexTypes = \App\Models\IndexType::all();
-        
-        // El nuevo depósito sugerido es el nuevo precio base (que se editará en el form)
-        // Pero ya calculamos la base para la vista
-        return view('leases.renew', compact('lease', 'indexTypes'));
+        $recurrentConcepts = \App\Models\RecurrentConcept::all();
+        return view('leases.renew', compact('lease', 'indexTypes', 'recurrentConcepts'));
     }
 
     public function storeRenewal(Request $request, Lease $lease)
@@ -181,6 +187,7 @@ class LeaseController extends Controller
             'guarantor_address' => $lease->guarantor_address,
             'guarantor_phone' => $lease->guarantor_phone,
             'security_deposit_amount' => $newTotalDeposit,
+            'agency_fee_amount' => $validated['agency_fee_amount'] ?? 0,
             'parent_lease_id' => $lease->id,
             'renewal_status' => 'renewed',
             'is_active' => true
@@ -189,8 +196,10 @@ class LeaseController extends Controller
         // 3. Heredar cargos fijos
         foreach ($lease->fixedCharges as $charge) {
             $newLease->fixedCharges()->create([
+                'recurrent_concept_id' => $charge->recurrent_concept_id,
                 'name' => $charge->name,
-                'amount' => $charge->amount
+                'amount' => $charge->amount,
+                'is_paid_by_agency' => $charge->is_paid_by_agency,
             ]);
         }
 
@@ -236,9 +245,10 @@ class LeaseController extends Controller
 
     public function showRenegotiationForm(Lease $lease)
     {
-        $lease->load(['property', 'tenant', 'fixedCharges']);
+        $lease->load(['property', 'tenant', 'fixedCharges.recurrentConcept']);
         $indexTypes = \App\Models\IndexType::all();
-        return view('leases.renegotiate', compact('lease', 'indexTypes'));
+        $recurrentConcepts = \App\Models\RecurrentConcept::all();
+        return view('leases.renegotiate', compact('lease', 'indexTypes', 'recurrentConcepts'));
     }
 
     public function storeRenegotiation(Request $request, Lease $lease)
@@ -270,6 +280,7 @@ class LeaseController extends Controller
             'guarantor_address' => $lease->guarantor_address,
             'guarantor_phone' => $lease->guarantor_phone,
             'security_deposit_amount' => $newTotalDeposit,
+            'agency_fee_amount' => $validated['agency_fee_amount'] ?? 0,
             'parent_lease_id' => $lease->id,
             'renewal_status' => 'renegotiated',
             'is_active' => true
@@ -278,8 +289,10 @@ class LeaseController extends Controller
         // Heredar cargos fijos
         foreach ($lease->fixedCharges as $charge) {
             $newLease->fixedCharges()->create([
+                'recurrent_concept_id' => $charge->recurrent_concept_id,
                 'name' => $charge->name,
-                'amount' => $charge->amount
+                'amount' => $charge->amount,
+                'is_paid_by_agency' => $charge->is_paid_by_agency,
             ]);
         }
 
@@ -348,7 +361,8 @@ class LeaseController extends Controller
         $lease->update([
             'is_active' => false,
             'end_date' => $request->termination_date,
-            'renewal_status' => 'terminated'
+            'renewal_status' => 'terminated',
+            'termination_reason' => $request->reason
         ]);
 
         return redirect()->route('leases.index')->with('success', 'Contrato finalizado correctamente. Se ha generado la multa correspondiente.');
@@ -356,8 +370,18 @@ class LeaseController extends Controller
 
     public function show(Lease $lease)
     {
-        $lease->load(['property', 'tenant', 'fixedCharges', 'extraCharges']);
-        return view('leases.show', compact('lease'));
+        $lease->load([
+            'property', 
+            'tenant', 
+            'fixedCharges.recurrentConcept', 
+            'extraCharges', 
+            'collections' => function($q) {
+                $q->orderBy('year', 'desc')->orderBy('month', 'desc')->take(4);
+            }
+        ]);
+        $categories = \App\Models\TransactionCategory::all();
+        $recurrentConcepts = \App\Models\RecurrentConcept::all();
+        return view('leases.show', compact('lease', 'categories', 'recurrentConcepts'));
     }
 
     public function monthlySummary(Lease $lease, Request $request)

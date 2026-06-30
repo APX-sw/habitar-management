@@ -33,6 +33,30 @@ class SettingsController extends Controller
         return view('settings.indices', compact('indexTypes'));
     }
 
+    public function recurrentConcepts()
+    {
+        $recurrentConcepts = \App\Models\RecurrentConcept::with('transactionCategory')->get();
+        $categories = \App\Models\TransactionCategory::all();
+        return view('settings.recurrent_concepts', compact('recurrentConcepts', 'categories'));
+    }
+
+    public function storeRecurrentConcept(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|unique:recurrent_concepts',
+            'transaction_category_id' => 'nullable|exists:transaction_categories,id'
+        ]);
+        
+        \App\Models\RecurrentConcept::create($request->all());
+        return back()->with('success', 'Concepto recurrente creado.');
+    }
+
+    public function destroyRecurrentConcept(\App\Models\RecurrentConcept $recurrentConcept)
+    {
+        $recurrentConcept->delete();
+        return back()->with('success', 'Concepto recurrente eliminado.');
+    }
+
     public function storeProvince(Request $request)
     {
         $request->validate(['name' => 'required|unique:provinces']);
@@ -205,5 +229,74 @@ class SettingsController extends Controller
     {
         $value->delete();
         return response()->json(['success' => 'Registro eliminado.']);
+    }
+
+    public function agencyBankAccounts()
+    {
+        $accounts = \App\Models\AgencyBankAccount::all();
+        return view('settings.agency_bank_accounts', compact('accounts'));
+    }
+
+    public function storeAgencyBankAccount(Request $request)
+    {
+        $request->validate([
+            'holder_name' => 'required',
+            'bank_entity' => 'required',
+            'cbu' => 'required',
+            'alias' => 'required',
+        ]);
+
+        \App\Models\AgencyBankAccount::create($request->all());
+
+        return back()->with('success', 'Cuenta bancaria agregada.');
+    }
+
+    public function setDefaultAgencyBankAccount(\App\Models\AgencyBankAccount $account)
+    {
+        \App\Models\AgencyBankAccount::where('id', '!=', $account->id)->update(['is_active' => false]);
+        $account->update(['is_active' => true]);
+
+        return back()->with('success', 'Cuenta marcada como predeterminada para cobros.');
+    }
+
+    public function destroyAgencyBankAccount(\App\Models\AgencyBankAccount $account)
+    {
+        $account->delete();
+        return back()->with('success', 'Cuenta eliminada.');
+    }
+
+    public function contact()
+    {
+        $whatsapp = \App\Models\AgencySetting::get('whatsapp_number');
+        $agencyEmail = \App\Models\AgencySetting::get('agency_email', 'contacto@habitar.com.ar');
+        $agencyAddress = \App\Models\AgencySetting::get('agency_address', 'Av. Belgrano (N) 450, Santiago del Estero');
+        return view('settings.contact', compact('whatsapp', 'agencyEmail', 'agencyAddress'));
+    }
+
+    public function storeContact(Request $request)
+    {
+        $request->validate([
+            'whatsapp_number' => 'required',
+            'agency_email' => 'required|email',
+            'agency_address' => 'required'
+        ]);
+
+        \App\Models\AgencySetting::set('whatsapp_number', $request->whatsapp_number);
+        \App\Models\AgencySetting::set('agency_email', $request->agency_email);
+        \App\Models\AgencySetting::set('agency_address', $request->agency_address);
+
+        return back()->with('success', 'Información de contacto de la inmobiliaria actualizada.');
+    }
+
+    public function fetchIcl()
+    {
+        \Illuminate\Support\Facades\Artisan::call('icl:fetch');
+        return back()->with('success', 'ICL actualizado desde BCRA.');
+    }
+
+    public function fetchIpc()
+    {
+        \Illuminate\Support\Facades\Artisan::call('ipc:fetch');
+        return back()->with('success', 'IPC actualizado desde BCRA.');
     }
 }

@@ -196,9 +196,44 @@
                     </select>
                 </div>
 
+                <div class="full-width" style="margin-top: 1rem; border-bottom: 1px solid var(--secondary-color); padding-bottom: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.8rem; cursor: pointer;">
+                        <input type="checkbox" name="has_expenses" id="has_expenses_checkbox" value="1" style="width: 20px; height: 20px;">
+                        <span style="font-weight: 700; font-size: 1.1rem; color: var(--primary-color);">¿La propiedad paga Expensas?</span>
+                    </label>
+                </div>
+
+                <div id="expenses_details_container" class="full-width" style="display: none; background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #edf2f7; margin-bottom: 1rem;">
+                    <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1rem;">Completá los datos de la administración o consorcio donde se abonan.</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Dirección de Pago de Expensas</label>
+                            <input type="text" name="expenses_payment_address" placeholder="Ej: San Martín 123 4to C" style="width: 100%; padding: 0.9rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Teléfono / Número / Referencia</label>
+                            <input type="text" name="expenses_payment_number" placeholder="Ej: Unidad 405 / Tel: 444-5555" style="width: 100%; padding: 0.9rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color);">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="full-width">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Descripción / Comodidades</label>
                     <textarea name="description" rows="4" placeholder="Ej: 2 dormitorios, cochera, patio amplio..." style="width: 100%; padding: 0.9rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color);"></textarea>
+                </div>
+
+                <div class="full-width" style="margin-top: 1rem;">
+                    <label style="display: block; margin-bottom: 1.5rem; font-weight: 600; font-size: 1.1rem; color: var(--primary-color); border-bottom: 1px solid var(--secondary-color); padding-bottom: 0.5rem;">Servicios Adheridos (Opcional)</label>
+                    <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1rem;">Si la propiedad tiene servicios a cargo de la Inmobiliaria (ej. Expensas, Aguas), puedes asociarlos aquí y colocar su Código de Pago Electrónico.</p>
+                    
+                    <div id="recurrent-concepts-container">
+                        <!-- Contenedor dinámico -->
+                    </div>
+                    
+                    <button type="button" onclick="addRecurrentConceptRow()" class="btn" style="background: var(--bg-body); border: 1px dashed var(--secondary-color); color: var(--primary-color); font-weight: 600; width: 100%; margin-top: 0.5rem; padding: 1rem;">
+                        + Agregar Servicio a la Propiedad
+                    </button>
                 </div>
 
                 <div class="full-width" style="display: flex; justify-content: center; margin-top: 2rem;">
@@ -463,5 +498,58 @@
             updateCities(selectedProvince, oldCityId);
         }
     });
+
+    // Dynamic Recurrent Concepts
+    let conceptCount = 0;
+    const allConcepts = @json($allRecurrentConcepts);
+
+    // Toggle Expenses Details
+    const hasExpensesCheckbox = document.getElementById('has_expenses_checkbox');
+    const expensesDetailsContainer = document.getElementById('expenses_details_container');
+    
+    if (hasExpensesCheckbox) {
+        hasExpensesCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                expensesDetailsContainer.style.display = 'block';
+            } else {
+                expensesDetailsContainer.style.display = 'none';
+            }
+        });
+    }
+
+    function addRecurrentConceptRow() {
+        const container = document.getElementById('recurrent-concepts-container');
+        
+        let optionsHtml = '<option value="">-- Seleccionar --</option>';
+        allConcepts.forEach(c => {
+            optionsHtml += `<option value="${c.id}">${c.name}</option>`;
+        });
+
+        const row = document.createElement('div');
+        row.style.display = 'grid';
+        row.style.gridTemplateColumns = '1fr 1fr 40px';
+        row.style.gap = '1rem';
+        row.style.marginBottom = '1rem';
+        row.style.alignItems = 'end';
+        
+        row.innerHTML = `
+            <div>
+                <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; font-weight: 600;">Servicio / Concepto</label>
+                <select name="recurrent_concepts[${conceptCount}][id]" required style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--secondary-color);">
+                    ${optionsHtml}
+                </select>
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; font-weight: 600;">Código de Pago Electrónico / Ente</label>
+                <input type="text" name="recurrent_concepts[${conceptCount}][payment_code]" placeholder="Opcional. Ej: 0012345678" style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--secondary-color);">
+            </div>
+            <div style="padding-bottom: 0.4rem;">
+                <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 1.2rem; font-weight: bold;" title="Eliminar">&times;</button>
+            </div>
+        `;
+        
+        container.appendChild(row);
+        conceptCount++;
+    }
 </script>
 @endsection

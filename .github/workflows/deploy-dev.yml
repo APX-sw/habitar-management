@@ -1,0 +1,44 @@
+name: Deploy to Dev
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd "${{ secrets.PROJECT_PATH }}"
+
+            php artisan down --retry=60
+
+            git pull origin develop
+
+            composer install --no-interaction --prefer-dist --optimize-autoloader
+
+            php artisan migrate --force
+
+            php artisan config:clear
+            php artisan cache:clear
+            php artisan view:clear
+
+            php artisan config:cache
+
+            php artisan queue:restart
+
+            npm ci
+            npm run build
+
+            php artisan up
+
+            curl -f -s -o /dev/null ${{ secrets.APP_URL }} || (php artisan down && echo "Health check failed, app left in maintenance mode" && exit 1)

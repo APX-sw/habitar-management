@@ -38,9 +38,9 @@ class TenantController extends Controller
         }
 
         $tenants = $query->latest()->paginate(15)->withQueryString();
-        $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->get();
+        $accounts = \App\Models\Account::where('is_active', true)->get();
         
-        return view('tenants.index', compact('tenants', 'paymentMethods'));
+        return view('tenants.index', compact('tenants', 'accounts'));
     }
 
     public function pendingCollections(Tenant $tenant)
@@ -77,7 +77,10 @@ class TenantController extends Controller
     public function show(Tenant $tenant)
     {
         $tenant->load('leases.property');
-        return view('tenants.show', compact('tenant'));
+        $pendingCollections = $tenant->getPendingCollections();
+        $totalDebt = $pendingCollections->sum('pending_amount');
+        
+        return view('tenants.show', compact('tenant', 'pendingCollections', 'totalDebt'));
     }
 
     public function showApi(Tenant $tenant)

@@ -13,6 +13,17 @@
 
     <form action="{{ route('leases.store') }}" method="POST" id="lease-form">
         @csrf
+
+        @if ($errors->any())
+            <div style="background: #FFF5F5; color: #C53030; padding: 1rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid #FEB2B2;">
+                <p style="font-weight: 700; margin-bottom: 0.5rem;">⚠️ Hay errores en el formulario:</p>
+                <ul style="font-size: 0.9rem; padding-left: 1.5rem;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
             <!-- Property & Tenant -->
             <div class="card">
@@ -21,21 +32,37 @@
                 <!-- Propiedad Selector -->
                 <div style="margin-bottom: 2rem;">
                     <label style="display: block; margin-bottom: 0.8rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light); text-transform: uppercase;">Propiedad a Alquilar</label>
-                    <input type="hidden" name="property_id" id="selected-property-id" required>
-                    <div id="property-display" style="border: 2px dashed var(--secondary-color); border-radius: 12px; padding: 1.5rem; text-align: center; background: #f8fafc; transition: all 0.3s;">
-                        <p style="color: var(--text-light); margin-bottom: 1rem; font-size: 0.9rem;">No hay propiedad seleccionada</p>
+                    <input type="hidden" name="property_id" id="selected-property-id" value="{{ old('property_id') }}" required>
+                    <div id="property-display" style="border: 2px dashed {{ $errors->has('property_id') ? '#E53E3E' : 'var(--secondary-color)' }}; border-radius: 12px; padding: 1.5rem; text-align: center; background: #f8fafc; transition: all 0.3s;">
+                        <p id="property-text" style="color: var(--text-main); margin-bottom: 1rem; font-size: 0.9rem; font-weight: 600;">
+                            @if(old('property_id'))
+                                @php $selP = $properties->firstWhere('id', old('property_id')) @endphp
+                                {{ $selP ? $selP->location . ' (' . $selP->city->name . ')' : 'No hay propiedad seleccionada' }}
+                            @else
+                                No hay propiedad seleccionada
+                            @endif
+                        </p>
                         <button type="button" onclick="openModal('property-modal')" class="btn" style="background: var(--accent-color); color: white; width: 100%;">Buscar Propiedad</button>
                     </div>
+                    @error('property_id') <span style="color: #E53E3E; font-size: 0.75rem; font-weight: 600;">La propiedad es obligatoria</span> @enderror
                 </div>
 
                 <!-- Inquilino Selector -->
                 <div style="margin-bottom: 2rem;">
                     <label style="display: block; margin-bottom: 0.8rem; font-weight: 700; font-size: 0.85rem; color: var(--text-light); text-transform: uppercase;">Inquilino Responsable</label>
-                    <input type="hidden" name="tenant_id" id="selected-tenant-id" required>
-                    <div id="tenant-display" style="border: 2px dashed var(--secondary-color); border-radius: 12px; padding: 1.5rem; text-align: center; background: #f8fafc; transition: all 0.3s;">
-                        <p style="color: var(--text-light); margin-bottom: 1rem; font-size: 0.9rem;">No hay inquilino seleccionado</p>
+                    <input type="hidden" name="tenant_id" id="selected-tenant-id" value="{{ old('tenant_id') }}" required>
+                    <div id="tenant-display" style="border: 2px dashed {{ $errors->has('tenant_id') ? '#E53E3E' : 'var(--secondary-color)' }}; border-radius: 12px; padding: 1.5rem; text-align: center; background: #f8fafc; transition: all 0.3s;">
+                        <p id="tenant-text" style="color: var(--text-main); margin-bottom: 1rem; font-size: 0.9rem; font-weight: 600;">
+                            @if(old('tenant_id'))
+                                @php $selT = $tenants->firstWhere('id', old('tenant_id')) @endphp
+                                {{ $selT ? $selT->name : 'No hay inquilino seleccionado' }}
+                            @else
+                                No hay inquilino seleccionado
+                            @endif
+                        </p>
                         <button type="button" onclick="openModal('tenant-modal')" class="btn" style="background: var(--accent-color); color: white; width: 100%;">Buscar Inquilino</button>
                     </div>
+                    @error('tenant_id') <span style="color: #E53E3E; font-size: 0.75rem; font-weight: 600;">El inquilino es obligatorio</span> @enderror
                 </div>
 
                 <!-- Datos del Garante -->
@@ -44,28 +71,28 @@
                     
                     <div style="margin-bottom: 1rem;">
                         <label style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem;">Nombre Completo</label>
-                        <input type="text" name="guarantor_name" placeholder="Nombre del Garante" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+                        <input type="text" name="guarantor_name" value="{{ old('guarantor_name') }}" placeholder="Nombre del Garante" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem;">DNI / CUIT</label>
-                            <input type="text" name="guarantor_id_number" placeholder="20-XXXXXXXX-X" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+                            <input type="text" name="guarantor_id_number" value="{{ old('guarantor_id_number') }}" placeholder="20-XXXXXXXX-X" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem;">Teléfono</label>
-                            <input type="text" name="guarantor_phone" placeholder="+54 9..." style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+                            <input type="text" name="guarantor_phone" value="{{ old('guarantor_phone') }}" placeholder="+54 9..." style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
                         </div>
                     </div>
 
                     <div style="margin-bottom: 1rem;">
                         <label style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem;">Email</label>
-                        <input type="email" name="guarantor_email" placeholder="garante@gmail.com" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+                        <input type="email" name="guarantor_email" value="{{ old('guarantor_email') }}" placeholder="garante@gmail.com" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
                     </div>
 
                     <div>
                         <label style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem;">Dirección</label>
-                        <input type="text" name="guarantor_address" placeholder="Calle, Nro, Piso, Dpto..." style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+                        <input type="text" name="guarantor_address" value="{{ old('guarantor_address') }}" placeholder="Calle, Nro, Piso, Dpto..." style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
                     </div>
                 </div>
             </div>
@@ -80,17 +107,17 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Fecha Inicio</label>
-                        <input type="date" name="start_date" required style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color);">
+                        <input type="date" name="start_date" value="{{ old('start_date') }}" required style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid {{ $errors->has('start_date') ? '#E53E3E' : 'var(--secondary-color)' }};">
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Fecha Fin</label>
-                        <input type="date" name="end_date" required style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color);">
+                        <input type="date" name="end_date" value="{{ old('end_date') }}" required style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid {{ $errors->has('end_date') ? '#E53E3E' : 'var(--secondary-color)' }};">
                     </div>
                 </div>
 
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Precio Base Mensual ($)</label>
-                    <input type="number" step="0.01" name="base_price" required style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color);">
+                    <input type="number" step="0.01" name="base_price" value="{{ old('base_price') }}" required style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid {{ $errors->has('base_price') ? '#E53E3E' : 'var(--secondary-color)' }};">
                 </div>
 
                 <div style="margin-bottom: 1.5rem; border: 1px solid var(--secondary-color); padding: 1rem; border-radius: 12px; background: #f8fafc;">
@@ -103,22 +130,22 @@
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div id="update-value-container">
+                        <div id="update-value-container" style="display: {{ old('update_type', 'fixed') === 'fixed' ? 'block' : 'none' }}">
                             <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 600;">Aumento (%)</label>
-                            <input type="number" step="0.01" name="update_value" placeholder="Ej: 15" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+                            <input type="number" step="0.01" name="update_value" value="{{ old('update_value') }}" placeholder="Ej: 15" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
                         </div>
                         <div>
                             <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 600;">Cada (meses)</label>
-                            <input type="number" name="update_frequency_months" value="6" min="1" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+                            <input type="number" name="update_frequency_months" value="{{ old('update_frequency_months', '6') }}" min="1" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
                         </div>
                     </div>
 
-                    <div id="index-name-container" style="display: none; margin-top: 1rem;">
+                    <div id="index-name-container" style="display: {{ old('update_type') === 'indexed' ? 'block' : 'none' }}; margin-top: 1rem;">
                         <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 600;">Seleccionar Índice</label>
                         <select name="index_type_id" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color); background: white;">
                             <option value="">-- Seleccionar --</option>
                             @foreach($indexTypes as $index)
-                                <option value="{{ $index->id }}">{{ $index->name }}</option>
+                                <option value="{{ $index->id }}" {{ old('index_type_id') == $index->id ? 'selected' : '' }}>{{ $index->name }}</option>
                             @endforeach
                         </select>
                         <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.4rem;">Puedes dar de alta más índices en Configuración.</p>
@@ -138,11 +165,11 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; font-weight: 600;">Monto Total ($)</label>
-                        <input type="number" step="0.01" name="agency_fee_amount" id="agency_fee_amount" placeholder="0.00" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+                        <input type="number" step="0.01" name="agency_fee_amount" id="agency_fee_amount" value="{{ old('agency_fee_amount') }}" placeholder="0.00" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; font-weight: 600;">Cuotas</label>
-                        <input type="number" name="initial_fee_installments" value="1" min="1" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+                        <input type="number" name="initial_fee_installments" value="{{ old('initial_fee_installments', '1') }}" min="1" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
                     </div>
                 </div>
                 <p style="font-size: 0.7rem; color: var(--text-light); margin-top: 1rem;">Se dividirá en cuotas y se cobrará mensualmente.</p>
@@ -156,7 +183,7 @@
                 </div>
                 <div>
                     <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; font-weight: 600;">Monto Total ($)</label>
-                    <input type="number" step="0.01" name="security_deposit_amount" id="security_deposit_amount" placeholder="0.00" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+                    <input type="number" step="0.01" name="security_deposit_amount" id="security_deposit_amount" value="{{ old('security_deposit_amount') }}" placeholder="0.00" style="width: 100%; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
                 </div>
                 <p style="font-size: 0.7rem; color: var(--text-light); margin-top: 1rem;">Se cobrará íntegramente en el primer mes de alquiler.</p>
             </div>
@@ -170,8 +197,19 @@
             </div>
             
             <div id="fixed-charges-container">
-                <div style="display: grid; grid-template-columns: 1fr 40px; gap: 1rem; margin-bottom: 1rem;" class="charge-row">
-                    <input type="text" name="fixed_charges[0][name]" placeholder="Concepto (Ej: Expensas, TGI, Agua)" class="form-control" style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color);">
+                <div style="display: grid; grid-template-columns: 1fr 200px 40px; gap: 1rem; margin-bottom: 1rem; align-items: start;" class="charge-row">
+                    <div>
+                        <select name="fixed_charges[0][recurrent_concept_id]" style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color); background: white;">
+                            <option value="">-- Seleccionar Concepto --</option>
+                            @foreach($recurrentConcepts as $rc)
+                                <option value="{{ $rc->id }}">{{ $rc->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <select name="fixed_charges[0][is_paid_by_agency]" style="width: 100%; padding: 0.8rem; border-radius: var(--border-radius); border: 1px solid var(--secondary-color); background: white; font-weight: 600; font-size: 0.85rem; color: #4A5568;">
+                        <option value="1">Lo paga Habitar</option>
+                        <option value="0">Lo paga Propietario</option>
+                    </select>
                     <div></div>
                 </div>
             </div>
@@ -219,19 +257,43 @@
     }
 
     let chargeCount = 1;
+
     function addFixedCharge() {
         const container = document.getElementById('fixed-charges-container');
         const row = document.createElement('div');
         row.style.display = 'grid';
-        row.style.gridTemplateColumns = '1fr 40px';
+        row.style.gridTemplateColumns = '1fr 200px 40px';
         row.style.gap = '1rem';
         row.style.marginBottom = '1rem';
+        row.style.alignItems = 'start';
+        
+        let optionsHtml = '<option value="">-- Seleccionar Concepto --</option>';
+        @foreach($recurrentConcepts as $rc)
+            optionsHtml += '<option value="{{ $rc->id }}">{{ addslashes($rc->name) }}</option>';
+        @endforeach
+
         row.innerHTML = `
-            <input type="text" name="fixed_charges[${chargeCount}][name]" placeholder="Concepto Mensual" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--secondary-color);">
+            <div>
+                <select name="fixed_charges[${chargeCount}][recurrent_concept_id]" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--secondary-color); background: white;">
+                    ${optionsHtml}
+                </select>
+            </div>
+            <select name="fixed_charges[${chargeCount}][is_paid_by_agency]" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--secondary-color); background: white; font-weight: 600; font-size: 0.85rem; color: #4A5568;">
+                <option value="1">Lo paga Habitar</option>
+                <option value="0">Lo paga Propietario</option>
+            </select>
             <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: #C53030; cursor: pointer; font-size: 1.2rem;">&times;</button>
         `;
         container.appendChild(row);
         chargeCount++;
     }
+
+    // Prevenir que el Enter envíe el formulario accidentalmente en inputs de texto/número
+    document.getElementById('lease-form').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT' && (e.target.type === 'text' || e.target.type === 'number' || e.target.type === 'email' || e.target.type === 'date')) {
+            e.preventDefault();
+            return false;
+        }
+    });
 </script>
 @endsection

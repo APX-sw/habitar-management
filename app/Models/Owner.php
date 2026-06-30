@@ -12,7 +12,7 @@ class Owner extends Model
 {
     use HasFactory, LogsActivity;
 
-    protected $fillable = ['name', 'dni_cuit', 'email', 'phone', 'contact'];
+    protected $fillable = ['name', 'dni_cuit', 'email', 'phone', 'contact', 'commission_percentage'];
 
     public function properties()
     {
@@ -22,6 +22,11 @@ class Owner extends Model
     public function bankAccounts()
     {
         return $this->hasMany(OwnerBankAccount::class);
+    }
+
+    public function settlements()
+    {
+        return $this->hasMany(Settlement::class);
     }
 
     public function getActivitylogOptions(): LogOptions

@@ -22,6 +22,12 @@
                 Envío Masivo de Mails
             </button>
         @endif
+        @if(count($servicesReport) > 0)
+            <button onclick="document.getElementById('servicesReportModal').style.display='flex'" class="btn" style="background: var(--bg-body); border: 1px solid var(--secondary-color); color: var(--primary-color); font-weight: 700; display: flex; align-items: center; gap: 0.5rem; padding: 1rem 1.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                Ver Servicios a Pagar
+            </button>
+        @endif
         <div class="card" style="padding: 1rem 1.5rem; border-left: 4px solid var(--accent-color); margin: 0;">
             <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-light); font-weight: 700; margin-bottom: 0.2rem;">Total Proyectado</div>
             <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-color);">${{ number_format($collections->sum('total_amount'), 2) }}</div>
@@ -184,6 +190,51 @@
                 <button type="submit" class="btn" style="background: #4299E1; color: white; font-weight: 700;">Confirmar y Enviar</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Modal Reporte de Servicios -->
+<div id="servicesReportModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div class="card" style="width: 100%; max-width: 800px; padding: 2.5rem; position: relative; max-height: 90vh; overflow-y: auto;">
+        <button onclick="document.getElementById('servicesReportModal').style.display='none'" style="position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text-light);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+
+        <h3 style="margin-bottom: 0.5rem; color: var(--primary-color);">Servicios a Pagar por Habitar</h3>
+        <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 2rem;">Listado de servicios (expensas, tasas, etc.) que la inmobiliaria debe abonar este mes, agrupados por concepto, con el código de pago correspondiente a cada propiedad.</p>
+
+        @foreach($servicesReport as $conceptName => $data)
+            <div style="margin-bottom: 2rem; border: 1px solid #edf2f7; border-radius: 12px; overflow: hidden;">
+                <div style="background: #f8fafc; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7;">
+                    <h4 style="margin: 0; color: var(--primary-color); font-size: 1.1rem;">{{ $conceptName }}</h4>
+                    <span style="font-weight: 800; color: var(--accent-color); font-size: 1.1rem;">Total: ${{ number_format($data['total'], 2) }}</span>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 1rem 1.5rem; border-bottom: 1px solid #edf2f7; color: var(--text-light);">Propiedad</th>
+                            <th style="padding: 1rem 1.5rem; border-bottom: 1px solid #edf2f7; color: var(--text-light);">Cód. Pago Electrónico</th>
+                            <th style="padding: 1rem 1.5rem; border-bottom: 1px solid #edf2f7; color: var(--text-light); text-align: right;">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($data['items'] as $item)
+                            <tr style="border-bottom: 1px solid #f8fafc;">
+                                <td style="padding: 1rem 1.5rem; font-weight: 600; color: #2d3748;">{{ $item['location'] }}</td>
+                                <td style="padding: 1rem 1.5rem;">
+                                    <span style="background: #edf2f7; padding: 0.3rem 0.6rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem; color: #4a5568;">{{ $item['payment_code'] }}</span>
+                                </td>
+                                <td style="padding: 1rem 1.5rem; text-align: right; font-weight: 700; color: var(--primary-color);">${{ number_format($item['amount'], 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endforeach
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+            <button type="button" onclick="document.getElementById('servicesReportModal').style.display='none'" class="btn" style="background: var(--secondary-color); color: var(--primary-color); font-weight: 700;">Cerrar Reporte</button>
+        </div>
     </div>
 </div>
 

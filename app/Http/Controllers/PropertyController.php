@@ -50,7 +50,7 @@ class PropertyController extends Controller
             }
         }
 
-        $properties = $query->latest()->paginate(12)->withQueryString();
+        $properties = $query->latest()->paginate(15)->withQueryString();
         
         $owners = Owner::orderBy('name')->get();
         $cities = City::orderBy('name')->get();
@@ -64,7 +64,8 @@ class PropertyController extends Controller
         $owners = Owner::all();
         $provinces = Province::orderBy('name')->get();
         $propertyTypes = PropertyType::all();
-        return view('properties.create', compact('owners', 'provinces', 'propertyTypes'));
+        $allRecurrentConcepts = \App\Models\RecurrentConcept::orderBy('name')->get();
+        return view('properties.create', compact('owners', 'provinces', 'propertyTypes', 'allRecurrentConcepts'));
     }
 
     public function store(Request $request)
@@ -91,25 +92,51 @@ class PropertyController extends Controller
             'has_patio' => 'boolean',
             'has_balcony' => 'boolean',
             'pets_allowed' => 'boolean',
+            'has_expenses' => 'boolean',
             'square_meters' => 'nullable|numeric|min:0',
+            'expenses_payment_address' => 'nullable|string|max:255',
+            'expenses_payment_number' => 'nullable|string|max:255',
+            'recurrent_concepts' => 'nullable|array',
+            'recurrent_concepts.*.id' => 'nullable|exists:recurrent_concepts,id',
+            'recurrent_concepts.*.payment_code' => 'nullable|string|max:255',
         ]);
 
         // Default values for booleans if not present
         $data = $validated;
+        unset($data['recurrent_concepts']); // Quitamos del array principal
         $data['has_garage'] = $request->has('has_garage');
         $data['has_patio'] = $request->has('has_patio');
         $data['has_balcony'] = $request->has('has_balcony');
         $data['pets_allowed'] = $request->has('pets_allowed');
+        $data['has_expenses'] = $request->has('has_expenses');
 
-        Property::create($data);
+        // Si no paga expensas, limpiar campos
+        if (!$data['has_expenses']) {
+            $data['expenses_payment_address'] = null;
+            $data['expenses_payment_number'] = null;
+        }
+
+        $property = Property::create($data);
+
+        // Atar los conceptos recurrentes si vinieron en el request
+        if ($request->has('recurrent_concepts')) {
+            foreach ($request->recurrent_concepts as $rc) {
+                if (!empty($rc['id'])) {
+                    $property->recurrentConcepts()->attach($rc['id'], [
+                        'payment_code' => $rc['payment_code'] ?? null,
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('properties.index')->with('success', 'Propiedad creada correctamente.');
     }
 
     public function show(Property $property)
     {
-        $property->load(['owner', 'city', 'type', 'leases.tenant']);
-        return view('properties.show', compact('property'));
+        $property->load(['owner', 'city', 'type', 'leases.tenant', 'recurrentConcepts']);
+        $allRecurrentConcepts = \App\Models\RecurrentConcept::orderBy('name')->get();
+        return view('properties.show', compact('property', 'allRecurrentConcepts'));
     }
 
     public function showApi(Property $property)
@@ -164,5 +191,27 @@ class PropertyController extends Controller
         $property->delete();
 
         return redirect()->route('properties.index')->with('success', 'Propiedad eliminada correctamente.');
+    }
+
+    public function addConcept(Request $request, Property $property)
+    {
+        $request->validate([
+            'recurrent_concept_id' => 'required|exists:recurrent_concepts,id',
+            'payment_code' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:255',
+        ]);
+
+        $property->recurrentConcepts()->attach($request->recurrent_concept_id, [
+            'payment_code' => $request->payment_code,
+            'notes' => $request->notes,
+        ]);
+
+        return back()->with('success', 'Concepto adherido correctamente.');
+    }
+
+    public function removeConcept(Property $property, \App\Models\RecurrentConcept $concept)
+    {
+        $property->recurrentConcepts()->detach($concept->id);
+        return back()->with('success', 'Concepto desvinculado correctamente.');
     }
 }
